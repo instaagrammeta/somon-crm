@@ -38,8 +38,17 @@ export const useAuthStore = defineStore("auth", {
       cookie.value = token;
     },
     async login(login: string, password: string) {
-      const api = useApi();
-      const res = await api.post<LoginResponse>("/api/login", { login, password });
+      // IMPORTANT: do NOT use useApi() here — login is the very first
+      // request and we want to bypass any wrapper subtleties (interceptors,
+      // SSR baseURL, etc). Login always runs in the browser.
+      const cfg = useRuntimeConfig();
+      const baseURL = (cfg.public.apiBase as string) || "";
+      const res = await $fetch<LoginResponse>("/api/login", {
+        method: "POST",
+        baseURL,
+        body: { login, password },
+        headers: { "Content-Type": "application/json" },
+      });
       this.setToken(res.token);
       this.user = res.user;
       return res.user;
