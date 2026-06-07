@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: somon_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-somon}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-somon_secret_change_me}
+      POSTGRES_DB: ${DB_NAME:-somon_crm}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-somon} -d ${DB_NAME:-somon_crm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - somon
+
+  redis:
+    image: redis:7-alpine
+    container_name: somon_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - somon
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: somon_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "8080:8080"
+    networks:
+      - somon
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: somon_nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads:/var/www/uploads:ro
+    ports:
+      - "80:80"
+    networks:
+      - somon
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+
+networks:
+  somon:
+    driver: bridge
