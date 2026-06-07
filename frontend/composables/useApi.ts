@@ -1,6 +1,6 @@
 /**
  * Thin wrapper around `$fetch` that automatically:
- *  - prefixes paths with the configured API base
+ *  - chooses the right base URL: SSR → backend container, browser → nginx
  *  - attaches the JWT bearer from Pinia store
  *  - handles 401 → forced logout + redirect
  *  - exposes a `download()` helper for binary endpoints (Excel)
@@ -13,7 +13,11 @@ export function useApi() {
   const router = useRouter();
   const { locale } = useI18n();
 
-  const baseURL = cfg.public.apiBase || "";
+  // SSR (Nitro inside the frontend container) uses Docker DNS to reach the
+  // backend; the browser hits nginx (relative URL).
+  const baseURL = import.meta.server
+    ? (cfg.apiBaseInternal as string) || "http://backend:8080"
+    : (cfg.public.apiBase as string) || "";
 
   const buildOpts = (opts: FetchOptions = {}): FetchOptions => {
     const headers: Record<string, string> = {
@@ -32,7 +36,7 @@ export function useApi() {
       onResponseError: async (ctx) => {
         if (ctx.response?.status === 401 && auth.token) {
           await auth.softLogout();
-          router.push("/login");
+          if (import.meta.client) router.push("/login");
         }
         if (opts.onResponseError) await opts.onResponseError(ctx);
       },
@@ -54,11 +58,14 @@ export function useApi() {
   const del = <T = any>(url: string, opts?: FetchOptions) =>
     $fetch<T>(url, { method: "DELETE", ...buildOpts(opts) });
 
-  /** Download a binary file (Excel/PDF). Triggers browser save dialog. */
+  /** Download a binary file (Excel/PDF). Triggers browser save dialog.
+   *  Always client-only (binary ops aren't useful in SSR). */
   const download = async (url: string, filename: string) => {
+    if (!import.meta.client) return;
     const blob = await $fetch<Blob>(url, {
       method: "GET",
       ...buildOpts({}),
+      baseURL: cfg.public.apiBase as string || "",
       responseType: "blob",
     });
     const u = URL.createObjectURL(blob);

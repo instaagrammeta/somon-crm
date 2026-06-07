@@ -5,9 +5,11 @@
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore();
+  // Hydrate token from cookie on every nav (works in both SSR and client).
+  auth.hydrate();
 
-  // On first load, fetch current user (only client-side: cookie is the token).
-  if (process.client && !auth.booted && auth.token) {
+  // Lazily load the current user once.
+  if (import.meta.client && auth.token && !auth.booted) {
     await auth.fetchMe();
   }
 

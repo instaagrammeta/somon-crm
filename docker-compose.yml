@@ -77,8 +77,10 @@ services:
       NODE_ENV: production
       NITRO_PORT: "3000"
       NITRO_HOST: 0.0.0.0
-      # same-origin: requests go to nginx → backend
+      # Browser-side base URL: empty → same-origin via nginx
       NUXT_PUBLIC_API_BASE: ""
+      # Server-side (SSR) base URL: Docker DNS to reach backend
+      NUXT_API_BASE_INTERNAL: "http://backend:8080"
       NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-tg}
     depends_on:
       - backend

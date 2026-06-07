@@ -37,9 +37,10 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-only: used by Nitro SSR to call backend over Docker network.
+    apiBaseInternal: process.env.NUXT_API_BASE_INTERNAL || "http://backend:8080",
     public: {
-      // Same-origin by default (production: nginx proxies /api → backend).
-      // For dev override with NUXT_PUBLIC_API_BASE=http://localhost:8080
+      // Browser: empty = same-origin (nginx proxies /api/* → backend)
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "",
       defaultLocale: process.env.NUXT_PUBLIC_DEFAULT_LOCALE || "tg",
     },
@@ -67,12 +68,17 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    strict: true,
+    strict: false,
     typeCheck: false,
   },
 
   nitro: {
     compressPublicAssets: true,
+    // Fail-soft on SSR data fetch errors so the page still renders.
+    routeRules: {
+      "/login": { ssr: false },
+      "/me/**": { ssr: false },
+    },
   },
 
   vite: {

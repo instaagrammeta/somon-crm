@@ -10,10 +10,7 @@ interface LoginResponse {
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: useCookie<string | null>("access_token", {
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-    }).value,
+    token: null as string | null,
     user: null as User | null,
     booted: false,
   }),
@@ -22,6 +19,15 @@ export const useAuthStore = defineStore("auth", {
     isAdmin: (s) => s.user?.role === "admin",
   },
   actions: {
+    /** Hydrate token from cookie. Called from middleware on every navigation. */
+    hydrate() {
+      if (this.token !== null) return;
+      const c = useCookie<string | null>("access_token", {
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+      });
+      this.token = c.value;
+    },
     /** Persist the token both in state and cookie. */
     setToken(token: string | null) {
       this.token = token;
@@ -32,26 +38,18 @@ export const useAuthStore = defineStore("auth", {
       cookie.value = token;
     },
     async login(login: string, password: string) {
-      const cfg = useRuntimeConfig();
-      const res = await $fetch<LoginResponse>("/api/login", {
-        method: "POST",
-        baseURL: cfg.public.apiBase || "",
-        body: { login, password },
-      });
+      const api = useApi();
+      const res = await api.post<LoginResponse>("/api/login", { login, password });
       this.setToken(res.token);
       this.user = res.user;
       return res.user;
     },
     async fetchMe() {
       if (!this.token) return null;
-      const cfg = useRuntimeConfig();
+      const api = useApi();
       try {
-        const res = await $fetch<{ authenticated: boolean; user?: User }>(
-          "/api/check-auth",
-          {
-            baseURL: cfg.public.apiBase || "",
-            headers: { Authorization: `Bearer ${this.token}` },
-          }
+        const res = await api.get<{ authenticated: boolean; user?: User }>(
+          "/api/check-auth"
         );
         if (res.authenticated && res.user) {
           this.user = res.user;
@@ -67,19 +65,15 @@ export const useAuthStore = defineStore("auth", {
       return this.user;
     },
     async logout() {
-      const cfg = useRuntimeConfig();
+      const api = useApi();
       try {
-        await $fetch("/api/logout", {
-          method: "POST",
-          baseURL: cfg.public.apiBase || "",
-          headers: { Authorization: `Bearer ${this.token}` },
-        });
+        await api.post("/api/logout");
       } catch {
         /* ignore */
       }
       this.softLogout();
     },
-    async softLogout() {
+    softLogout() {
       this.setToken(null);
       this.user = null;
     },
