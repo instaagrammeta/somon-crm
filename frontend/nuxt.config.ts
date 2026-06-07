@@ -2,7 +2,13 @@
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
-  ssr: true,
+
+  // Disable server-side rendering: the app runs as SPA.
+  // Reasoning: this CRM is fully behind auth — there's nothing to SEO-optimize,
+  // and SSR was crashing because some pages call useFetch before login.
+  // Nitro still serves the static index.html + handles assets, but pages
+  // hydrate fully on the client where the auth cookie is available.
+  ssr: false,
 
   modules: [
     "@nuxtjs/tailwindcss",
@@ -37,10 +43,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Server-only: used by Nitro SSR to call backend over Docker network.
-    apiBaseInternal: process.env.NUXT_API_BASE_INTERNAL || "http://backend:8080",
     public: {
-      // Browser: empty = same-origin (nginx proxies /api/* → backend)
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "",
       defaultLocale: process.env.NUXT_PUBLIC_DEFAULT_LOCALE || "tg",
     },
@@ -74,11 +77,6 @@ export default defineNuxtConfig({
 
   nitro: {
     compressPublicAssets: true,
-    // Fail-soft on SSR data fetch errors so the page still renders.
-    routeRules: {
-      "/login": { ssr: false },
-      "/me/**": { ssr: false },
-    },
   },
 
   vite: {

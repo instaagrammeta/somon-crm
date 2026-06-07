@@ -2,14 +2,17 @@
  *  - if not logged in and route !== /login → /login
  *  - if logged in and route === /login → /
  *  - admin-only routes are checked here as well
+ *
+ * Runs only in the browser (SPA mode).
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (import.meta.server) return; // safety: never run on server
+
   const auth = useAuthStore();
-  // Hydrate token from cookie on every nav (works in both SSR and client).
   auth.hydrate();
 
-  // Lazily load the current user once.
-  if (import.meta.client && auth.token && !auth.booted) {
+  // Lazy-load the current user once.
+  if (auth.token && !auth.booted) {
     await auth.fetchMe();
   }
 
@@ -22,7 +25,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo("/");
   }
 
-  // Admin-only paths (kept simple — fine for v1).
+  // Admin-only paths.
   const adminPaths = ["/users"];
   if (
     auth.token &&
