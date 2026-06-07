@@ -195,7 +195,7 @@
     "generate_code": "Сохтани рамз",
     "copy_link": "Ҳаволаро нусхабардорӣ",
     "code_copied": "Рамз нусхабардорӣ шуд",
-    "linked": "Telegram пайваст шуд: @{username}",
+    "linked": "Telegram пайваст шуд: {username}",
     "not_linked": "Telegram пайваст нашудааст",
     "unlink": "Канор кардан",
     "instructions": "Рамзи зерро бо боти Telegram равон кунед — баъдан ҳамаи огоҳсозиҳо ба шумо мерасанд."

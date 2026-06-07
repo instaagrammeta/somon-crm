@@ -195,7 +195,7 @@
     "generate_code": "Сгенерировать код",
     "copy_link": "Скопировать ссылку",
     "code_copied": "Код скопирован",
-    "linked": "Telegram подключён: @{username}",
+    "linked": "Telegram подключён: {username}",
     "not_linked": "Telegram не подключён",
     "unlink": "Отвязать",
     "instructions": "Отправьте код вашему Telegram-боту — все уведомления будут приходить вам автоматически."

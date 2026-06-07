@@ -54,7 +54,7 @@ const unlink = async () => {
       </div>
       <div class="flex-1">
         <div v-if="auth.user?.has_telegram" class="font-semibold text-ink mb-1">
-          {{ $t("telegram.linked", { username: auth.user?.telegram_username || "?" }) }}
+          {{ $t("telegram.linked", { username: "@" + (auth.user?.telegram_username || "?") }) }}
         </div>
         <div v-else class="font-semibold text-ink mb-1">
           {{ $t("telegram.not_linked") }}
