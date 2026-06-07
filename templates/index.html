@@ -1,0 +1,1427 @@
+{% extends "base.html" %}
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<style>
+    /* ==================== LAYOUT ==================== */
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .dash-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .dash-page-header-left h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+        letter-spacing: -0.5px;
+    }
+
+    .dash-page-header-left p {
+        color: var(--text-soft);
+        font-size: 14px;
+    }
+
+    .dash-page-header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 11px 20px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-family: inherit;
+    }
+
+    .btn-action.btn-primary {
+        background: var(--green-primary) !important;
+        color: white !important;
+    }
+
+    .btn-action.btn-primary:hover {
+        background: var(--green-dark) !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-action.btn-outline {
+        background: white;
+        color: var(--text-dark);
+        border: 1.5px solid var(--border-soft);
+    }
+
+    .btn-action.btn-outline:hover {
+        border-color: var(--green-primary);
+        color: var(--green-primary);
+    }
+
+    /* ==================== STATS CARDS ==================== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 22px;
+        border: 1px solid var(--border-soft);
+        position: relative;
+        transition: all 0.2s;
+        overflow: hidden;
+    }
+
+    .stat-card.featured {
+        background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+        color: white;
+        border: none;
+    }
+
+    .stat-card.featured::before {
+        content: '';
+        position: absolute;
+        right: -40px;
+        top: -40px;
+        width: 140px;
+        height: 140px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 50%;
+    }
+
+    .stat-card.featured::after {
+        content: '';
+        position: absolute;
+        right: -80px;
+        bottom: -80px;
+        width: 180px;
+        height: 180px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 50%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .stat-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-medium);
+    }
+
+    .stat-card.featured .stat-label {
+        color: rgba(255,255,255,0.9);
+    }
+
+    .stat-arrow {
+        width: 32px;
+        height: 32px;
+        background: var(--green-soft);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green-primary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .stat-card.featured .stat-arrow {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+
+    .stat-arrow:hover {
+        transform: rotate(-45deg);
+    }
+
+    .stat-number {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+        line-height: 1;
+    }
+
+    .stat-card.featured .stat-number {
+        color: white;
+    }
+
+    .stat-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--green-primary);
+        padding: 4px 10px;
+        background: var(--green-soft);
+        border-radius: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-card.featured .stat-trend {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+
+    /* ==================== ROWS ==================== */
+    .charts-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .charts-row.equal {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 22px;
+        border: 1px solid var(--border-soft);
+    }
+
+    .card-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-title i {
+        color: var(--green-primary);
+    }
+
+    .card-action-btn {
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: var(--green-soft);
+        color: var(--green-primary);
+        font-size: 12px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+
+    .card-action-btn:hover {
+        background: var(--green-light);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 280px;
+    }
+
+    .chart-container canvas {
+        max-height: 280px;
+    }
+
+    /* ==================== TABLE ==================== */
+    .table-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 22px;
+        border: 1px solid var(--border-soft);
+        margin-bottom: 24px;
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        text-align: left;
+        padding: 12px 14px;
+        background: var(--green-soft);
+        color: var(--green-primary);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .data-table th:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+
+    .data-table th:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    .data-table td {
+        padding: 14px;
+        border-bottom: 1px solid var(--border-soft);
+        color: var(--text-medium);
+        font-size: 13px;
+    }
+
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+        background: var(--green-soft);
+    }
+
+    .client-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .client-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    .client-name {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .client-phone {
+        font-size: 11px;
+        color: var(--text-soft);
+    }
+
+    .column-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--green-soft);
+        color: var(--green-primary);
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    /* ==================== SOURCES ==================== */
+    .source-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .source-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .source-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .source-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    .source-count {
+        font-weight: 700;
+        color: var(--green-primary);
+        font-size: 13px;
+    }
+
+    .progress-bar {
+        background: var(--bg-page);
+        border-radius: 10px;
+        height: 6px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        background: linear-gradient(90deg, var(--green-primary), var(--green-dark));
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.6s;
+    }
+
+    /* ==================== EMPLOYEES ==================== */
+    .employee-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .employee-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        background: var(--green-soft);
+        border-radius: 14px;
+        transition: all 0.2s;
+    }
+
+    .employee-item:hover {
+        background: var(--green-light);
+    }
+
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .employee-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 13px;
+    }
+
+    .employee-sub {
+        font-size: 11px;
+        color: var(--text-soft);
+    }
+
+    .employee-count {
+        background: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        color: var(--green-primary);
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    /* ==================== EMPTY ==================== */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-soft);
+    }
+
+    .empty-state i {
+        font-size: 36px;
+        color: var(--green-primary);
+        opacity: 0.3;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .empty-state-text {
+        font-size: 14px;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-soft);
+    }
+
+    /* ==================== RESPONSIVE ==================== */
+    @media (max-width: 1024px) {
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dash-page-header-left h1 {
+            font-size: 24px;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        .stat-number {
+            font-size: 32px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .data-table th, .data-table td {
+            padding: 10px 8px;
+            font-size: 11px;
+        }
+        .stat-card {
+            padding: 18px;
+        }
+        .stat-number {
+            font-size: 28px;
+        }
+        .chart-card {
+            padding: 16px;
+        }
+        .chart-container {
+            height: 240px;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    <!-- ==================== HEADER ==================== -->
+    <div class="dash-page-header">
+        <div class="dash-page-header-left">
+            <h1>Дашборд</h1>
+            <p>Банақшагирӣ, афзалият ва иҷрои вазифаҳо бо осонӣ — шӯъбаи {{ session.category }}</p>
+        </div>
+        <div class="dash-page-header-actions">
+            {% if session.category == 'Отдел продаж' or session.category == 'Отдел закупки' or session.role == 'admin' %}
+            <a href="/zayavka" class="btn-action btn-primary">
+                <i class="fas fa-plus"></i> Илова кардани заявка
+            </a>
+            {% endif %}
+            <button class="btn-action btn-outline" onclick="reloadDashboard()">
+                <i class="fas fa-sync-alt"></i> Навсозӣ
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== ОТДЕЛ ПРОДАЖ ==================== -->
+    {% if session.category == 'Отдел продаж' %}
+
+    <div class="stats-grid">
+        <div class="stat-card featured">
+            <div class="stat-card-top">
+                <div class="stat-label">Имрӯз</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="salesToday">0</div>
+            <div class="stat-trend"><i class="fas fa-arrow-up"></i> Лидҳои нав имрӯз</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ин ҳафта</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="salesWeek">0</div>
+            <div class="stat-trend"><i class="fas fa-calendar-week"></i> 7 рӯзи охир</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ин моҳ</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="salesMonth">0</div>
+            <div class="stat-trend"><i class="fas fa-calendar-alt"></i> 30 рӯзи охир</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Зангҳои воридшаванда</div>
+                <div class="stat-arrow"><i class="fas fa-phone"></i></div>
+            </div>
+            <div class="stat-number" id="incomingCount">0</div>
+            <div class="stat-trend"><i class="fas fa-phone-alt"></i> Воридшаванда</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Зангҳои берунӣ</div>
+                <div class="stat-arrow"><i class="fas fa-phone-volume"></i></div>
+            </div>
+            <div class="stat-number" id="outgoingCount">0</div>
+            <div class="stat-trend"><i class="fas fa-phone-volume"></i> Берунӣ</div>
+        </div>
+    </div>
+
+    <div class="charts-row equal">
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-line"></i> Лидҳо аз рӯи рӯзҳо</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="dailyLidsChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Лидҳо аз рӯи манбаъ</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="sourcesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="card-header-flex">
+            <div class="card-title"><i class="fas fa-list-ul"></i> Тафсилоти манбаъҳо</div>
+        </div>
+        <div id="sourcesDetail" class="source-list"></div>
+    </div>
+
+    {% endif %}
+
+    <!-- ==================== ОТДЕЛ ЗАКУПКИ ==================== -->
+    {% if session.category == 'Отдел закупки' %}
+
+    <div class="stats-grid">
+        <div class="stat-card featured">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи заявкаҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="purchaseTotalRequests">0</div>
+            <div class="stat-trend"><i class="fas fa-file-alt"></i> Дар умум</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи вазифаҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="purchaseTotalTasks">0</div>
+            <div class="stat-trend"><i class="fas fa-tasks"></i> Дар умум</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Вазифаҳои фаъол</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="purchaseActiveTasks">0</div>
+            <div class="stat-trend"><i class="fas fa-play"></i> Фаъол</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Вазифаҳои анҷомёфта</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="purchaseDoneTasks">0</div>
+            <div class="stat-trend"><i class="fas fa-check-double"></i> Анҷом ёфт</div>
+        </div>
+    </div>
+
+    <div class="charts-row equal">
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Заявкаҳо аз рӯи колоннаҳо</div>
+            </div>
+            <div class="chart-container"><canvas id="requestsByColumnChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Ҳолати вазифаҳо</div>
+            </div>
+            <div class="chart-container"><canvas id="tasksChart"></canvas></div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- ==================== ОТДЕЛ МАРКЕТИНГА ==================== -->
+    {% if session.category == 'Отдел маркетинга' %}
+
+    <div class="stats-grid">
+        <div class="stat-card featured">
+            <div class="stat-card-top">
+                <div class="stat-label">Вазифаҳои анҷомёфта</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="marketingDoneTasks">0</div>
+            <div class="stat-trend"><i class="fas fa-check-circle"></i> Анҷом ёфт</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Вазифаҳои фаъол</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="marketingActiveTasks">0</div>
+            <div class="stat-trend"><i class="fas fa-play-circle"></i> Дар ҷараён</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи видеоҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="marketingVideos">0</div>
+            <div class="stat-trend"><i class="fas fa-video"></i> Видеоҳо</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи постҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="marketingPosts">0</div>
+            <div class="stat-trend"><i class="fas fa-share-alt"></i> Постҳо</div>
+        </div>
+    </div>
+
+    <div class="charts-row equal">
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-line"></i> Фаъолият дар шабакаҳои иҷтимоӣ</div>
+            </div>
+            <div class="chart-container"><canvas id="socialChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-bar"></i> Вазифаҳо аз рӯи ҳолат</div>
+            </div>
+            <div class="chart-container"><canvas id="marketingTasksChart"></canvas></div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- ==================== АДМИН ==================== -->
+    {% if session.role == 'admin' %}
+
+    <div class="stats-grid">
+        <div class="stat-card featured">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи лидҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="adminTotalLids">0</div>
+            <div class="stat-trend"><i class="fas fa-users"></i> Дар умум</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи заявкаҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="adminTotalRequests">0</div>
+            <div class="stat-trend"><i class="fas fa-file-alt"></i> Заявкаҳо</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Ҳамаи вазифаҳо</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="adminTotalTasks">0</div>
+            <div class="stat-trend"><i class="fas fa-tasks"></i> Вазифаҳо</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-top">
+                <div class="stat-label">Объектҳои амвол</div>
+                <div class="stat-arrow"><i class="fas fa-arrow-up"></i></div>
+            </div>
+            <div class="stat-number" id="adminTotalHouses">0</div>
+            <div class="stat-trend"><i class="fas fa-building"></i> Объектҳо</div>
+        </div>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-line"></i> Афзоиши лидҳо дар вақт</div>
+            </div>
+            <div class="chart-container"><canvas id="lidsGrowthChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Лидҳо аз рӯи манбаъ</div>
+            </div>
+            <div class="chart-container"><canvas id="adminSourcesChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="charts-row equal">
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-users"></i> Омори корманд</div>
+            </div>
+            <div id="employeesStats" class="employee-stats"></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-header-flex">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Заявкаҳо аз рӯи колоннаҳо</div>
+            </div>
+            <div class="chart-container"><canvas id="requestsColumnsChart"></canvas></div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- ==================== ЗАЯВКАҲОИ ОХИРИН ==================== -->
+    {% if session.role == 'admin' or session.category == 'Отдел закупки' or session.category == 'Отдел продаж' %}
+    <div class="table-card">
+        <div class="card-header-flex">
+            <div class="card-title"><i class="fas fa-history"></i> Заявкаҳои охирин</div>
+            <a href="/zayavka" class="card-action-btn">
+                Ҳамаро дидан <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Муштарӣ</th>
+                    <th>Намуди амвол</th>
+                    <th>Колонна</th>
+                    <th>Нарх</th>
+                    <th>Иҷрокунанда</th>
+                    <th>Сана</th>
+                </tr>
+            </thead>
+            <tbody id="recentRequestsTable">
+                <tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Бор шуда истодааст...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let currentUserCategory = "{{ session.category }}";
+let currentUserRole = "{{ session.role }}";
+let currentUserId = {{ session.user_id|default(0) }};
+let charts = {};
+
+// Палитра рангҳо барои графикҳо (танҳо сабз ва ҳамтогҳои он + бе кабуд)
+const GREEN_PALETTE = ['#1f7a4d', '#2d9d68', '#52c98a', '#86d6b3', '#b3e5cc', '#0f5f3a', '#3eb076', '#6cc299', '#a8e0c2', '#7ec9a3'];
+const ACCENT_PALETTE = ['#1f7a4d', '#f59e0b', '#10b981', '#06b6d4', '#84cc16', '#ef4444', '#8b5cf6', '#ec4899'];
+
+// ==================== ПОЛУЧЕНИЕ ЛИДОВ ИЗ KANBAN ====================
+async function fetchLidsFromKanban() {
+    try {
+        const boardsRes = await fetch('/api/kanban/boards');
+        if (!boardsRes.ok) return [];
+        const boards = await boardsRes.json();
+        if (!boards || boards.length === 0) return [];
+
+        let allLids = [];
+        for (const board of boards) {
+            if (board.is_archived) continue;
+            try {
+                const leadsRes = await fetch(`/api/kanban/leads?board_id=${board.id}`);
+                if (!leadsRes.ok) continue;
+                const leads = await leadsRes.json();
+                if (leads && leads.length) {
+                    allLids = [...allLids, ...leads];
+                }
+            } catch (innerErr) { /* */ }
+        }
+        return allLids;
+    } catch (e) {
+        console.error('Хато:', e);
+        return [];
+    }
+}
+
+// ==================== ПОЛУЧЕНИЕ ЗАЯВОК С КОЛОННАМИ ====================
+async function fetchRequestsFromBoards() {
+    try {
+        const boardsRes = await fetch('/api/requests-boards');
+        if (!boardsRes.ok) return { requests: [], boards: [], columnsMap: {}, columnsList: [] };
+        const boards = await boardsRes.json();
+        if (!boards || boards.length === 0) return { requests: [], boards: [], columnsMap: {}, columnsList: [] };
+
+        let allRequests = [];
+        let columnsMap = {};
+        let columnsList = []; // массив барои ороиш
+
+        for (const board of boards) {
+            if (board.is_archived) continue;
+
+            try {
+                const colRes = await fetch(`/api/requests-boards/${board.id}/columns`);
+                if (colRes.ok) {
+                    const cols = await colRes.json();
+                    cols.forEach(c => {
+                        const key = c.id;
+                        columnsMap[key] = {
+                            id: c.id,
+                            title: c.title,
+                            color: c.color || '#1f7a4d',
+                            board_id: board.id,
+                            board_title: board.title,
+                            order: c.order_index || 0
+                        };
+                        columnsList.push(columnsMap[key]);
+                    });
+                }
+            } catch (e) { /* */ }
+
+            try {
+                const reqRes = await fetch(`/api/requests-board/${board.id}/requests`);
+                if (!reqRes.ok) continue;
+                const requests = await reqRes.json();
+                if (requests && requests.length) {
+                    requests.forEach(r => { r.board_id = board.id; r.board_title = board.title; });
+                    allRequests = [...allRequests, ...requests];
+                }
+            } catch (innerErr) { /* */ }
+        }
+        return { requests: allRequests, boards: boards, columnsMap: columnsMap, columnsList: columnsList };
+    } catch (e) {
+        console.error('Хато:', e);
+        return { requests: [], boards: [], columnsMap: {}, columnsList: [] };
+    }
+}
+
+// ==================== ОТДЕЛ ПРОДАЖ ====================
+async function loadSalesDashboard() {
+    const allLids = await fetchLidsFromKanban();
+
+    let userLids = allLids;
+    if (currentUserRole !== 'admin' && currentUserId) {
+        userLids = allLids.filter(lid => lid.author_id == currentUserId);
+    }
+
+    const today = new Date().toDateString();
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+
+    const todayCount = userLids.filter(lid => new Date(lid.created_date).toDateString() === today).length;
+    const weekCount = userLids.filter(lid => new Date(lid.created_date) >= weekAgo).length;
+    const monthCount = userLids.filter(lid => new Date(lid.created_date) >= monthAgo).length;
+
+    setText('salesToday', todayCount);
+    setText('salesWeek', weekCount);
+    setText('salesMonth', monthCount);
+
+    let incoming = 0, outgoing = 0;
+    userLids.forEach(lid => {
+        if (lid.source === 'Входящий') incoming++;
+        if (lid.source === 'Исходящий') outgoing++;
+    });
+    setText('incomingCount', incoming);
+    setText('outgoingCount', outgoing);
+
+    const sources = {};
+    userLids.forEach(lid => {
+        const src = lid.source || 'Дигар';
+        sources[src] = (sources[src] || 0) + 1;
+    });
+
+    const sourcesDetail = document.getElementById('sourcesDetail');
+    const total = userLids.length;
+    if (total > 0 && sourcesDetail) {
+        sourcesDetail.innerHTML = Object.entries(sources)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => `
+                <div class="source-row">
+                    <div class="source-row-top">
+                        <div class="source-name">${getSourceIcon(name)} ${escapeHtml(name)}</div>
+                        <div class="source-count">${count} (${Math.round(count/total*100)}%)</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${count/total*100}%"></div></div>
+                </div>
+            `).join('');
+    } else if (sourcesDetail) {
+        sourcesDetail.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><div class="empty-state-text">Лидҳо нестанд</div></div>';
+    }
+
+    // Лидҳо аз рӯи 7 рӯзи охир
+    const daily = {};
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString();
+        last7Days.push(dateStr);
+        daily[dateStr] = 0;
+    }
+    userLids.forEach(lid => {
+        const date = new Date(lid.created_date).toLocaleDateString();
+        if (daily[date] !== undefined) daily[date]++;
+    });
+
+    drawChart('dailyLidsChart', 'line', {
+        labels: last7Days,
+        datasets: [{
+            label: 'Лидҳо',
+            data: last7Days.map(d => daily[d]),
+            borderColor: '#1f7a4d',
+            backgroundColor: 'rgba(31, 122, 77, 0.12)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3,
+            pointBackgroundColor: '#1f7a4d',
+            pointRadius: 4
+        }]
+    }, { plugins: { legend: { display: false } } });
+
+    drawChart('sourcesChart', 'doughnut', {
+        labels: Object.keys(sources),
+        datasets: [{
+            data: Object.values(sources),
+            backgroundColor: GREEN_PALETTE,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    }, { plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } }, cutout: '65%' });
+}
+
+// ==================== ОТДЕЛ ЗАКУПКИ ====================
+async function loadPurchaseDashboard() {
+    const { requests, columnsMap, columnsList } = await fetchRequestsFromBoards();
+
+    let tasks = [];
+    try {
+        const tasksResp = await fetch('/api/tasks');
+        if (tasksResp.ok) tasks = await tasksResp.json() || [];
+    } catch (e) { /* */ }
+
+    setText('purchaseTotalRequests', requests.length);
+    setText('purchaseTotalTasks', tasks.length);
+    setText('purchaseActiveTasks', tasks.filter(t => t.status === 'new' || t.status === 'progress').length);
+    setText('purchaseDoneTasks', tasks.filter(t => t.status === 'done').length);
+
+    // Заявкаҳо аз рӯи колоннаҳо (БЕ статусҳои оддӣ)
+    drawRequestsByColumnsChart('requestsByColumnChart', requests, columnsList);
+
+    // Вазифаҳо ҳамоно статус доранд
+    const taskStats = {
+        new: tasks.filter(t => t.status === 'new').length,
+        progress: tasks.filter(t => t.status === 'progress').length,
+        done: tasks.filter(t => t.status === 'done').length,
+        cancel: tasks.filter(t => t.status === 'cancel').length
+    };
+
+    drawChart('tasksChart', 'doughnut', {
+        labels: ['Нав', 'Дар ҷараён', 'Анҷомёфта', 'Бекоршуда'],
+        datasets: [{
+            data: [taskStats.new, taskStats.progress, taskStats.done, taskStats.cancel],
+            backgroundColor: ['#10b981', '#f59e0b', '#1f7a4d', '#ef4444'],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    }, { plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } }, cutout: '65%' });
+
+    renderRecentRequests(requests, columnsMap);
+}
+
+// ==================== ОТДЕЛ МАРКЕТИНГА ====================
+async function loadMarketingDashboard() {
+    let tasks = [], posts = [];
+    try {
+        const tasksResp = await fetch('/api/tasks');
+        if (tasksResp.ok) tasks = await tasksResp.json() || [];
+    } catch (e) { /* */ }
+
+    try {
+        const postsResp = await fetch('/api/posts');
+        if (postsResp.ok) posts = await postsResp.json() || [];
+    } catch (e) { /* */ }
+
+    setText('marketingDoneTasks', tasks.filter(t => t.status === 'done').length);
+    setText('marketingActiveTasks', tasks.filter(t => t.status === 'new' || t.status === 'progress').length);
+    setText('marketingPosts', posts.length);
+    setText('marketingVideos', posts.filter(p => p.media_type === 'video').length);
+
+    const socialStats = { instagram: 0, tiktok: 0, telegram: 0, other: 0 };
+    posts.forEach(p => {
+        const cat = (p.category || '').toLowerCase();
+        if (cat === 'instagram') socialStats.instagram++;
+        else if (cat === 'tiktok') socialStats.tiktok++;
+        else if (cat === 'telegram') socialStats.telegram++;
+        else socialStats.other++;
+    });
+
+    drawChart('socialChart', 'bar', {
+        labels: ['Instagram', 'TikTok', 'Telegram', 'Дигар'],
+        datasets: [{
+            label: 'Шумораи постҳо',
+            data: [socialStats.instagram, socialStats.tiktok, socialStats.telegram, socialStats.other],
+            backgroundColor: ['#e1306c', '#1a1a2e', '#0088cc', '#1f7a4d'],
+            borderRadius: 10
+        }]
+    }, { plugins: { legend: { display: false } } });
+
+    const taskStats = {
+        new: tasks.filter(t => t.status === 'new').length,
+        progress: tasks.filter(t => t.status === 'progress').length,
+        done: tasks.filter(t => t.status === 'done').length
+    };
+
+    drawChart('marketingTasksChart', 'bar', {
+        labels: ['Нав', 'Дар ҷараён', 'Анҷомёфта'],
+        datasets: [{
+            label: 'Вазифаҳо',
+            data: [taskStats.new, taskStats.progress, taskStats.done],
+            backgroundColor: ['#10b981', '#f59e0b', '#1f7a4d'],
+            borderRadius: 10
+        }]
+    }, { plugins: { legend: { display: false } } });
+}
+
+// ==================== АДМИН ====================
+async function loadAdminDashboard() {
+    const allLids = await fetchLidsFromKanban();
+    const { requests, columnsMap, columnsList } = await fetchRequestsFromBoards();
+
+    let tasks = [], houses = [];
+    try {
+        const tasksResp = await fetch('/api/tasks');
+        if (tasksResp.ok) tasks = await tasksResp.json() || [];
+    } catch (e) { /* */ }
+
+    try {
+        const housesResp = await fetch('/api/houses');
+        if (housesResp.ok) houses = await housesResp.json() || [];
+    } catch (e) { /* */ }
+
+    setText('adminTotalLids', allLids.length);
+    setText('adminTotalRequests', requests.length);
+    setText('adminTotalTasks', tasks.length);
+    setText('adminTotalHouses', houses.length);
+
+    // Афзоиши лидҳо
+    const daily = {};
+    const last14Days = [];
+    for (let i = 13; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString();
+        last14Days.push(dateStr);
+        daily[dateStr] = 0;
+    }
+    allLids.forEach(lid => {
+        const date = new Date(lid.created_date).toLocaleDateString();
+        if (daily[date] !== undefined) daily[date]++;
+    });
+
+    drawChart('lidsGrowthChart', 'line', {
+        labels: last14Days,
+        datasets: [{
+            label: 'Лидҳо',
+            data: last14Days.map(d => daily[d]),
+            borderColor: '#1f7a4d',
+            backgroundColor: 'rgba(31, 122, 77, 0.12)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3,
+            pointBackgroundColor: '#1f7a4d',
+            pointRadius: 3
+        }]
+    }, { plugins: { legend: { display: false } } });
+
+    // Лидҳо аз рӯи манбаъ
+    const sources = {};
+    allLids.forEach(lid => {
+        const src = lid.source || 'Дигар';
+        sources[src] = (sources[src] || 0) + 1;
+    });
+
+    drawChart('adminSourcesChart', 'pie', {
+        labels: Object.keys(sources),
+        datasets: [{
+            data: Object.values(sources),
+            backgroundColor: GREEN_PALETTE,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    }, { plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } } });
+
+    // Кормандон
+    const employees = {};
+    allLids.forEach(lid => {
+        const name = lid.author_name || 'Номаълум';
+        employees[name] = (employees[name] || 0) + 1;
+    });
+
+    const employeesStats = document.getElementById('employeesStats');
+    if (employeesStats) {
+        const sortedEmployees = Object.entries(employees).sort((a, b) => b[1] - a[1]);
+        if (sortedEmployees.length > 0) {
+            employeesStats.innerHTML = sortedEmployees.map(([name, count]) => `
+                <div class="employee-item">
+                    <div class="employee-info">
+                        <div class="employee-avatar">${getInitials(name)}</div>
+                        <div>
+                            <div class="employee-name">${escapeHtml(name)}</div>
+                            <div class="employee-sub">Шуъбаи фурӯш</div>
+                        </div>
+                    </div>
+                    <div class="employee-count">${count} лид</div>
+                </div>
+            `).join('');
+        } else {
+            employeesStats.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><div class="empty-state-text">Маълумот нест</div></div>';
+        }
+    }
+
+    // ==================== Заявкаҳо аз рӯи колоннаҳо (БЕ кабуд, БЕ задача) ====================
+    drawRequestsByColumnsChart('requestsColumnsChart', requests, columnsList);
+
+    renderRecentRequests(requests, columnsMap);
+}
+
+// ==================== ГРАФИК ЗАЯВКАХО АЗ РУИ КОЛОННАХО ====================
+function drawRequestsByColumnsChart(canvasId, requests, columnsList) {
+    // Якҷо кардани колоннаҳо аз рӯи унвон (агар якчанд board бошад)
+    const columnsByTitle = {};
+    columnsList.forEach(col => {
+        const title = col.title;
+        if (!columnsByTitle[title]) {
+            columnsByTitle[title] = { title: title, count: 0, color: col.color, ids: [] };
+        }
+        columnsByTitle[title].ids.push(col.id);
+    });
+
+    requests.forEach(r => {
+        for (const title in columnsByTitle) {
+            if (columnsByTitle[title].ids.includes(r.column_id)) {
+                columnsByTitle[title].count++;
+                break;
+            }
+        }
+    });
+
+    const sortedColumns = Object.values(columnsByTitle).sort((a, b) => b.count - a.count);
+    const labels = sortedColumns.map(c => c.title);
+    const data = sortedColumns.map(c => c.count);
+
+    // Истифодаи рангҳои GREEN_PALETTE (бе кабуд)
+    const backgroundColors = sortedColumns.map((c, i) => {
+        // Агар колонна ранги ҳақиқӣ дошта бошад, аммо кабуд набошад, истифода кунем
+        const customColor = c.color;
+        if (customColor && !isBlueColor(customColor)) {
+            return customColor;
+        }
+        return GREEN_PALETTE[i % GREEN_PALETTE.length];
+    });
+
+    if (data.length === 0 || data.every(d => d === 0)) {
+        // Холӣ → empty state
+        const canvas = document.getElementById(canvasId);
+        if (canvas && canvas.parentElement) {
+            canvas.parentElement.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><div class="empty-state-text">Заявка нест</div></div>';
+        }
+        return;
+    }
+
+    drawChart(canvasId, 'doughnut', {
+        labels: labels,
+        datasets: [{
+            data: data,
+            backgroundColor: backgroundColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    }, { plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } }, cutout: '65%' });
+}
+
+// Тасдиқи он, ки ранг кабуд аст
+function isBlueColor(hex) {
+    if (!hex || typeof hex !== 'string') return false;
+    const h = hex.toLowerCase().replace('#', '');
+    if (h.length !== 6 && h.length !== 3) return false;
+    let r, g, b;
+    if (h.length === 6) {
+        r = parseInt(h.substr(0, 2), 16);
+        g = parseInt(h.substr(2, 2), 16);
+        b = parseInt(h.substr(4, 2), 16);
+    } else {
+        r = parseInt(h[0] + h[0], 16);
+        g = parseInt(h[1] + h[1], 16);
+        b = parseInt(h[2] + h[2], 16);
+    }
+    // Кабуд: b бузургтар аз r ва g бошад ва r кам бошад
+    return b > 150 && b > r + 30 && b > g + 30;
+}
+
+// ==================== ОТРИСОВКА ПОСЛЕДНИХ ЗАЯВОК ====================
+function renderRecentRequests(requests, columnsMap) {
+    const tbody = document.getElementById('recentRequestsTable');
+    if (!tbody) return;
+
+    if (!requests || requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><div class="empty-state-text">Ҳоло заявка нест</div></div></td></tr>';
+        return;
+    }
+
+    const sorted = [...requests].sort((a, b) => {
+        const da = new Date(a.created_date || 0).getTime();
+        const db = new Date(b.created_date || 0).getTime();
+        return db - da;
+    });
+
+    tbody.innerHTML = sorted.slice(0, 8).map(r => {
+        const col = columnsMap[r.column_id];
+        const colTitle = col ? escapeHtml(col.title) : 'Беҳолат';
+        const colColor = (col && col.color && !isBlueColor(col.color)) ? col.color : '#1f7a4d';
+        return `
+            <tr>
+                <td>
+                    <div class="client-cell">
+                        <div class="client-avatar">${getInitials(r.client_name || '?')}</div>
+                        <div>
+                            <div class="client-name">${escapeHtml(r.client_name || 'Бе ном')}</div>
+                            <div class="client-phone">${escapeHtml(r.phone || '—')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${escapeHtml(r.property_type || '—')}</td>
+                <td><span class="column-badge" style="background: ${hexToRgba(colColor, 0.15)}; color: ${colColor};">${colTitle}</span></td>
+                <td><strong>${formatPrice(r.total_price)} С</strong></td>
+                <td>${escapeHtml(r.executor_name || '—')}</td>
+                <td>${formatDate(r.created_date)}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// hex → rgba
+function hexToRgba(hex, alpha) {
+    if (!hex) return `rgba(31, 122, 77, ${alpha})`;
+    const h = hex.replace('#', '');
+    let r, g, b;
+    if (h.length === 6) {
+        r = parseInt(h.substr(0, 2), 16);
+        g = parseInt(h.substr(2, 2), 16);
+        b = parseInt(h.substr(4, 2), 16);
+    } else if (h.length === 3) {
+        r = parseInt(h[0] + h[0], 16);
+        g = parseInt(h[1] + h[1], 16);
+        b = parseInt(h[2] + h[2], 16);
+    } else {
+        return `rgba(31, 122, 77, ${alpha})`;
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function drawChart(canvasId, type, data, extraOptions = {}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (charts[canvasId]) charts[canvasId].destroy();
+
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } }
+        }
+    };
+
+    charts[canvasId] = new Chart(canvas, {
+        type: type,
+        data: data,
+        options: Object.assign({}, baseOptions, extraOptions)
+    });
+}
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
+function getSourceIcon(source) {
+    const icons = {
+        'Входящий': '<i class="fas fa-phone-alt" style="color:#1f7a4d"></i>',
+        'Исходящий': '<i class="fas fa-phone-volume" style="color:#10b981"></i>',
+        'WhatsApp': '<i class="fab fa-whatsapp" style="color:#25d366"></i>',
+        'Telegram': '<i class="fab fa-telegram" style="color:#0088cc"></i>',
+        'Somon.tj': '<i class="fas fa-home" style="color:#f59e0b"></i>',
+        'Instagram': '<i class="fab fa-instagram" style="color:#e1306c"></i>',
+        'TikTok': '<i class="fab fa-tiktok" style="color:#1a1a2e"></i>',
+        'Офис застройщика': '<i class="fas fa-building" style="color:#8b5cf6"></i>',
+        'Наш офис': '<i class="fas fa-store" style="color:#1f7a4d"></i>',
+        'Холодный контакт': '<i class="fas fa-snowflake" style="color:#06b6d4"></i>'
+    };
+    return icons[source] || '<i class="fas fa-tag" style="color:#8b9dc3"></i>';
+}
+
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+        return new Date(dateStr).toLocaleDateString('ru-RU');
+    } catch (e) { return '—'; }
+}
+
+function reloadDashboard() {
+    location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (currentUserCategory === 'Отдел продаж') {
+        loadSalesDashboard();
+    } else if (currentUserCategory === 'Отдел закупки') {
+        loadPurchaseDashboard();
+    } else if (currentUserCategory === 'Отдел маркетинга') {
+        loadMarketingDashboard();
+    }
+
+    if (currentUserRole === 'admin') {
+        loadAdminDashboard();
+    }
+});
+</script>
+{% endblock %}

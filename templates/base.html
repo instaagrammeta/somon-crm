@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Real Estate CRM{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ============================================================
+           DESIGN TOKENS — Donezo (зеленый)
+           ============================================================ */
+        :root {
+            --green-primary: #1f7a4d;
+            --green-dark: #0f5f3a;
+            --green-light: #d4edda;
+            --green-bg: #e8f5ee;
+            --green-soft: #f0f9f4;
+            --bg-page: #f1f4f8;
+            --bg-card: #ffffff;
+            --text-dark: #1a1a2e;
+            --text-medium: #4a5568;
+            --text-soft: #8b9dc3;
+            --border-soft: #eef2f6;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-hover: 0 8px 24px -8px rgba(0,0,0,0.12);
+            --radius: 20px;
+            --radius-lg: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            padding: 14px;
+            gap: 14px;
+        }
+
+        /* ============================================================
+           SIDEBAR
+           ============================================================ */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: calc(100vh - 28px);
+            left: 14px;
+            top: 14px;
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 22px 18px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--green-soft);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green-primary);
+            font-size: 18px;
+            position: relative;
+            -webkit-background-clip: initial;
+            -webkit-text-fill-color: var(--green-primary);
+            background-clip: initial;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border: 2.5px solid var(--green-primary);
+            border-radius: 50%;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--green-primary);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .logo-text {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.3px;
+            background: none;
+            -webkit-background-clip: initial;
+            -webkit-text-fill-color: var(--text-dark);
+            background-clip: initial;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 8px 14px;
+            overflow-y: auto;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-soft);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 14px 12px 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            color: var(--text-medium);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 2px;
+            transition: all 0.18s ease;
+            font-weight: 500;
+            font-size: 13.5px;
+            position: relative;
+            background: transparent;
+        }
+
+        .nav-item i {
+            width: 18px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .nav-text {
+            flex: 1;
+        }
+
+        .nav-item:hover {
+            background: var(--green-soft);
+            color: var(--green-primary);
+        }
+
+        .nav-item.active {
+            background: var(--green-soft);
+            color: var(--green-primary);
+            font-weight: 600;
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 26px;
+            background: var(--green-primary);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .sidebar-footer {
+            padding: 14px;
+        }
+
+        .promo-card {
+            background: #1a1a2e;
+            border-radius: 18px;
+            padding: 18px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        .promo-card::before {
+            content: '';
+            position: absolute;
+            right: -30px;
+            bottom: -30px;
+            width: 110px;
+            height: 110px;
+            background: linear-gradient(135deg, var(--green-primary), transparent);
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+
+        .promo-card::after {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--green-primary), transparent);
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+
+        .promo-icon {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green-primary);
+            font-size: 14px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-subtitle {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-btn {
+            background: var(--green-primary);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 12px;
+            position: relative;
+            z-index: 1;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .promo-btn:hover {
+            background: var(--green-dark);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 8px 4px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px 16px;
+            background: #fef2f2;
+            border: none;
+            border-radius: 12px;
+            color: #ef4444;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            background: #fee2e2;
+        }
+
+        /* ============================================================
+           MAIN AREA + TOPBAR
+           ============================================================ */
+        .main-area {
+            flex: 1;
+            margin-left: 274px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .topbar {
+            background: white;
+            border-radius: 24px;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 480px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            color: var(--text-soft);
+            font-size: 14px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            background: var(--bg-page);
+            border: 1.5px solid transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            transition: all 0.2s;
+            font-family: inherit;
+            color: var(--text-dark);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--green-primary);
+            background: white;
+        }
+
+        .search-shortcut {
+            position: absolute;
+            right: 14px;
+            background: white;
+            border: 1px solid var(--border-soft);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--text-soft);
+            font-weight: 600;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .topbar-icon-btn {
+            width: 42px;
+            height: 42px;
+            background: var(--bg-page);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-medium);
+            position: relative;
+            transition: all 0.2s;
+            font-size: 15px;
+        }
+
+        .topbar-icon-btn:hover {
+            background: var(--green-soft);
+            color: var(--green-primary);
+        }
+
+        .topbar-icon-btn .badge-dot {
+            position: absolute;
+            top: 10px;
+            right: 11px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 12px 4px 4px;
+            background: var(--bg-page);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .topbar-user:hover {
+            background: var(--green-soft);
+        }
+
+        .topbar-user .user-avatar {
+            width: 38px;
+            height: 38px;
+        }
+
+        .user-details-top {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .user-name-top {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+
+        .user-email-top {
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        /* ============================================================
+           MAIN CONTENT
+           ============================================================ */
+        .main-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px 28px;
+            min-height: calc(100vh - 130px);
+            box-shadow: var(--shadow-card);
+            margin-left: 0;
+            flex: 1;
+        }
+
+        .content-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .page-header p {
+            color: var(--text-soft);
+            font-size: 14px;
+        }
+
+        /* ============================================================
+           BUTTONS — Override blue → green ҳамаи саҳифаҳо
+           ============================================================ */
+        .btn-primary {
+            background: var(--green-primary) !important;
+            color: white !important;
+            border: none;
+            padding: 11px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: none !important;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--green-dark) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(31, 122, 77, 0.25) !important;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-dark);
+            border: 1.5px solid var(--border-soft);
+            padding: 11px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--green-primary);
+            color: var(--green-primary);
+            background: var(--green-soft);
+        }
+
+        /* ============================================================
+           MODAL
+           ============================================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-soft);
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #ef4444;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-medium);
+            font-size: 12px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 12px 14px;
+            background: var(--bg-page);
+            border: 1.5px solid transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            transition: all 0.2s;
+            font-family: inherit;
+            color: var(--text-dark);
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--green-primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.08);
+        }
+
+        .modal-buttons {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-soft);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* ============================================================
+           STATUS BADGES
+           ============================================================ */
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-new { background: #e0f2fe; color: #0369a1; }
+        .status-progress { background: #fef3c7; color: #b45309; }
+        .status-done { background: var(--green-light); color: var(--green-dark); }
+        .status-cancel { background: #fee2e2; color: #b91c1c; }
+
+        /* ============================================================
+           SCROLLBAR
+           ============================================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--green-primary);
+        }
+
+        /* ============================================================
+           MOBILE TOGGLE
+           ============================================================ */
+        .mobile-toggle {
+            display: none;
+            width: 42px;
+            height: 42px;
+            background: var(--bg-page);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 18px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+            backdrop-filter: blur(2px);
+        }
+
+        /* ============================================================
+           GLOBAL OVERRIDES — кабудро бо сабз иваз кардан
+           барои ҳамаи саҳифаҳо
+           ============================================================ */
+        a {
+            color: var(--green-primary);
+        }
+
+        /* Boxed cards в саҳифаҳои дохилӣ */
+        .stat-card, .chart-card, .table-card,
+        .lid-card, .post-card, .house-card,
+        .file-card, .folder-card, .object-card {
+            transition: all 0.2s;
+        }
+
+        /* ============================================================
+           ADAPTIVE — Mobile / Tablet / Desktop / TV
+           ============================================================ */
+
+        /* Tablet (≤ 1024px) */
+        @media (max-width: 1024px) {
+            .app-container {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .sidebar {
+                width: 240px;
+                left: 10px;
+                top: 10px;
+                height: calc(100vh - 20px);
+                z-index: 999;
+                transform: translateX(-110%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-area {
+                margin-left: 0;
+            }
+
+            .mobile-toggle {
+                display: flex;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .main-content {
+                padding: 20px 22px;
+            }
+        }
+
+        /* Mobile (≤ 768px) */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .topbar {
+                padding: 10px 14px;
+                gap: 10px;
+                border-radius: 18px;
+            }
+
+            .search-box {
+                max-width: none;
+            }
+
+            .search-shortcut {
+                display: none;
+            }
+
+            .topbar-user .user-details-top {
+                display: none;
+            }
+
+            .topbar-user {
+                padding: 4px;
+            }
+
+            .main-content {
+                padding: 18px;
+                border-radius: 18px;
+            }
+
+            .page-header h1 {
+                font-size: 22px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 8% auto;
+            }
+        }
+
+        /* Small mobile (≤ 480px) */
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 6px;
+                gap: 6px;
+            }
+
+            .topbar {
+                padding: 8px 10px;
+            }
+
+            .topbar-icon-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 13px;
+            }
+
+            .search-box input {
+                padding: 10px 12px 10px 38px;
+                font-size: 12px;
+            }
+
+            .search-box i {
+                left: 12px;
+                font-size: 12px;
+            }
+
+            .main-content {
+                padding: 14px;
+                border-radius: 16px;
+            }
+
+            .page-header {
+                margin-bottom: 18px;
+            }
+
+            .page-header h1 {
+                font-size: 20px;
+            }
+
+            .modal-content {
+                width: 98%;
+                margin: 4% auto;
+                border-radius: 18px;
+            }
+
+            .modal-header, .modal-buttons {
+                padding: 16px;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .modal-buttons .btn-primary,
+            .modal-buttons .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Large desktop / TV (≥ 1920px) */
+        @media (min-width: 1920px) {
+            .content-wrapper {
+                max-width: 1700px;
+            }
+
+            .main-content {
+                padding: 32px 40px;
+            }
+
+            .page-header h1 {
+                font-size: 32px;
+            }
+        }
+
+        /* Ultra-wide TV (≥ 2560px) */
+        @media (min-width: 2560px) {
+            .content-wrapper {
+                max-width: 2200px;
+            }
+
+            body {
+                font-size: 16px;
+            }
+
+            .page-header h1 {
+                font-size: 38px;
+            }
+
+            .sidebar {
+                width: 300px;
+            }
+
+            .main-area {
+                margin-left: 314px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"></div>
+                    <span class="logo-text">RealEstate</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Меню</div>
+
+                <a href="/" class="nav-item" data-page="dashboard">
+                    <i class="fas fa-th-large"></i>
+                    <span class="nav-text">Дашборд</span>
+                </a>
+
+                <a href="/zadacha" class="nav-item" data-page="tasks">
+                    <i class="fas fa-tasks"></i>
+                    <span class="nav-text">Вазифаҳо</span>
+                </a>
+
+                <a href="/zayavka" class="nav-item" data-page="requests">
+                    <i class="fas fa-file-invoice"></i>
+                    <span class="nav-text">Харид</span>
+                </a>
+
+                {% if session.category == 'Отдел продаж' or session.role == 'admin' %}
+                <a href="/lids" class="nav-item" data-page="lids">
+                    <i class="fas fa-fire"></i>
+                    <span class="nav-text">Фуруш</span>
+                </a>
+                {% endif %}
+
+                <a href="/houses" class="nav-item" data-page="houses">
+                    <i class="fas fa-home"></i>
+                    <span class="nav-text">Манзилҳо</span>
+                </a>
+
+                <a href="/obiekt" class="nav-item" data-page="obiekt">
+                    <i class="fas fa-building"></i>
+                    <span class="nav-text">Биноҳо</span>
+                </a>
+
+                <a href="/ipoteka" class="nav-item" data-page="ipoteka">
+                    <i class="fas fa-building-columns"></i>
+                    <span class="nav-text">Ипотека</span>
+                </a>
+
+                <a href="/rasrochka" class="nav-item" data-page="rasrochka">
+                    <i class="fas fa-store"></i>
+                    <span class="nav-text">Рассрочка</span>
+                </a>
+
+                <div class="nav-section-title">Умумӣ</div>
+
+                <a href="/posts" class="nav-item" data-page="posts">
+                    <i class="fas fa-share-nodes"></i>
+                    <span class="nav-text">Шабакаҳо</span>
+                </a>
+
+                <a href="/chat" class="nav-item" data-page="chat">
+                    <i class="fas fa-comment-dots"></i>
+                    <span class="nav-text">Суҳбат</span>
+                </a>
+
+                <a href="/sim-cards" class="nav-item" data-page="sim">
+                    <i class="fas fa-sim-card"></i>
+                    <span class="nav-text">SIM картаҳо</span>
+                </a>
+
+                <a href="/baza" class="nav-item" data-page="baza">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="nav-text">База</span>
+                </a>
+
+                {% if session.role == 'admin' %}
+                <a href="/admin" class="nav-item" data-page="admin">
+                    <i class="fas fa-user-shield"></i>
+                    <span class="nav-text">Кормандон</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {% if session.photo %}
+                        <img src="{{ session.photo }}" alt="">
+                        {% else %}
+                        {{ (session.user_name or '?')[0]|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">{{ session.user_name or 'Корбар' }}</div>
+                        <div class="user-role">{{ session.category or '' }}</div>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-arrow-right-from-bracket"></i>
+                    <span>Баромадан</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN AREA ==================== -->
+        <div class="main-area">
+
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <button class="mobile-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearch" placeholder="Ҷустуҷӯи вазифа, заявка, лид..." onkeydown="handleGlobalSearch(event)">
+                    <span class="search-shortcut">⌘ F</span>
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="topbar-icon-btn" title="Паёмҳо" onclick="window.location.href='/chat'">
+                        <i class="fas fa-envelope"></i>
+                        <span class="badge-dot"></span>
+                    </button>
+
+                    <button class="topbar-icon-btn" title="Огоҳиҳо" onclick="window.location.href='/evedem'">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge-dot"></span>
+                    </button>
+
+                    <div class="topbar-user">
+                        <div class="user-avatar">
+                            {% if session.photo %}
+                            <img src="{{ session.photo }}" alt="">
+                            {% else %}
+                            {{ (session.user_name or '?')[0]|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="user-details-top">
+                            <div class="user-name-top">{{ session.user_name or 'Корбар' }}</div>
+                            <div class="user-email-top">{{ session.category or '' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MAIN CONTENT -->
+            <main class="main-content">
+                <div class="content-wrapper">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ==================== SIDEBAR TOGGLE (mobile) ====================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // ==================== ACTIVE NAV ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            const path = window.location.pathname;
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (!href || href === '#') return;
+                if (href === '/' && path === '/') {
+                    item.classList.add('active');
+                } else if (href !== '/' && path.startsWith(href)) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // ==================== LOGOUT ====================
+        function logout() {
+            if (!confirm('Шумо мутмаин ҳастед, ки баромадан мехоҳед?')) return;
+            fetch('/api/logout', { method: 'POST' })
+                .then(() => window.location.href = '/login')
+                .catch(() => window.location.href = '/login');
+        }
+
+        // ==================== GLOBAL SEARCH ====================
+        function handleGlobalSearch(e) {
+            if (e.key === 'Enter') {
+                const value = e.target.value.trim();
+                if (value) {
+                    window.location.href = '/zayavka?search=' + encodeURIComponent(value);
+                }
+            }
+        }
+
+        // Cmd/Ctrl + F → focus search
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+                const input = document.getElementById('globalSearch');
+                if (input) {
+                    e.preventDefault();
+                    input.focus();
+                }
+            }
+        });
+
+        // ==================== UTILITIES (БО НИГОҲ ДОШТАН) ====================
+        function getStatusText(status) {
+            const statuses = {
+                'new': '🟢 Нав',
+                'progress': '🟡 Дар ҷараён',
+                'done': '🔵 Анҷомёфта',
+                'cancel': '🔴 Бекоршуда'
+            };
+            return statuses[status] || status;
+        }
+
+        function formatPrice(price) {
+            if (!price) return '0';
+            return new Intl.NumberFormat('ru-RU').format(price);
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'})[m];
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
