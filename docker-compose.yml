@@ -58,6 +58,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       UPLOAD_DIR: /app/uploads
+      # Set to "true" once if you changed ADMIN_PASSWORD after first startup.
+      # Then unset and restart again so a normal startup runs.
+      RESET_ADMIN_PASSWORD: ${RESET_ADMIN_PASSWORD:-false}
     volumes:
       - uploads:/app/uploads
     depends_on:

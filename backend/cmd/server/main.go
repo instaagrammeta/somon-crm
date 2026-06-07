@@ -94,15 +94,37 @@ func main() {
 	log.Println("[server] goodbye")
 }
 
-// seedAdmin creates the default admin user on first launch (idempotent).
+// seedAdmin creates the default admin on first launch.
+// If RESET_ADMIN_PASSWORD=true (env), it also re-hashes the password from cfg
+// on every startup — useful when ADMIN_PASSWORD in .env was changed after the
+// initial container build.
 func seedAdmin(db *gorm.DB, auth *service.AuthService, cfg *config.Config) error {
-	var count int64
-	if err := db.Model(&models.User{}).Where("login = ?", cfg.Admin.Login).Count(&count).Error; err != nil {
-		return err
-	}
-	if count > 0 {
+	resetPwd := os.Getenv("RESET_ADMIN_PASSWORD") == "true"
+
+	var existing models.User
+	err := db.Where("login = ?", cfg.Admin.Login).First(&existing).Error
+	if err == nil {
+		// User exists. Optionally rotate password / re-activate / promote to admin.
+		if resetPwd {
+			hashed, herr := auth.HashPassword(cfg.Admin.Password)
+			if herr != nil {
+				return herr
+			}
+			if uerr := db.Model(&existing).Updates(map[string]any{
+				"password":  hashed,
+				"role":      models.RoleAdmin,
+				"is_active": true,
+			}).Error; uerr != nil {
+				return uerr
+			}
+			log.Printf("[seed] admin password reset (login=%s)", cfg.Admin.Login)
+		} else {
+			log.Printf("[seed] admin already exists (login=%s) — skipped (set RESET_ADMIN_PASSWORD=true to rotate)", cfg.Admin.Login)
+		}
 		return nil
 	}
+
+	// Create fresh admin.
 	hashed, err := auth.HashPassword(cfg.Admin.Password)
 	if err != nil {
 		return err
