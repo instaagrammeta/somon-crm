@@ -1,0 +1,33 @@
+# Binaries
+/bin/
+/dist/
+/server
+/server.exe
+/migrate
+/migrate.exe
+
+# Test
+*.test
+*.out
+coverage.txt
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Uploads (kept by .gitkeep)
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Go
+vendor/

@@ -1,0 +1,113 @@
+# Production-ready stack:
+#   Postgres + Redis + Go backend + Nuxt SSR frontend + Nginx reverse proxy.
+#
+# Usage:
+#   1. Copy .env.example to .env and customize values
+#   2. docker compose up -d --build
+#   3. Browse to http://<server-ip>/   (port 80)
+#
+# Internal network — only nginx is exposed to host.
+
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: somon_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-somon}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-somon_secret_change_me}
+      POSTGRES_DB: ${DB_NAME:-somon_crm}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-somon} -d ${DB_NAME:-somon_crm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [somon]
+
+  redis:
+    image: redis:7-alpine
+    container_name: somon_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [somon]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: somon_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8080"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      UPLOAD_DIR: /app/uploads
+      # Set to "true" once if you changed ADMIN_PASSWORD after first startup.
+      # Then unset and restart again so a normal startup runs.
+      RESET_ADMIN_PASSWORD: ${RESET_ADMIN_PASSWORD:-false}
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [somon]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: somon_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NITRO_PORT: "3000"
+      NITRO_HOST: 0.0.0.0
+      # Browser-side base URL: empty → same-origin via nginx
+      NUXT_PUBLIC_API_BASE: ""
+      # Server-side (SSR) base URL: Docker DNS to reach backend
+      NUXT_API_BASE_INTERNAL: "http://backend:8080"
+      NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-tg}
+    depends_on:
+      - backend
+    networks: [somon]
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: somon_nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "${PUBLIC_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads:/var/www/uploads:ro
+    networks: [somon]
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+
+networks:
+  somon:
+    driver: bridge
