@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-page text-ink font-sans;
+  }
+  /* Cyrillic-friendly scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d8e1ee;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b3c0d4;
+  }
+}
+
+@layer components {
+  /* === Buttons === */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           text-sm font-semibold transition-all duration-200 disabled:opacity-50
+           disabled:cursor-not-allowed select-none whitespace-nowrap;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-dark hover:-translate-y-0.5 shadow-soft;
+  }
+  .btn-secondary {
+    @apply btn bg-brand-soft text-brand hover:bg-brand-bg;
+  }
+  .btn-outline {
+    @apply btn bg-white text-ink border border-border-soft hover:border-brand hover:text-brand;
+  }
+  .btn-danger {
+    @apply btn bg-red-50 text-red-500 hover:bg-red-100;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-medium hover:bg-brand-soft hover:text-brand;
+  }
+
+  /* === Cards === */
+  .card {
+    @apply bg-white rounded-2xl border border-border-soft shadow-card;
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-hover;
+  }
+
+  /* === Form === */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl border border-border-soft bg-white
+           text-ink text-sm transition-all duration-150
+           focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15
+           placeholder:text-ink-soft disabled:bg-page disabled:cursor-not-allowed;
+  }
+  .label {
+    @apply block text-sm font-medium text-ink-medium mb-1.5;
+  }
+
+  /* === Badges === */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-green {
+    @apply badge bg-brand-soft text-brand;
+  }
+  .badge-red {
+    @apply badge bg-red-50 text-red-600;
+  }
+  .badge-yellow {
+    @apply badge bg-yellow-50 text-yellow-600;
+  }
+  .badge-blue {
+    @apply badge bg-blue-50 text-blue-600;
+  }
+  .badge-gray {
+    @apply badge bg-gray-100 text-gray-600;
+  }
+
+  /* === Tables === */
+  .table-modern {
+    @apply w-full border-collapse;
+  }
+  .table-modern th {
+    @apply text-left px-5 py-3 bg-page text-xs uppercase tracking-wide
+           font-semibold text-ink-soft border-b border-border-soft whitespace-nowrap;
+  }
+  .table-modern td {
+    @apply px-5 py-4 text-sm text-ink border-b border-border-soft;
+  }
+  .table-modern tr:hover td {
+    @apply bg-brand-soft/40;
+  }
+
+  /* === Logo icon (matches legacy design) === */
+  .logo-icon {
+    @apply w-9 h-9 rounded-xl bg-brand-soft flex items-center justify-center
+           text-brand relative;
+  }
+  .logo-icon::before {
+    content: "";
+    @apply absolute w-[22px] h-[22px] rounded-full;
+    border: 2.5px solid #1f7a4d;
+  }
+  .logo-icon::after {
+    content: "";
+    @apply absolute w-2 h-2 rounded-full bg-brand;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* === Active sidebar item === */
+  .nav-item {
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-ink-medium
+           font-medium text-[13.5px] transition-all duration-150 hover:bg-brand-soft hover:text-brand
+           cursor-pointer relative;
+  }
+  .nav-item.active {
+    @apply bg-brand-soft text-brand font-semibold;
+  }
+  .nav-item.active::before {
+    content: "";
+    @apply absolute -left-3.5 top-1/2 -translate-y-1/2 w-1 h-7
+           bg-brand rounded-r;
+  }
+}
+
+@layer utilities {
+  /* No-tap blue highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Hide scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
