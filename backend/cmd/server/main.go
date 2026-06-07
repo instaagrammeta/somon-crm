@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -95,43 +96,63 @@ func main() {
 }
 
 // seedAdmin creates the default admin on first launch.
-// If RESET_ADMIN_PASSWORD=true (env), it also re-hashes the password from cfg
+// If RESET_ADMIN_PASSWORD=true (env), it ALSO re-hashes the password from cfg
 // on every startup — useful when ADMIN_PASSWORD in .env was changed after the
 // initial container build.
+//
+// In addition: if the existing admin row is not active or not in the admin role,
+// we force-fix that on every startup (cheap and safe).
 func seedAdmin(db *gorm.DB, auth *service.AuthService, cfg *config.Config) error {
-	resetPwd := os.Getenv("RESET_ADMIN_PASSWORD") == "true"
+	resetPwd := strings.EqualFold(strings.TrimSpace(os.Getenv("RESET_ADMIN_PASSWORD")), "true")
+
+	login := strings.TrimSpace(cfg.Admin.Login)
+	password := cfg.Admin.Password
+
+	if login == "" || password == "" {
+		log.Printf("[seed] ADMIN_LOGIN or ADMIN_PASSWORD is empty — skipping seed")
+		return nil
+	}
 
 	var existing models.User
-	err := db.Where("login = ?", cfg.Admin.Login).First(&existing).Error
+	err := db.Where("login = ?", login).First(&existing).Error
 	if err == nil {
-		// User exists. Optionally rotate password / re-activate / promote to admin.
+		// User exists. Always make sure it is admin + active.
+		needsFix := !existing.IsActive || existing.Role != models.RoleAdmin
+		updates := map[string]any{}
+		if needsFix {
+			updates["role"] = models.RoleAdmin
+			updates["is_active"] = true
+		}
 		if resetPwd {
-			hashed, herr := auth.HashPassword(cfg.Admin.Password)
+			hashed, herr := auth.HashPassword(password)
 			if herr != nil {
 				return herr
 			}
-			if uerr := db.Model(&existing).Updates(map[string]any{
-				"password":  hashed,
-				"role":      models.RoleAdmin,
-				"is_active": true,
-			}).Error; uerr != nil {
+			updates["password"] = hashed
+		}
+		if len(updates) > 0 {
+			if uerr := db.Model(&existing).Updates(updates).Error; uerr != nil {
 				return uerr
 			}
-			log.Printf("[seed] admin password reset (login=%s)", cfg.Admin.Login)
+			if resetPwd {
+				log.Printf("[seed] admin password reset + role/active fixed (login=%s)", login)
+			} else {
+				log.Printf("[seed] admin role/active fixed (login=%s)", login)
+			}
 		} else {
-			log.Printf("[seed] admin already exists (login=%s) — skipped (set RESET_ADMIN_PASSWORD=true to rotate)", cfg.Admin.Login)
+			log.Printf("[seed] admin already exists (login=%s) — set RESET_ADMIN_PASSWORD=true to rotate password", login)
 		}
 		return nil
 	}
 
 	// Create fresh admin.
-	hashed, err := auth.HashPassword(cfg.Admin.Password)
+	hashed, err := auth.HashPassword(password)
 	if err != nil {
 		return err
 	}
 	admin := models.User{
 		FullName:       cfg.Admin.FullName,
-		Login:          cfg.Admin.Login,
+		Login:          login,
 		Password:       hashed,
 		Role:           models.RoleAdmin,
 		Category:       "Руководство",
@@ -143,6 +164,6 @@ func seedAdmin(db *gorm.DB, auth *service.AuthService, cfg *config.Config) error
 	if err := db.Create(&admin).Error; err != nil {
 		return err
 	}
-	log.Printf("[seed] admin user created (login=%s)", cfg.Admin.Login)
+	log.Printf("[seed] admin user created (login=%s)", login)
 	return nil
 }
