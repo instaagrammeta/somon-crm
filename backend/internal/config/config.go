@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -186,14 +185,4 @@ func parseCSV(s string) []string {
 	return out
 }
 
-// Helper to safely parse int from env string.
-func atoi(s string, def int) int {
-	if s == "" {
-		return def
-	}
-	n, err := strconv.Atoi(s)
-	if err != nil {
-		return def
-	}
-	return n
-}
+

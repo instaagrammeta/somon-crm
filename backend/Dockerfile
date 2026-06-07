@@ -1,15 +1,23 @@
 # ---------- Build stage ----------
 FROM golang:1.23-alpine AS builder
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git ca-certificates
 
 WORKDIR /src
-COPY go.mod go.sum* ./
-RUN go mod download
 
+# Copy module file first for layer caching. go.sum may be absent on first build —
+# `go mod tidy` below will create/sync it.
+COPY go.mod ./
+COPY go.sum* ./
+
+# Copy the rest of the source.
 COPY . .
 
-# Build server and migrate binaries
+# Resolve all imports and (re)generate go.sum. This fetches dependencies from
+# proxy.golang.org and works whether go.sum existed or not.
+RUN go mod tidy
+
+# Build the two binaries.
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/server ./cmd/server
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/migrate ./cmd/migrate
 
