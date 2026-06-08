@@ -1,0 +1,1783 @@
+{% extends "base.html" %}
+{% block title %}Kanban Board - CRM Лиды{% endblock %}
+
+{% block content %}
+<style>
+    /* ==================== ROOT VARIABLES ==================== */
+    :root {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --bg-card: #1e293b;
+        --bg-column: #0f172a;
+        --border-color: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-tertiary: #64748b;
+        --accent-blue: #3b82f6;
+        --accent-purple: #8b5cf6;
+        --accent-green: #22c55e;
+        --accent-red: #ef4444;
+        --accent-orange: #f59e0b;
+        --accent-pink: #ec4899;
+        --accent-cyan: #06b6d4;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* ==================== MAIN LAYOUT ==================== */
+    .kanban-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background: var(--bg-primary);
+        overflow: hidden;
+    }
+
+    /* ==================== HEADER ==================== */
+    .kanban-header {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 12px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        z-index: 20;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .board-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .board-icon:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-md);
+    }
+
+    .board-title-box {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .board-title {
+        font-size: 22px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #fff, var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .board-stats {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .board-stats span {
+        color: var(--accent-blue);
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* ==================== FILTERS ==================== */
+    .filters-bar {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        padding: 10px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        z-index: 15;
+        overflow-x: auto;
+    }
+
+    .filters-bar::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-secondary);
+        padding: 6px 14px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+    }
+
+    .filter-group:hover {
+        border-color: var(--accent-blue);
+    }
+
+    .filter-group i {
+        color: var(--accent-blue);
+        font-size: 13px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        padding: 6px 0;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .filter-group select option {
+        background: var(--bg-secondary);
+    }
+
+    /* ==================== KANBAN BOARD ==================== */
+    .kanban-main {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .board-scroll {
+        height: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 20px;
+        transition: background 0.3s ease;
+    }
+
+    .kanban-board {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        height: 100%;
+        min-width: min-content;
+    }
+
+    /* ==================== COLUMN ==================== */
+    .kanban-column {
+        min-width: 320px;
+        width: 320px;
+        max-height: calc(100vh - 220px);
+        background: var(--bg-column);
+        border-radius: var(--radius-lg);
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        flex-shrink: 0;
+        backdrop-filter: blur(4px);
+        transition: var(--transition);
+    }
+
+    .kanban-column.dragging {
+        opacity: 0.4;
+    }
+
+    .kanban-column.drag-over {
+        border-left: 3px solid var(--accent-blue);
+    }
+
+    /* Свернутая колонка */
+    .kanban-column.collapsed {
+        min-width: 80px;
+        width: 80px;
+    }
+
+    .column-header {
+        padding: 14px 16px;
+        background: linear-gradient(135deg, var(--bg-secondary), var(--bg-column));
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        flex-shrink: 0;
+    }
+
+    .collapsed .column-header {
+        padding: 20px 10px;
+        justify-content: center;
+        flex-direction: column;
+        border-radius: var(--radius-lg);
+    }
+
+    .column-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .collapsed .column-left {
+        flex-direction: column;
+        writing-mode: vertical-lr;
+        transform: rotate(180deg);
+        gap: 15px;
+    }
+
+    .column-drag-handle {
+        cursor: grab;
+        color: var(--text-tertiary);
+        font-size: 14px;
+    }
+
+    .collapsed .column-drag-handle {
+        display: none;
+    }
+
+    .column-title h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .collapsed .column-title h3 {
+        font-size: 13px;
+    }
+
+    .column-badge {
+        background: rgba(59, 130, 246, 0.2);
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent-blue);
+    }
+
+    .collapsed .column-badge {
+        margin-top: 10px;
+    }
+
+    .column-actions {
+        position: relative;
+    }
+
+    .collapsed .column-actions {
+        display: none;
+    }
+
+    .column-menu-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        transition: var(--transition);
+    }
+
+    .column-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    /* Dropdown Menu - открывается прямо под иконкой */
+    .column-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        min-width: 220px;
+        z-index: 1000;
+        box-shadow: var(--shadow-xl);
+        display: none;
+        margin-top: 5px;
+        animation: fadeIn 0.15s ease;
+    }
+
+    .column-dropdown.show {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-item {
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: var(--transition);
+        color: var(--text-primary);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dropdown-item:hover {
+        background: rgba(59, 130, 246, 0.2);
+    }
+
+    .dropdown-item.danger {
+        color: var(--accent-red);
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 5px 0;
+    }
+
+    .collapsed .cards-container {
+        display: none;
+    }
+
+    /* Cards Container */
+    .cards-container {
+        padding: 12px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .cards-container::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .cards-container::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+    }
+
+    .cards-container::-webkit-scrollbar-thumb {
+        background: var(--accent-blue);
+        border-radius: 10px;
+    }
+
+    /* ==================== CARD ==================== */
+    .kanban-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        padding: 12px;
+        margin-bottom: 12px;
+        cursor: grab;
+        transition: var(--transition);
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+
+    .kanban-card:active {
+        cursor: grabbing;
+    }
+
+    .kanban-card.dragging {
+        opacity: 0.4;
+        transform: scale(0.98);
+    }
+
+    .kanban-card.drag-over-top {
+        border-top: 3px solid var(--accent-blue);
+    }
+
+    .kanban-card.drag-over-bottom {
+        border-bottom: 3px solid var(--accent-blue);
+    }
+
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent-blue);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .card-name {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--text-primary);
+        background: rgba(59, 130, 246, 0.1);
+        padding: 4px 10px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 6px;
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .kanban-card:hover .card-actions {
+        opacity: 1;
+    }
+
+    .card-actions button {
+        background: var(--bg-tertiary);
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 11px;
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+
+    .card-actions button:hover {
+        background: var(--accent-blue);
+        color: white;
+    }
+
+    .card-phone {
+        font-size: 13px;
+        color: var(--accent-blue);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+        font-family: monospace;
+    }
+
+    .card-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .source-badge {
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .source-incoming { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .source-outgoing { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .source-whatsapp { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .source-telegram { background: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+    .source-somon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .source-instagram { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+    .source-tiktok { background: rgba(0, 0, 0, 0.3); color: #fff; }
+
+    .card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        color: var(--text-tertiary);
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .card-badges {
+        display: flex;
+        gap: 6px;
+    }
+
+    .badge {
+        background: rgba(34, 197, 94, 0.2);
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 9px;
+        color: #4ade80;
+    }
+
+    /* Add Column Button */
+    .add-column-btn {
+        min-width: 320px;
+        width: 320px;
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 1px dashed var(--border-color);
+        color: var(--text-tertiary);
+        flex-shrink: 0;
+    }
+
+    .add-column-btn:hover {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+    }
+
+    /* ==================== BOTTOM BOARDS PANEL ==================== */
+    .bottom-panel {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-color);
+        padding: 8px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        overflow-x: auto;
+        z-index: 10;
+    }
+
+    .bottom-panel::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    .board-tab {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 16px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transition);
+        background: var(--bg-secondary);
+        flex-shrink: 0;
+    }
+
+    .board-tab.active {
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    }
+
+    .board-tab.active span {
+        color: white;
+    }
+
+    .board-tab:hover {
+        transform: translateY(-2px);
+    }
+
+    .board-tab-icon {
+        width: 28px;
+        height: 28px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+    .board-tab-name {
+        font-size: 13px;
+        color: var(--text-primary);
+    }
+
+    .create-board-tab {
+        border: 1px dashed var(--border-color);
+        background: transparent;
+    }
+
+    /* ==================== MODALS ==================== */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+        background: var(--bg-secondary);
+        margin: 5% auto;
+        border-radius: var(--radius-xl);
+        width: 90%;
+        max-width: 550px;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid var(--border-color);
+        animation: modalSlideIn 0.2s ease;
+    }
+
+    .modal-large {
+        max-width: 800px;
+    }
+
+    @keyframes modalSlideIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        font-size: 20px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-header .close {
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--text-tertiary);
+        transition: var(--transition);
+    }
+
+    .modal-header .close:hover {
+        color: var(--accent-red);
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Forms */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: var(--transition);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-row-full {
+        grid-column: span 2;
+    }
+
+    /* Color Options */
+    .color-palette {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .color-option {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid transparent;
+    }
+
+    .color-option:hover {
+        transform: scale(1.1);
+    }
+
+    .color-option.selected {
+        border-color: white;
+        box-shadow: 0 0 0 2px var(--accent-blue);
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        border: none;
+        padding: 10px 20px;
+        border-radius: var(--radius-md);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        padding: 10px 20px;
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-card);
+    }
+
+    .btn-sm {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+
+    .btn-danger {
+        background: var(--accent-red);
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: var(--bg-secondary);
+        border-left: 4px solid var(--accent-green);
+        border-radius: var(--radius-md);
+        padding: 12px 20px;
+        color: var(--text-primary);
+        z-index: 1001;
+        box-shadow: var(--shadow-lg);
+        animation: slideInRight 0.3s ease;
+    }
+
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+
+    /* Loading */
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-tertiary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .kanban-column {
+            min-width: 280px;
+            width: 280px;
+        }
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        .form-row-full {
+            grid-column: span 1;
+        }
+        .header-actions {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
+<div class="kanban-wrapper">
+    <!-- Header -->
+    <div class="kanban-header">
+        <div class="header-left">
+            <div class="board-icon" onclick="showSelectBoardModal()">
+                <i class="fas fa-chalkboard"></i>
+            </div>
+            <div class="board-title-box">
+                <div class="board-title" id="currentBoardTitle">Загрузка...</div>
+                <div class="board-stats">
+                    <i class="fas fa-users"></i> Всего лидов: <span id="totalLeadsCount">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-secondary btn-sm" onclick="showBoardSettings()">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+            <button class="btn-secondary btn-sm" onclick="showAddColumnModal()">
+                <i class="fas fa-plus"></i> Колонка
+            </button>
+            <button class="btn-primary btn-sm" onclick="showAddLeadModal()">
+                <i class="fas fa-user-plus"></i> Лид
+            </button>
+            <button class="btn-secondary btn-sm" onclick="exportBoard()">
+                <i class="fas fa-file-excel"></i> Экспорт
+            </button>
+            <button class="btn-secondary btn-sm" onclick="showImportModal()">
+                <i class="fas fa-upload"></i> Импорт
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <div class="filter-group">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Поиск..." onkeyup="filterLeads()">
+        </div>
+        <div class="filter-group">
+            <i class="fas fa-tag"></i>
+            <select id="sourceFilter" onchange="filterLeads()">
+                <option value="all">Все источники</option>
+                <option value="Входящий">📞 Входящий</option>
+                <option value="Исходящий">📞 Исходящий</option>
+                <option value="WhatsApp">💬 WhatsApp</option>
+                <option value="Telegram">✈️ Telegram</option>
+                <option value="Somon.tj">🏠 Somon.tj</option>
+                <option value="Instagram">📷 Instagram</option>
+                <option value="TikTok">🎵 TikTok</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <i class="fas fa-home"></i>
+            <select id="mortgageFilter" onchange="filterLeads()">
+                <option value="all">Ипотека</option>
+                <option value="yes">✅ Да</option>
+                <option value="no">❌ Нет</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <i class="fas fa-box"></i>
+            <select id="boxFilter" onchange="filterLeads()">
+                <option value="all">Коробка</option>
+                <option value="yes">✅ Да</option>
+                <option value="no">❌ Нет</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <i class="fas fa-user"></i>
+            <select id="authorFilter" onchange="filterLeads()">
+                <option value="all">Все сотрудники</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <i class="fas fa-calendar"></i>
+            <select id="dateFilter" onchange="filterLeads()">
+                <option value="all">За всё время</option>
+                <option value="today">Сегодня</option>
+                <option value="week">Эта неделя</option>
+                <option value="month">Этот месяц</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <i class="fas fa-columns"></i>
+            <select id="columnFilter" onchange="filterLeads()">
+                <option value="all">Все колонки</option>
+            </select>
+        </div>
+        <button class="btn-secondary btn-sm" onclick="resetFilters()">
+            <i class="fas fa-undo-alt"></i> Сброс
+        </button>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-main">
+        <div class="board-scroll" id="boardContainer">
+            <div class="kanban-board" id="kanbanBoard">
+                <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка досок...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Boards Panel -->
+    <div class="bottom-panel" id="boardsBottomPanel"></div>
+</div>
+
+<!-- Modal: Board Create/Edit -->
+<div id="boardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="boardModalTitle"><i class="fas fa-plus-circle"></i> Создать доску</h2>
+            <span class="close" onclick="closeBoardModal()">&times;</span>
+        </div>
+        <form id="boardForm">
+            <input type="hidden" id="boardId">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Название доски</label>
+                    <input type="text" id="boardTitle" required placeholder="Например: Продажи 2024">
+                </div>
+                <div class="form-group">
+                    <label>Цвет фона</label>
+                    <input type="color" id="boardColor" value="#0f172a">
+                </div>
+                <div class="form-group">
+                    <label>Тип доски</label>
+                    <select id="boardIsPublic">
+                        <option value="1">🌍 Публичная</option>
+                        <option value="0">🔒 Приватная</option>
+                    </select>
+                </div>
+                <div class="form-group" id="membersGroup" style="display: none;">
+                    <label>Участники</label>
+                    <select id="boardMembers" multiple style="height: 120px;"></select>
+                    <small>Ctrl + для выбора нескольких</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeBoardModal()">Отмена</button>
+                <button type="submit" class="btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Select Board -->
+<div id="selectBoardModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2><i class="fas fa-columns"></i> Выбрать доску</h2>
+            <span class="close" onclick="closeSelectBoardModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <input type="text" id="boardSearch" placeholder="🔎 Поиск досок..." onkeyup="filterBoardsList()">
+            </div>
+            <div id="boardsListContainer" style="max-height: 350px; overflow-y: auto;"></div>
+            <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="showAddBoardModal(); closeSelectBoardModal();">
+                <i class="fas fa-plus"></i> Создать доску
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Board Settings -->
+<div id="boardSettingsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-cog"></i> Настройки доски</h2>
+            <span class="close" onclick="closeBoardSettingsModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" id="settingsBoardTitle">
+            </div>
+            <div class="form-group">
+                <label>Цвет фона</label>
+                <input type="color" id="settingsBoardColor">
+            </div>
+            <div class="form-group">
+                <label>Тип</label>
+                <select id="settingsBoardIsPublic">
+                    <option value="1">Публичная</option>
+                    <option value="0">Приватная</option>
+                </select>
+            </div>
+            <hr style="border-color: var(--border-color); margin: 15px 0;">
+            <button class="btn-secondary" onclick="archiveCurrentBoard()" style="width: 100%; margin-bottom: 10px;">
+                <i class="fas fa-archive"></i> Архивировать
+            </button>
+            <button class="btn-danger" onclick="deleteCurrentBoard()" style="width: 100%;">
+                <i class="fas fa-trash-alt"></i> Удалить
+            </button>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeBoardSettingsModal()">Отмена</button>
+            <button class="btn-primary" onclick="updateCurrentBoard()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Column -->
+<div id="columnModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="columnModalTitle"><i class="fas fa-plus-circle"></i> Добавить колонку</h2>
+            <span class="close" onclick="closeColumnModal()">&times;</span>
+        </div>
+        <form id="columnForm">
+            <input type="hidden" id="columnId">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Название колонки</label>
+                    <input type="text" id="columnTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Цвет колонки</label>
+                    <div class="color-palette" id="colorPalette">
+                        <div class="color-option" style="background:#3b82f6;" data-color="#3b82f6"></div>
+                        <div class="color-option" style="background:#22c55e;" data-color="#22c55e"></div>
+                        <div class="color-option" style="background:#f59e0b;" data-color="#f59e0b"></div>
+                        <div class="color-option" style="background:#ef4444;" data-color="#ef4444"></div>
+                        <div class="color-option" style="background:#8b5cf6;" data-color="#8b5cf6"></div>
+                        <div class="color-option" style="background:#ec4899;" data-color="#ec4899"></div>
+                        <div class="color-option" style="background:#06b6d4;" data-color="#06b6d4"></div>
+                        <div class="color-option" style="background:#eab308;" data-color="#eab308"></div>
+                    </div>
+                    <input type="color" id="columnColor" style="width: 100%; margin-top: 10px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeColumnModal()">Отмена</button>
+                <button type="submit" class="btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Lead -->
+<div id="leadModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="leadModalTitle"><i class="fas fa-user-plus"></i> Добавить лид</h2>
+            <span class="close" onclick="closeLeadModal()">&times;</span>
+        </div>
+        <form id="leadForm">
+            <input type="hidden" id="leadId">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Имя клиента *</label>
+                        <input type="text" id="leadClientName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Телефон *</label>
+                        <input type="tel" id="leadPhone" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Источник</label>
+                        <select id="leadSource">
+                            <option value="Входящий">📞 Входящий</option>
+                            <option value="Исходящий">📞 Исходящий</option>
+                            <option value="WhatsApp">💬 WhatsApp</option>
+                            <option value="Telegram">✈️ Telegram</option>
+                            <option value="Somon.tj">🏠 Somon.tj</option>
+                            <option value="Instagram">📷 Instagram</option>
+                            <option value="TikTok">🎵 TikTok</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Тема разговора</label>
+                        <input type="text" id="leadTopic">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ипотека</label>
+                        <select id="leadMortgage">
+                            <option value="0">Нет</option>
+                            <option value="1">Да</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Коробка</label>
+                        <select id="leadBox">
+                            <option value="0">Нет</option>
+                            <option value="1">Да</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Комментарий</label>
+                    <textarea id="leadComment" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeLeadModal()">Отмена</button>
+                <button type="submit" class="btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: View Lead -->
+<div id="viewLeadModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2 id="viewLeadTitle"><i class="fas fa-user-circle"></i> Информация</h2>
+            <span class="close" onclick="closeViewLeadModal()">&times;</span>
+        </div>
+        <div id="viewLeadContent" class="modal-body"></div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeViewLeadModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Import -->
+<div id="importModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-file-excel"></i> Импорт Excel</h2>
+            <span class="close" onclick="closeImportModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Файл Excel (.xlsx, .xls)</label>
+                <input type="file" id="importFile" accept=".xlsx,.xls">
+            </div>
+            <div class="form-group">
+                <label>Формат файла:</label>
+                <small style="color: var(--text-tertiary); display: block;">
+                    Колонки: Колонка | Клиент | Телефон | Тема разговора | Комментарий | Источник | Ипотека | Коробка | Автор | Дата создания
+                </small>
+                <small style="color: var(--accent-blue); display: block; margin-top: 8px;">
+                    * Обязательные поля: Клиент и Телефон
+                </small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeImportModal()">Отмена</button>
+            <button class="btn-primary" onclick="importExcel()">Импортировать</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+let currentBoardId = null;
+let allBoards = [];
+let allColumns = [];
+let allLeads = [];
+let draggedColumn = null;
+let draggedCard = null;
+let columnDropPosition = null;
+let currentUserId = {{ session.user_id }};
+let currentUserRole = "{{ session.role }}";
+let filterTimeout = null;
+
+// Clipboard for columns copy/paste
+let copiedColumnData = null;
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    loadBoards();
+    loadUsersForFilters();
+    loadUsersForMembers();
+    
+    // Global keyboard handler for Ctrl+V
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+            e.preventDefault();
+            if (copiedColumnData) {
+                pasteColumnToCurrentBoard();
+                copiedColumnData = null; // Сброс после вставки
+            }
+        }
+    });
+});
+
+// ==================== LOAD DATA ====================
+async function loadBoards() {
+    try {
+        const res = await fetch('/api/kanban/boards');
+        allBoards = await res.json();
+        const active = allBoards.filter(b => !b.is_archived);
+        if (active.length && !currentBoardId) currentBoardId = active[0].id;
+        if (currentBoardId) await loadBoardData();
+        renderBoardsPanel();
+        updateBoardUI();
+        if (!active.length) document.getElementById('kanbanBoard').innerHTML = '<div class="loading">📋 Нет досок. Создайте первую!</div>';
+    } catch(e) { console.error(e); }
+}
+
+async function loadBoardData() {
+    if (!currentBoardId) return;
+    await Promise.all([loadColumns(), loadLeads()]);
+    renderKanbanBoard();
+    updateTotalCount();
+}
+
+async function loadColumns() {
+    try {
+        const res = await fetch(`/api/kanban/boards/${currentBoardId}/columns`);
+        allColumns = await res.json();
+        updateColumnFilter();
+    } catch(e) { allColumns = []; }
+}
+
+async function loadLeads() {
+    try {
+        const res = await fetch(`/api/kanban/leads?board_id=${currentBoardId}`);
+        allLeads = await res.json();
+    } catch(e) { allLeads = []; }
+}
+
+// ==================== RENDER ====================
+function renderKanbanBoard() {
+    const container = document.getElementById('kanbanBoard');
+    if (!allColumns.length) {
+        container.innerHTML = `<div class="add-column-btn" onclick="showAddColumnModal()"><i class="fas fa-plus"></i> Добавить колонку</div>`;
+        return;
+    }
+    
+    const sorted = [...allColumns].sort((a,b) => a.order_index - b.order_index);
+    
+    container.innerHTML = sorted.map(col => `
+        <div class="kanban-column" data-column-id="${col.id}" data-order="${col.order_index}" draggable="true"
+             ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)" 
+             ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <div class="column-header" style="border-bottom-color: ${col.color || '#3b82f6'}">
+                <div class="column-left">
+                    <i class="fas fa-grip-vertical column-drag-handle"></i>
+                    <div class="column-title"><h3>${escapeHtml(col.title)}</h3></div>
+                    <span class="column-badge" id="badge-${col.id}">${allLeads.filter(l => l.column_id === col.id).length}</span>
+                </div>
+                <div class="column-actions">
+                    <i class="fas fa-chevron-up" onclick="event.stopPropagation(); toggleColumn(${col.id})" style="cursor:pointer; margin-right: 10px; color:var(--text-tertiary);"></i>
+                    <span class="column-menu-btn" onclick="event.stopPropagation(); toggleColumnMenu(event, ${col.id})">⋮</span>
+                    <div class="column-dropdown" id="dropdown-${col.id}">
+                        <div class="dropdown-item" onclick="editColumn(${col.id})"><i class="fas fa-edit"></i> Редактировать</div>
+                        <div class="dropdown-item" onclick="copyColumnToClipboard(${col.id})"><i class="fas fa-copy"></i> Копировать</div>
+                        <div class="dropdown-item" onclick="pasteColumnToCurrentBoard()"><i class="fas fa-paste"></i> Вставить</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="exportColumn(${col.id})"><i class="fas fa-file-excel"></i> Экспорт Excel</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item danger" onclick="deleteColumn(${col.id})"><i class="fas fa-trash-alt"></i> Удалить</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cards-container" data-column-id="${col.id}"
+                 ondragover="handleCardDragOver(event)" ondrop="handleCardDrop(event)">
+                ${renderCards(col.id)}
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML += `<div class="add-column-btn" onclick="showAddColumnModal()"><i class="fas fa-plus"></i> Добавить колонку</div>`;
+}
+
+function renderCards(columnId) {
+    const leads = allLeads.filter(l => l.column_id === columnId).sort((a,b) => (a.order_index || 0) - (b.order_index || 0));
+    if (!leads.length) return '<div style="padding:20px; text-align:center; color:var(--text-tertiary); font-size:12px;">Нет лидов</div>';
+    
+    return leads.map(lead => `
+        <div class="kanban-card" data-lead-id="${lead.id}" data-order="${lead.order_index || 0}" draggable="true"
+             ondragstart="handleCardDragStart(event)" ondragend="handleCardDragEnd(event)"
+             ondblclick="viewLead(${lead.id})">
+            <div class="card-header">
+                <span class="card-name">${escapeHtml(lead.client_name)}</span>
+                <div class="card-actions">
+                    <button onclick="event.stopPropagation(); editLead(${lead.id})"><i class="fas fa-pen"></i></button>
+                    <button onclick="event.stopPropagation(); deleteLead(${lead.id})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="card-phone"><i class="fas fa-phone-alt"></i> ${escapeHtml(lead.phone)}</div>
+            <div class="card-info">
+                <span class="source-badge source-${getSourceClass(lead.source)}">${getSourceIcon(lead.source)} ${lead.source}</span>
+            </div>
+            ${lead.topic ? `<div class="card-topic" style="font-size:11px; color:var(--text-secondary);"><i class="fas fa-comment"></i> ${escapeHtml(lead.topic)}</div>` : ''}
+            <div class="card-meta">
+                <span><i class="far fa-calendar-alt"></i> ${formatDate(lead.created_date)}</span>
+                <div class="card-badges">
+                    ${lead.mortgage ? '<span class="badge">🏦 Ипотека</span>' : ''}
+                    ${lead.box ? '<span class="badge">📦 Коробка</span>' : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getSourceClass(s) {
+    const map = {'Входящий':'incoming','Исходящий':'outgoing','WhatsApp':'whatsapp','Telegram':'telegram','Somon.tj':'somon','Instagram':'instagram','TikTok':'tiktok'};
+    return map[s] || 'incoming';
+}
+
+function getSourceIcon(s) {
+    const map = {'Входящий':'📞','Исходящий':'📞','WhatsApp':'💬','Telegram':'✈️','Somon.tj':'🏠','Instagram':'📷','TikTok':'🎵'};
+    return map[s] || '📌';
+}
+
+function formatDate(d) { return d ? new Date(d).toLocaleDateString() : '—'; }
+function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+
+// ==================== COLUMN DRAG & DROP (ГОРИЗОНТАЛЬНЫЙ SWAP) ====================
+function handleDragStart(e) {
+    const col = e.target.closest('.kanban-column');
+    if (!col) return;
+    draggedColumn = col;
+    col.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', col.dataset.columnId);
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+    document.querySelectorAll('.kanban-column').forEach(c => {
+        c.classList.remove('dragging', 'drag-over');
+    });
+    draggedColumn = null;
+    columnDropPosition = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    const col = e.target.closest('.kanban-column');
+    if (!col || col === draggedColumn) return;
+    col.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    const col = e.target.closest('.kanban-column');
+    if (col) col.classList.remove('drag-over');
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    const targetCol = e.target.closest('.kanban-column');
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (!targetCol || !draggedId || draggedId === targetCol.dataset.columnId) {
+        document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+        return;
+    }
+    
+    const sourceId = parseInt(draggedId);
+    const targetId = parseInt(targetCol.dataset.columnId);
+    const sourceCol = allColumns.find(c => c.id === sourceId);
+    const targetColData = allColumns.find(c => c.id === targetId);
+    if (!sourceCol || !targetColData) return;
+
+    // Простой обмен order_index
+    const sourceOrder = sourceCol.order_index;
+    const targetOrder = targetColData.order_index;
+
+    await fetch(`/api/kanban/columns/${sourceId}/order`, {
+        method: 'PUT', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ order_index: targetOrder })
+    });
+    
+    await fetch(`/api/kanban/columns/${targetId}/order`, {
+        method: 'PUT', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ order_index: sourceOrder })
+    });
+
+    await loadColumns();
+    renderKanbanBoard();
+    showToast('Колонки перемещены');
+    
+    document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+}
+
+// ==================== CARD DRAG & DROP ====================
+function handleCardDragStart(e) {
+    e.stopPropagation();
+    const card = e.target.closest('.kanban-card');
+    if (!card) return;
+    draggedCard = card;
+    card.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', card.dataset.leadId);
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleCardDragEnd(e) {
+    document.querySelectorAll('.kanban-card').forEach(c => c.classList.remove('dragging'));
+    draggedCard = null;
+}
+
+function handleCardDragOver(e) {
+    e.preventDefault();
+}
+
+async function handleCardDrop(e) {
+    e.preventDefault();
+    const container = e.target.closest('.cards-container');
+    if (!container) return;
+    
+    const leadId = parseInt(e.dataTransfer.getData('text/plain'));
+    const newColumnId = parseInt(container.dataset.columnId);
+    
+    await fetch('/api/kanban/leads/move', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ lead_id: leadId, column_id: newColumnId, order_index: 0 })
+    });
+    
+    await loadLeads();
+    renderKanbanBoard();
+    updateTotalCount();
+    showToast('Лид перемещён');
+}
+
+// ==================== COLUMN MENU ====================
+function toggleColumnMenu(e, id) {
+    e.stopPropagation();
+    document.querySelectorAll('.column-dropdown').forEach(m => {
+        if (m.id !== `dropdown-${id}`) m.classList.remove('show');
+    });
+    
+    const menu = document.getElementById(`dropdown-${id}`);
+    menu.classList.toggle('show');
+    
+    const closeMenu = (ev) => {
+        if (!menu.contains(ev.target)) {
+            menu.classList.remove('show');
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+    if (menu.classList.contains('show')) {
+        setTimeout(() => document.addEventListener('click', closeMenu), 10);
+    }
+}
+
+function toggleColumn(id) {
+    const col = document.querySelector(`.kanban-column[data-column-id="${id}"]`);
+    if (col) col.classList.toggle('collapsed');
+}
+
+// ==================== CRUD OPERATIONS ====================
+async function createColumn(title, color) {
+    const res = await fetch('/api/kanban/columns', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ board_id: currentBoardId, title, color })
+    });
+    if (res.ok) { await loadColumns(); renderKanbanBoard(); showToast('Колонка создана'); }
+}
+
+async function updateColumn(id, title, color) {
+    const res = await fetch(`/api/kanban/columns/${id}`, {
+        method: 'PUT', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ title, color })
+    });
+    if (res.ok) { await loadColumns(); renderKanbanBoard(); showToast('Колонка обновлена'); }
+}
+
+async function deleteColumn(id) {
+    if (!confirm('Удалить колонку и все лиды в ней?')) return;
+    const res = await fetch(`/api/kanban/columns/${id}`, { method: 'DELETE' });
+    if (res.ok) { await loadColumns(); await loadLeads(); renderKanbanBoard(); updateTotalCount(); showToast('Колонка удалена'); }
+}
+
+async function copyColumnToClipboard(id) {
+    const col = allColumns.find(c => c.id === id);
+    if (!col) return;
+    const leadsToCopy = allLeads.filter(l => l.column_id === id);
+    copiedColumnData = {
+        title: col.title,
+        color: col.color,
+        leads: leadsToCopy.map(l => ({
+            client_name: l.client_name,
+            phone: l.phone,
+            topic: l.topic || '',
+            comment: l.comment || '',
+            source: l.source,
+            mortgage: l.mortgage,
+            box: l.box
+        }))
+    };
+    showToast(`Колонка "${col.title}" скопирована. Нажмите Ctrl+V для вставки`);
+}
+
+async function pasteColumnToCurrentBoard() {
+    if (!copiedColumnData) {
+        showToast('Нет скопированной колонки. Сначала скопируйте колонку.', 3000);
+        return;
+    }
+    if (!currentBoardId) {
+        showToast('Выберите доску для вставки', 3000);
+        return;
+    }
+    
+    const res = await fetch('/api/kanban/columns', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ 
+            board_id: currentBoardId, 
+            title: `${copiedColumnData.title} (копия)`, 
+            color: copiedColumnData.color || '#3b82f6' 
+        })
+    });
+    
+    if (res.ok) {
+        const newCol = await res.json();
+        for (let i = 0; i < copiedColumnData.leads.length; i++) {
+            const l = copiedColumnData.leads[i];
+            await fetch('/api/kanban/leads', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    board_id: currentBoardId,
+                    column_id: newCol.id,
+                    client_name: l.client_name,
+                    phone: l.phone,
+                    topic: l.topic,
+                    comment: l.comment,
+                    source: l.source,
+                    mortgage: l.mortgage,
+                    box: l.box,
+                    order_index: i
+                })
+            });
+        }
+        await loadColumns();
+        await loadLeads();
+        renderKanbanBoard();
+        showToast(`Колонка "${copiedColumnData.title}" вставлена с ${copiedColumnData.leads.length} лидами`);
+    }
+}
+
+async function createLead(data) {
+    const firstCol = allColumns[0]?.id;
+    if (!firstCol) { alert('Сначала создайте колонку'); return false; }
+    const res = await fetch('/api/kanban/leads', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ...data, board_id: currentBoardId, column_id: firstCol, order_index: 0 })
+    });
+    if (res.ok) { await loadLeads(); renderKanbanBoard(); updateTotalCount(); showToast('Лид добавлен'); return true; }
+    return false;
+}
+
+async function updateLead(id, data) {
+    const res = await fetch(`/api/kanban/leads/${id}`, {
+        method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
+    });
+    if (res.ok) { await loadLeads(); renderKanbanBoard(); showToast('Лид обновлён'); return true; }
+    return false;
+}
+
+async function deleteLead(id) {
+    if (!confirm('Удалить лид?')) return;
+    const res = await fetch(`/api/kanban/leads/${id}`, { method: 'DELETE' });
+    if (res.ok) { await loadLeads(); renderKanbanBoard(); updateTotalCount(); showToast('Лид удалён'); }
+}
+
+// ==================== UI HELPERS ====================
+function updateTotalCount() {
+    document.getElementById('totalLeadsCount').textContent = allLeads.length;
+}
+
+function updateColumnFilter() {
+    const sel = document.getElementById('columnFilter');
+    sel.innerHTML = '<option value="all">Все колонки</option>' + allColumns.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+}
+
+function filterLeads() {
+    if (filterTimeout) clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(() => {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const source = document.getElementById('sourceFilter').value;
+        const mortgage = document.getElementById('mortgageFilter').value;
+        const box = document.getElementById('boxFilter').value;
+        const author = document.getElementById('authorFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
+        const columnFilter = document.getElementById('columnFilter').value;
+        
+        let visible = 0;
+        document.querySelectorAll('.kanban-card').forEach(card => {
+            const lid = allLeads.find(l => l.id == parseInt(card.dataset.leadId));
+            if (!lid) return;
+            let show = true;
+            if (search && !lid.client_name.toLowerCase().includes(search) && !lid.phone.includes(search)) show = false;
+            if (source !== 'all' && lid.source !== source) show = false;
+            if (mortgage === 'yes' && !lid.mortgage) show = false;
+            if (mortgage === 'no' && lid.mortgage) show = false;
+            if (box === 'yes' && !lid.box) show = false;
+            if (box === 'no' && lid.box) show = false;
+            if (author !== 'all' && lid.author_id != author) show = false;
+            if (columnFilter !== 'all' && lid.column_id != columnFilter) show = false;
+            if (dateFilter === 'today') {
+                const today = new Date().toDateString();
+                if (new Date(lid.created_date).toDateString() !== today) show = false;
+            } else if (dateFilter === 'week') {
+                const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+                if (new Date(lid.created_date) < weekAgo) show = false;
+            } else if (dateFilter === 'month') {
+                const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+                if (new Date(lid.created_date) < monthAgo) show = false;
+            }
+            card.style.display = show ? 'block' : 'none';
+            if (show) visible++;
+        });
+        document.getElementById('totalLeadsCount').textContent = visible;
+    }, 300);
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sourceFilter').value = 'all';
+    document.getElementById('mortgageFilter').value = 'all';
+    document.getElementById('boxFilter').value = 'all';
+    document.getElementById('authorFilter').value = 'all';
+    document.getElementById('dateFilter').value = 'all';
+    document.getElementById('columnFilter').value = 'all';
+    filterLeads();
+    showToast('Фильтры сброшены');
+}
+
+function showToast(msg, duration = 2500) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<i class="fas fa-check-circle" style="color:var(--accent-green); margin-right:8px;"></i>${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => { 
+        t.style.animation = 'slideOutRight 0.3s ease'; 
+        setTimeout(() => t.remove(), 300); 
+    }, duration);
+}
+
+// ==================== MODALS ====================
+function showAddBoardModal() { document.getElementById('boardModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Создать доску'; document.getElementById('boardId').value = ''; document.getElementById('boardForm').reset(); document.getElementById('boardModal').style.display = 'block'; }
+function closeBoardModal() { document.getElementById('boardModal').style.display = 'none'; }
+function showAddColumnModal() { if(!currentBoardId) {alert('Выберите доску'); return;} document.getElementById('columnModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Добавить колонку'; document.getElementById('columnId').value = ''; document.getElementById('columnForm').reset(); document.getElementById('columnColor').value = '#3b82f6'; document.getElementById('columnModal').style.display = 'block'; }
+function closeColumnModal() { document.getElementById('columnModal').style.display = 'none'; }
+function showAddLeadModal() { if(!currentBoardId) {alert('Выберите доску'); return;} if(!allColumns.length) {alert('Сначала создайте колонку'); return;} document.getElementById('leadModalTitle').innerHTML = '<i class="fas fa-user-plus"></i> Добавить лид'; document.getElementById('leadId').value = ''; document.getElementById('leadForm').reset(); document.getElementById('leadModal').style.display = 'block'; }
+function closeLeadModal() { document.getElementById('leadModal').style.display = 'none'; }
+function showBoardSettings() { const b = allBoards.find(b => b.id === currentBoardId); if(b) { document.getElementById('settingsBoardTitle').value = b.title; document.getElementById('settingsBoardColor').value = b.color || '#0f172a'; document.getElementById('settingsBoardIsPublic').value = b.is_public; document.getElementById('boardSettingsModal').style.display = 'block'; } }
+function closeBoardSettingsModal() { document.getElementById('boardSettingsModal').style.display = 'none'; }
+function showImportModal() { document.getElementById('importModal').style.display = 'block'; }
+function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
+function showSelectBoardModal() { loadBoardsList(); document.getElementById('selectBoardModal').style.display = 'block'; }
+function closeSelectBoardModal() { document.getElementById('selectBoardModal').style.display = 'none'; }
+function closeViewLeadModal() { document.getElementById('viewLeadModal').style.display = 'none'; }
+
+function editColumn(id) { const c = allColumns.find(c => c.id === id); if(c) { document.getElementById('columnModalTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать колонку'; document.getElementById('columnId').value = c.id; document.getElementById('columnTitle').value = c.title; document.getElementById('columnColor').value = c.color || '#3b82f6'; document.getElementById('columnModal').style.display = 'block'; } }
+function editLead(id) { const l = allLeads.find(l => l.id === id); if(l) { document.getElementById('leadModalTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать лид'; document.getElementById('leadId').value = l.id; document.getElementById('leadClientName').value = l.client_name; document.getElementById('leadPhone').value = l.phone; document.getElementById('leadSource').value = l.source; document.getElementById('leadTopic').value = l.topic || ''; document.getElementById('leadComment').value = l.comment || ''; document.getElementById('leadMortgage').value = l.mortgage; document.getElementById('leadBox').value = l.box; document.getElementById('leadModal').style.display = 'block'; } }
+function viewLead(id) { const l = allLeads.find(l => l.id === id); if(!l) return; const col = allColumns.find(c => c.id === l.column_id); document.getElementById('viewLeadTitle').innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(l.client_name)}`; document.getElementById('viewLeadContent').innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div><strong>📞 Телефон:</strong><br>${escapeHtml(l.phone)}</div><div><strong>📌 Источник:</strong><br>${l.source}</div><div><strong>📋 Колонка:</strong><br>${col ? escapeHtml(col.title) : '—'}</div><div><strong>👤 Автор:</strong><br>${escapeHtml(l.author_name || '—')}</div><div><strong>💬 Тема:</strong><br>${escapeHtml(l.topic || '-')}</div><div><strong>🏦 Ипотека:</strong><br>${l.mortgage ? '✅ Да' : '❌ Нет'}</div><div><strong>📦 Коробка:</strong><br>${l.box ? '✅ Да' : '❌ Нет'}</div><div><strong>📅 Дата:</strong><br>${new Date(l.created_date).toLocaleString()}</div><div class="form-row-full"><strong>📝 Комментарий:</strong><br>${escapeHtml(l.comment || '-')}</div></div>`; document.getElementById('viewLeadModal').style.display = 'block'; }
+function exportColumn(id) { window.open(`/api/kanban/columns/${id}/export/excel`, '_blank'); }
+function exportBoard() { window.open(`/api/kanban/boards/${currentBoardId}/export/excel`, '_blank'); }
+async function importExcel() { 
+    const file = document.getElementById('importFile').files[0]; 
+    if(!file) {alert('Выберите файл'); return;} 
+    const fd = new FormData(); 
+    fd.append('file', file); 
+    fd.append('board_id', currentBoardId); 
+    showToast('Импорт...', 1000);
+    const res = await fetch('/api/kanban/import/excel', { method: 'POST', body: fd }); 
+    if(res.ok) { 
+        const r = await res.json(); 
+        await loadLeads(); 
+        renderKanbanBoard(); 
+        updateTotalCount(); 
+        showToast(`Импортировано ${r.count} лидов${r.skipped ? ` (пропущено: ${r.skipped})` : ''}`); 
+        closeImportModal(); 
+        document.getElementById('importFile').value = '';
+    } else { 
+        const err = await res.json();
+        alert('Ошибка импорта: ' + (err.error || 'Неизвестная ошибка')); 
+    } 
+}
+async function switchBoard(id) { currentBoardId = id; await loadBoardData(); renderBoardsPanel(); updateBoardUI(); resetFilters(); showToast('Доска переключена'); }
+function updateBoardUI() { const b = allBoards.find(b => b.id === currentBoardId); if(b) { document.getElementById('currentBoardTitle').innerHTML = `<i class="fas fa-chalkboard"></i> ${escapeHtml(b.title)}`; document.getElementById('boardContainer').style.background = b.color || '#0f172a'; } }
+function renderBoardsPanel() { const active = allBoards.filter(b => !b.is_archived); const panel = document.getElementById('boardsBottomPanel'); panel.innerHTML = active.map(b => `<div class="board-tab ${currentBoardId === b.id ? 'active' : ''}" onclick="switchBoard(${b.id})"><div class="board-tab-icon" style="background:${b.color || '#3b82f6'}"><i class="fas fa-columns"></i></div><span class="board-tab-name">${escapeHtml(b.title)}</span></div>`).join('') + `<div class="board-tab create-board-tab" onclick="showAddBoardModal()"><i class="fas fa-plus"></i><span style="margin-left:6px;">Создать</span></div>`; }
+function loadBoardsList() { const c = document.getElementById('boardsListContainer'); c.innerHTML = allBoards.filter(b => !b.is_archived).map(b => `<div class="board-tab ${currentBoardId === b.id ? 'active' : ''}" style="margin-bottom:8px; display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; cursor:pointer;" onclick="selectBoard(${b.id})"><div class="board-tab-icon" style="background:${b.color || '#3b82f6'}"><i class="fas fa-columns"></i></div><span style="flex:1">${escapeHtml(b.title)}</span></div>`).join(''); if(!c.innerHTML) c.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-tertiary);">Нет досок</div>'; }
+function selectBoard(id) { switchBoard(id); closeSelectBoardModal(); }
+function filterBoardsList() { const s = document.getElementById('boardSearch').value.toLowerCase(); document.querySelectorAll('#boardsListContainer .board-tab').forEach(tab => { tab.style.display = tab.innerText.toLowerCase().includes(s) ? 'flex' : 'none'; }); }
+async function loadUsersForFilters() { const res = await fetch('/api/users/list'); const users = await res.json(); const sel = document.getElementById('authorFilter'); sel.innerHTML = '<option value="all">Все сотрудники</option>' + users.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join(''); }
+async function loadUsersForMembers() { const res = await fetch('/api/users/list'); const users = await res.json(); const sel = document.getElementById('boardMembers'); sel.innerHTML = users.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join(''); }
+async function updateCurrentBoard() { await updateBoard(currentBoardId, { title: document.getElementById('settingsBoardTitle').value, color: document.getElementById('settingsBoardColor').value, is_public: parseInt(document.getElementById('settingsBoardIsPublic').value) }); closeBoardSettingsModal(); }
+async function archiveCurrentBoard() { await fetch(`/api/kanban/boards/${currentBoardId}/archive`, { method: 'PUT' }); await loadBoards(); const active = allBoards.filter(b => !b.is_archived); if(active.length) currentBoardId = active[0].id; else currentBoardId = null; await loadBoardData(); renderBoardsPanel(); updateBoardUI(); closeBoardSettingsModal(); showToast('Доска архивирована'); }
+async function deleteCurrentBoard() { if(!confirm('Удалить доску безвозвратно?')) return; await fetch(`/api/kanban/boards/${currentBoardId}`, { method: 'DELETE' }); await loadBoards(); const active = allBoards.filter(b => !b.is_archived); if(active.length) currentBoardId = active[0].id; else currentBoardId = null; await loadBoardData(); renderBoardsPanel(); updateBoardUI(); closeBoardSettingsModal(); showToast('Доска удалена'); }
+async function updateBoard(id, data) { await fetch(`/api/kanban/boards/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }); await loadBoards(); if(currentBoardId === id) updateBoardUI(); showToast('Доска обновлена'); }
+
+// ==================== FORM SUBMIT HANDLERS ====================
+document.getElementById('boardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('boardId').value;
+    const data = {
+        title: document.getElementById('boardTitle').value,
+        color: document.getElementById('boardColor').value,
+        is_public: parseInt(document.getElementById('boardIsPublic').value),
+        members: Array.from(document.getElementById('boardMembers').selectedOptions).map(o => parseInt(o.value))
+    };
+    if(id) await updateBoard(parseInt(id), data);
+    else { 
+        await fetch('/api/kanban/boards', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }); 
+        await loadBoards(); 
+        const active = allBoards.filter(b => !b.is_archived); 
+        if(active.length) { currentBoardId = active[0].id; await loadBoardData(); renderBoardsPanel(); updateBoardUI(); } 
+    }
+    closeBoardModal();
+    showToast(id ? 'Доска обновлена' : 'Доска создана');
+});
+
+document.getElementById('columnForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('columnId').value;
+    if(id) await updateColumn(parseInt(id), document.getElementById('columnTitle').value, document.getElementById('columnColor').value);
+    else await createColumn(document.getElementById('columnTitle').value, document.getElementById('columnColor').value);
+    closeColumnModal();
+});
+
+document.getElementById('leadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('leadId').value;
+    const data = {
+        client_name: document.getElementById('leadClientName').value,
+        phone: document.getElementById('leadPhone').value,
+        source: document.getElementById('leadSource').value,
+        topic: document.getElementById('leadTopic').value,
+        comment: document.getElementById('leadComment').value,
+        mortgage: parseInt(document.getElementById('leadMortgage').value),
+        box: parseInt(document.getElementById('leadBox').value)
+    };
+    if(id) await updateLead(parseInt(id), data);
+    else await createLead(data);
+    closeLeadModal();
+});
+
+document.getElementById('boardIsPublic')?.addEventListener('change', function() {
+    document.getElementById('membersGroup').style.display = this.value === '0' ? 'block' : 'none';
+});
+
+document.querySelectorAll('.color-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+        document.getElementById('columnColor').value = opt.dataset.color;
+        document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+    });
+});
+</script>
+{% endblock %}

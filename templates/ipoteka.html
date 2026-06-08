@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+{% block title %}Ипотека — Бонкҳо{% endblock %}
+
+{% block content %}
+<style>
+    .ipoteka-page {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .ipoteka-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .ipoteka-header-left h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+        letter-spacing: -0.5px;
+    }
+
+    .ipoteka-header-left p {
+        color: var(--text-soft);
+        font-size: 14px;
+    }
+
+    .ipoteka-header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* Hero card */
+    .ipoteka-hero {
+        background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+        border-radius: var(--radius-lg);
+        padding: 30px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .ipoteka-hero::before {
+        content: '';
+        position: absolute;
+        right: -60px;
+        top: -60px;
+        width: 220px;
+        height: 220px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+
+    .ipoteka-hero::after {
+        content: '';
+        position: absolute;
+        right: 80px;
+        bottom: -100px;
+        width: 240px;
+        height: 240px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 720px;
+    }
+
+    .hero-icon-wrap {
+        width: 56px;
+        height: 56px;
+        background: rgba(255,255,255,0.18);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-bottom: 14px;
+    }
+
+    .hero-content h2 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        letter-spacing: -0.5px;
+    }
+
+    .hero-content p {
+        opacity: 0.9;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Search */
+    .search-bar {
+        background: white;
+        border-radius: var(--radius);
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        border: 1.5px solid var(--border-soft);
+        transition: all 0.2s;
+    }
+
+    .search-bar:focus-within {
+        border-color: var(--green-primary);
+        box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.08);
+    }
+
+    .search-bar i {
+        color: var(--text-soft);
+        font-size: 16px;
+    }
+
+    .search-bar input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        font-family: inherit;
+        background: transparent;
+        color: var(--text-dark);
+    }
+
+    .search-stats {
+        font-size: 12px;
+        color: var(--text-soft);
+        white-space: nowrap;
+    }
+
+    /* Banks grid */
+    .banks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 22px;
+    }
+
+    .bank-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 26px;
+        border: 1.5px solid var(--border-soft);
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bank-card::before {
+        content: '';
+        position: absolute;
+        right: -50px;
+        top: -50px;
+        width: 140px;
+        height: 140px;
+        background: var(--green-soft);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .bank-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--green-primary);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .bank-card:hover::before {
+        opacity: 1;
+    }
+
+    .bank-card-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .bank-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        background: var(--green-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: var(--green-primary);
+        font-weight: 700;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .bank-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 6px;
+    }
+
+    .bank-card-title h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+    }
+
+    .bank-card-title span {
+        font-size: 12px;
+        color: var(--text-soft);
+    }
+
+    .bank-card-desc {
+        color: var(--text-medium);
+        font-size: 13px;
+        line-height: 1.5;
+        position: relative;
+        z-index: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Conditions block on card */
+    .bank-conditions-block {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .bank-condition {
+        background: var(--green-soft);
+        border-left: 3px solid var(--green-primary);
+        border-radius: 12px;
+        padding: 12px 14px;
+    }
+
+    .bank-condition.usd {
+        background: #fef9e6;
+        border-left-color: #f59e0b;
+    }
+
+    .bank-condition-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .bank-condition-curr {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--text-dark);
+    }
+
+    .bank-condition-curr .badge {
+        background: var(--green-primary);
+        color: white;
+        padding: 2px 9px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
+    .bank-condition.usd .bank-condition-curr .badge {
+        background: #f59e0b;
+    }
+
+    .bank-condition-rate {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--green-primary);
+    }
+
+    .bank-condition.usd .bank-condition-rate {
+        color: #f59e0b;
+    }
+
+    .bank-condition-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px 12px;
+        font-size: 12px;
+    }
+
+    .bank-condition-grid > div {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-medium);
+    }
+
+    .bank-condition-grid i {
+        color: var(--green-primary);
+        font-size: 11px;
+        width: 13px;
+        text-align: center;
+    }
+
+    .bank-condition.usd .bank-condition-grid i {
+        color: #f59e0b;
+    }
+
+    .bank-condition-grid b {
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    .bank-card-cta {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-soft);
+        position: relative;
+        z-index: 1;
+    }
+
+    .bank-card-cta-left {
+        font-size: 12px;
+        color: var(--text-soft);
+        font-weight: 500;
+    }
+
+    .bank-card-cta-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--green-primary);
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    /* Empty / loading */
+    .state-card {
+        grid-column: 1 / -1;
+        background: white;
+        border-radius: var(--radius);
+        padding: 60px 30px;
+        text-align: center;
+        border: 1.5px dashed var(--border-soft);
+    }
+
+    .state-card i {
+        font-size: 48px;
+        color: var(--green-primary);
+        opacity: 0.4;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .state-card h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .state-card p {
+        color: var(--text-soft);
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    /* Skeleton */
+    .skeleton-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1.5px solid var(--border-soft);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .skeleton-row {
+        background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    @media (max-width: 768px) {
+        .ipoteka-header-left h1 {
+            font-size: 24px;
+        }
+        .ipoteka-hero {
+            padding: 22px;
+        }
+        .hero-content h2 {
+            font-size: 22px;
+        }
+        .banks-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="ipoteka-page">
+    <!-- Header -->
+    <div class="ipoteka-header">
+        <div class="ipoteka-header-left">
+            <h1>Ипотека</h1>
+            <p>Шартҳои қарзи ипотекӣ дар бонкҳои Тоҷикистон</p>
+        </div>
+        <div class="ipoteka-header-actions">
+            {% if session.role == 'admin' %}
+            <a href="/admin/ipoteka" class="btn-action btn-primary" style="padding:11px 20px;border-radius:12px;font-weight:600;background:var(--green-primary);color:white;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:13px;">
+                <i class="fas fa-cog"></i> Идоракунӣ
+            </a>
+            {% endif %}
+            <button onclick="loadBanks()" class="btn-action btn-outline" style="padding:11px 20px;border-radius:12px;font-weight:600;background:white;color:var(--text-dark);border:1.5px solid var(--border-soft);display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-family:inherit;">
+                <i class="fas fa-sync-alt"></i> Навсозӣ
+            </button>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="ipoteka-hero">
+        <div class="hero-content">
+            <div class="hero-icon-wrap">
+                <i class="fas fa-house-chimney-window"></i>
+            </div>
+            <h2>Хонаи орзуи худро ба даст оред</h2>
+            <p>Шартҳои беҳтарини ипотека аз бонкҳои бузургтарини Тоҷикистон. Ҳисобкунаки ҳозиракунанда барои интихоби нархи қулай.</p>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchBanks" placeholder="Ҷустуҷӯи бонк..." oninput="filterBanks()">
+        <span class="search-stats" id="searchStats">0 бонк</span>
+    </div>
+
+    <!-- Banks grid -->
+    <div class="banks-grid" id="banksGrid">
+        <!-- Skeletons -->
+        <div class="skeleton-card">
+            <div style="display:flex;gap:14px;">
+                <div class="skeleton-row" style="width:64px;height:64px;border-radius:14px;"></div>
+                <div style="flex:1;">
+                    <div class="skeleton-row" style="height:18px;width:60%;margin-bottom:6px;"></div>
+                    <div class="skeleton-row" style="height:12px;width:40%;"></div>
+                </div>
+            </div>
+            <div class="skeleton-row" style="height:14px;width:100%;"></div>
+            <div class="skeleton-row" style="height:14px;width:80%;"></div>
+        </div>
+        <div class="skeleton-card">
+            <div style="display:flex;gap:14px;">
+                <div class="skeleton-row" style="width:64px;height:64px;border-radius:14px;"></div>
+                <div style="flex:1;">
+                    <div class="skeleton-row" style="height:18px;width:60%;margin-bottom:6px;"></div>
+                    <div class="skeleton-row" style="height:12px;width:40%;"></div>
+                </div>
+            </div>
+            <div class="skeleton-row" style="height:14px;width:100%;"></div>
+            <div class="skeleton-row" style="height:14px;width:80%;"></div>
+        </div>
+        <div class="skeleton-card">
+            <div style="display:flex;gap:14px;">
+                <div class="skeleton-row" style="width:64px;height:64px;border-radius:14px;"></div>
+                <div style="flex:1;">
+                    <div class="skeleton-row" style="height:18px;width:60%;margin-bottom:6px;"></div>
+                    <div class="skeleton-row" style="height:12px;width:40%;"></div>
+                </div>
+            </div>
+            <div class="skeleton-row" style="height:14px;width:100%;"></div>
+            <div class="skeleton-row" style="height:14px;width:80%;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let allBanks = [];
+const isAdmin = "{{ session.role }}" === "admin";
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+}
+
+function getBankInitials(name) {
+    if (!name) return 'Б';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+}
+
+function formatNumber(n) {
+    return new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
+}
+
+async function loadBanks() {
+    const grid = document.getElementById('banksGrid');
+    try {
+        const res = await fetch('/api/banks');
+        if (!res.ok) throw new Error('Хато');
+        allBanks = await res.json();
+        renderBanks(allBanks);
+    } catch (e) {
+        grid.innerHTML = `
+            <div class="state-card">
+                <i class="fas fa-circle-exclamation"></i>
+                <h3>Хатогӣ дар боргузорӣ</h3>
+                <p>Бонкҳоро бор кардан имконнопазир аст</p>
+                <button class="btn-primary" onclick="loadBanks()">
+                    <i class="fas fa-sync-alt"></i> Кӯшиши такрорӣ
+                </button>
+            </div>
+        `;
+    }
+}
+
+function renderBanks(banks) {
+    const grid = document.getElementById('banksGrid');
+    const stats = document.getElementById('searchStats');
+    stats.textContent = `${banks.length} бонк`;
+
+    if (!banks || banks.length === 0) {
+        grid.innerHTML = `
+            <div class="state-card">
+                <i class="fas fa-building-columns"></i>
+                <h3>Бонкҳо ҳоло илова нашудаанд</h3>
+                <p>${isAdmin ? 'Бо тугмаи "Идоракунӣ" бонки навро илова кунед' : 'Ҳоло ягон бонк дар система мавҷуд нест'}</p>
+                ${isAdmin ? '<a href="/admin/ipoteka" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;background:var(--green-primary);color:white;text-decoration:none;font-weight:600;font-size:13px;"><i class="fas fa-plus"></i> Илова кардан</a>' : ''}
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = banks.map(bank => {
+        const conditions = bank.conditions || [];
+
+        // Render full conditions block
+        let conditionsHtml = '';
+        if (conditions.length > 0) {
+            conditionsHtml = conditions.map(c => {
+                const isUSD = c.currency === 'USD';
+                const sym = isUSD ? '$' : 'сом.';
+                const cls = isUSD ? 'bank-condition usd' : 'bank-condition';
+                return `
+                    <div class="${cls}">
+                        <div class="bank-condition-head">
+                            <span class="bank-condition-curr">
+                                <i class="fas fa-${isUSD ? 'dollar-sign' : 'coins'}"></i>
+                                ${escapeHtml(c.currency || 'TJS')}
+                                <span class="badge">${isUSD ? 'USD' : 'TJS'}</span>
+                            </span>
+                            <span class="bank-condition-rate">${c.interest_yearly}% сол.</span>
+                        </div>
+                        <div class="bank-condition-grid">
+                            <div><i class="fas fa-percent"></i> Пешпардохт: <b>${c.down_payment_percent}%</b></div>
+                            <div><i class="fas fa-calendar-days"></i> Мӯҳлат: <b>${c.max_months || c.months || '—'} моҳ</b></div>
+                            <div><i class="fas fa-arrow-down"></i> Мин: <b>${formatNumber(c.min_amount)} ${sym}</b></div>
+                            <div><i class="fas fa-arrow-up"></i> Макс: <b>${c.max_amount > 0 ? formatNumber(c.max_amount) + ' ' + sym : '—'}</b></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const logoHtml = bank.logo
+            ? `<img src="${escapeHtml(bank.logo)}" alt="${escapeHtml(bank.name)}" onerror="this.style.display='none';this.parentNode.innerHTML='${getBankInitials(bank.name)}'">`
+            : getBankInitials(bank.name);
+
+        return `
+            <a href="/ipoteka/${escapeHtml(bank.slug)}" class="bank-card">
+                <div class="bank-card-top">
+                    <div class="bank-logo">${logoHtml}</div>
+                    <div class="bank-card-title">
+                        <h3>${escapeHtml(bank.name)}</h3>
+                        <span>${conditions.length} шарти ипотека</span>
+                    </div>
+                </div>
+                ${bank.description ? `<div class="bank-card-desc">${escapeHtml(bank.description)}</div>` : ''}
+                ${conditionsHtml ? `<div class="bank-conditions-block">${conditionsHtml}</div>` : ''}
+                <div class="bank-card-cta">
+                    <div class="bank-card-cta-left">Ҳисобкунак ва тафсилот</div>
+                    <div class="bank-card-cta-right">
+                        Дидан <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            </a>
+        `;
+    }).join('');
+}
+
+function filterBanks() {
+    const q = document.getElementById('searchBanks').value.toLowerCase().trim();
+    if (!q) {
+        renderBanks(allBanks);
+        return;
+    }
+    const filtered = allBanks.filter(b =>
+        (b.name || '').toLowerCase().includes(q) ||
+        (b.description || '').toLowerCase().includes(q) ||
+        (b.slug || '').toLowerCase().includes(q)
+    );
+    renderBanks(filtered);
+}
+
+document.addEventListener('DOMContentLoaded', loadBanks);
+</script>
+{% endblock %}

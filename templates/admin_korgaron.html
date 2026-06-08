@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Admin Korgaron{% endblock %}
+
+{% block content %}
+<style>
+    .users-table-container {
+        background: white;
+        border-radius: 24px;
+        overflow-x: auto;
+        border: 1px solid #eef2f6;
+    }
+    
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    
+    .users-table th {
+        color: #8b9dc3;
+        font-weight: 600;
+        font-size: 13px;
+        background: #fafbfc;
+    }
+    
+    .users-table td {
+        color: #5b6e8c;
+        font-size: 14px;
+    }
+    
+    .user-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .category-badge {
+        background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(124,58,237,0.1));
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        color: #2563eb;
+    }
+    
+    .btn-icon {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 6px;
+        margin: 0 4px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        color: #8b9dc3;
+    }
+    
+    .btn-icon:hover {
+        background: #f0f2f5;
+        color: #2563eb;
+    }
+    
+    .file-input-label {
+        display: inline-block;
+        padding: 8px 12px;
+        background: #f0f2f5;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #5b6e8c;
+    }
+    
+    .preview-image {
+        margin-top: 8px;
+        max-width: 100px;
+        border-radius: 12px;
+    }
+</style>
+
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1><i class="fas fa-users"></i> Admin Korgaron</h1>
+        <p>Управление сотрудниками компании</p>
+    </div>
+    <button class="btn-primary" onclick="showAddUserModal()"><i class="fas fa-plus"></i> Добавить сотрудника</button>
+</div>
+
+<div class="users-table-container">
+    <table class="users-table">
+        <thead>
+            <tr><th>Фото</th><th>ФИО</th><th>Возраст</th><th>Телефоны</th><th>Логин</th><th>Категория</th><th>Действия</th></tr>
+        </thead>
+        <tbody id="usersTableBody">
+            <tr><td colspan="7" style="text-align:center;padding:40px;">Загрузка...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Добавить сотрудника</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <form id="userForm" enctype="multipart/form-data">
+            <input type="hidden" id="userId">
+            <div style="padding: 24px;">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> ФИО *</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> Возраст *</label>
+                    <input type="number" id="age" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Личные телефоны (через запятую)</label>
+                    <input type="text" id="personalPhones" placeholder="+7xxx,+7xxx">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-briefcase"></i> Рабочие телефоны (через запятую)</label>
+                    <input type="text" id="workPhones" placeholder="+7xxx,+7xxx">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> Логин *</label>
+                    <input type="text" id="login" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Пароль <span id="passwordRequired">*</span></label>
+                    <input type="password" id="password">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Категория *</label>
+                    <select id="category" required>
+                        <option value="">Выберите...</option>
+                        <option value="Отдел закупки">Отдел закупки</option>
+                        <option value="Отдел маркетинга">Отдел маркетинга</option>
+                        <option value="Отдел продаж">Отдел продаж</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-camera"></i> Фото</label>
+                    <input type="file" id="photoFile" accept="image/*" style="display:none;" onchange="previewPhoto()">
+                    <button type="button" class="file-input-label" onclick="document.getElementById('photoFile').click()">
+                        <i class="fas fa-upload"></i> Выбрать фото
+                    </button>
+                    <div id="photoPreview"></div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Сохранить</button>
+                <button type="button" class="btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentEditId = null;
+
+function previewPhoto() {
+    const file = document.getElementById('photoFile').files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" class="preview-image">`;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+async function loadUsers() {
+    const response = await fetch('/api/users');
+    const users = await response.json();
+    
+    const tbody = document.getElementById('usersTableBody');
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;">Нет сотрудников</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.photo ? `<img src="${user.photo}" class="user-photo">` : '<i class="fas fa-user-circle" style="font-size:40px;color:#cbd5e1;"></i>'}</td>
+            <td><strong>${escapeHtml(user.full_name)}</strong></td>
+            <td>${user.age}</td>
+            <td><small>📱 ${JSON.parse(user.personal_phones || '[]').join(', ')}</small><br><small>💼 ${JSON.parse(user.work_phones || '[]').join(', ')}</small></td>
+            <td>${user.login}</td>
+            <td><span class="category-badge">${user.category}</span></td>
+            <td>
+                <button class="btn-icon" onclick="editUser(${user.id})"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon" onclick="deleteUser(${user.id})"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function showAddUserModal() {
+    currentEditId = null;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-plus"></i> Добавить сотрудника';
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    document.getElementById('passwordRequired').innerHTML = '*';
+    document.getElementById('password').required = true;
+    document.getElementById('photoPreview').innerHTML = '';
+    document.getElementById('userModal').style.display = 'block';
+}
+
+async function editUser(id) {
+    const response = await fetch('/api/users');
+    const users = await response.json();
+    const user = users.find(u => u.id === id);
+    
+    if (user) {
+        currentEditId = id;
+        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-edit"></i> Редактировать сотрудника';
+        document.getElementById('userId').value = user.id;
+        document.getElementById('fullName').value = user.full_name;
+        document.getElementById('age').value = user.age;
+        document.getElementById('personalPhones').value = JSON.parse(user.personal_phones || '[]').join(',');
+        document.getElementById('workPhones').value = JSON.parse(user.work_phones || '[]').join(',');
+        document.getElementById('login').value = user.login;
+        document.getElementById('category').value = user.category;
+        document.getElementById('passwordRequired').innerHTML = '(оставьте пустым)';
+        document.getElementById('password').required = false;
+        if (user.photo) {
+            document.getElementById('photoPreview').innerHTML = `<img src="${user.photo}" class="preview-image">`;
+        }
+        document.getElementById('userModal').style.display = 'block';
+    }
+}
+
+async function deleteUser(id) {
+    if (confirm('Удалить сотрудника?')) {
+        await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        loadUsers();
+    }
+}
+
+document.getElementById('userForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const userId = document.getElementById('userId').value;
+    const formData = new FormData();
+    
+    formData.append('full_name', document.getElementById('fullName').value);
+    formData.append('age', document.getElementById('age').value);
+    formData.append('personal_phones', document.getElementById('personalPhones').value);
+    formData.append('work_phones', document.getElementById('workPhones').value);
+    formData.append('login', document.getElementById('login').value);
+    formData.append('category', document.getElementById('category').value);
+    
+    const password = document.getElementById('password').value;
+    if (password) formData.append('password', password);
+    
+    const photoFile = document.getElementById('photoFile').files[0];
+    if (photoFile) formData.append('photo_file', photoFile);
+    
+    const url = userId ? `/api/users/${userId}` : '/api/users';
+    const method = userId ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method: method,
+        body: formData
+    });
+    
+    if (response.ok) {
+        closeModal();
+        loadUsers();
+        alert(userId ? 'Сотрудник обновлен!' : 'Сотрудник добавлен!');
+    } else {
+        const error = await response.json();
+        alert('Ошибка: ' + error.error);
+    }
+});
+
+function closeModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+loadUsers();
+</script>
+{% endblock %}

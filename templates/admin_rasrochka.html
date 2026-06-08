@@ -1,0 +1,1012 @@
+{% extends "base.html" %}
+{% block title %}Идоракунии Рассрочка{% endblock %}
+
+{% block content %}
+<style>
+    .admin-page {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .admin-header-left h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+        letter-spacing: -0.3px;
+    }
+
+    .admin-header-left p {
+        color: var(--text-soft);
+        font-size: 14px;
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-add {
+        background: var(--green-primary);
+        color: white;
+        border: none;
+        padding: 11px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-add:hover {
+        background: var(--green-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(31, 122, 77, 0.25);
+    }
+
+    .btn-back {
+        background: white;
+        color: var(--text-dark);
+        border: 1.5px solid var(--border-soft);
+        padding: 11px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+        border-color: var(--green-primary);
+        color: var(--green-primary);
+    }
+
+    /* Objects list */
+    .objects-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .object-row {
+        background: white;
+        border: 1.5px solid var(--border-soft);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+
+    .object-row:hover {
+        border-color: var(--green-primary);
+        box-shadow: var(--shadow-card);
+    }
+
+    .object-row-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        cursor: pointer;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .object-row-header:hover {
+        background: var(--green-soft);
+    }
+
+    .object-row.expanded .object-row-header {
+        background: var(--green-soft);
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .object-image-mini {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: var(--green-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green-primary);
+        font-size: 22px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .object-image-mini img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .object-row-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .object-row-info h4 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+    }
+
+    .object-row-info .meta {
+        font-size: 12px;
+        color: var(--text-soft);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .object-row-info .meta .slug-tag {
+        background: var(--bg-page);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--text-medium);
+    }
+
+    .object-row-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border-soft);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-medium);
+        transition: all 0.2s;
+        font-size: 13px;
+    }
+
+    .icon-btn:hover {
+        background: var(--green-soft);
+        color: var(--green-primary);
+        border-color: var(--green-primary);
+    }
+
+    .icon-btn.danger:hover {
+        background: #fef2f2;
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+
+    .icon-btn.toggle {
+        background: var(--green-soft);
+        color: var(--green-primary);
+        border: none;
+    }
+
+    .object-row-body {
+        padding: 18px 20px;
+        background: var(--bg-page);
+        display: none;
+    }
+
+    .object-row.expanded .object-row-body {
+        display: block;
+    }
+
+    .conditions-mini-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .condition-mini {
+        background: white;
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .condition-mini .currency-tag {
+        background: var(--green-primary);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .condition-mini .currency-tag.usd {
+        background: #f59e0b;
+    }
+
+    .condition-mini .info {
+        flex: 1;
+        font-size: 13px;
+        color: var(--text-medium);
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .condition-mini .info .title {
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .condition-mini .info b {
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    /* Modal */
+    .modal-bg {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        align-items: flex-start;
+        justify-content: center;
+        padding: 4vh 16px;
+        overflow-y: auto;
+    }
+
+    .modal-bg.show {
+        display: flex;
+    }
+
+    .modal-box {
+        background: white;
+        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 600px;
+        max-height: 92vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalIn 0.2s ease-out;
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: translateY(-20px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-head {
+        padding: 22px 24px;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-head h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .modal-close {
+        background: var(--bg-page);
+        border: none;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: var(--text-medium);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .modal-close:hover {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+
+    .modal-body {
+        padding: 22px 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-foot {
+        padding: 18px 24px;
+        border-top: 1px solid var(--border-soft);
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    /* Form */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .form-grid.single {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid > .span2 {
+        grid-column: span 2;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-medium);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+        padding: 11px 14px;
+        background: var(--bg-page);
+        border: 1.5px solid transparent;
+        border-radius: 10px;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--text-dark);
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+        border-color: var(--green-primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.08);
+    }
+
+    .field textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .field .hint {
+        font-size: 11px;
+        color: var(--text-soft);
+    }
+
+    .file-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .file-input-wrap input[type="file"] {
+        flex: 1;
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .file-preview {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        background: var(--green-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        color: var(--green-primary);
+    }
+
+    .file-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Empty state */
+    .empty-state {
+        background: white;
+        border-radius: var(--radius);
+        border: 1.5px dashed var(--border-soft);
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: var(--green-primary);
+        opacity: 0.4;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .empty-state h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--text-soft);
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    .empty-mini {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-soft);
+        font-size: 13px;
+        background: white;
+        border-radius: 10px;
+        border: 1.5px dashed var(--border-soft);
+    }
+
+    /* Toast */
+    .toast-wrap {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .toast {
+        background: white;
+        border-radius: 12px;
+        padding: 12px 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        animation: toastIn 0.3s ease-out;
+        border-left: 4px solid var(--green-primary);
+    }
+
+    .toast.error {
+        border-left-color: #ef4444;
+    }
+
+    @keyframes toastIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-grid > .span2 {
+            grid-column: span 1;
+        }
+        .object-row-header {
+            flex-wrap: wrap;
+        }
+        .admin-header-left h1 {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<div class="admin-page">
+    <div class="admin-header">
+        <div class="admin-header-left">
+            <h1><i class="fas fa-store" style="color:var(--green-primary);margin-right:8px;"></i>Идоракунии Рассрочка</h1>
+            <p>Илова, таҳрир ва нест кардани объектҳо ва шартҳои рассрочка</p>
+        </div>
+        <div class="admin-actions">
+            <a href="/rasrochka" class="btn-back">
+                <i class="fas fa-eye"></i> Намуди корбар
+            </a>
+            <button class="btn-add" onclick="openObjectModal()">
+                <i class="fas fa-plus"></i> Илова кардани объект
+            </button>
+        </div>
+    </div>
+
+    <div class="objects-list" id="objectsList">
+        <div class="empty-mini">Бор шуда истодааст...</div>
+    </div>
+</div>
+
+<!-- Modal: Object -->
+<div class="modal-bg" id="objectModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2 id="objectModalTitle">Илова кардани объект</h2>
+            <button class="modal-close" onclick="closeObjectModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="objectForm" onsubmit="saveObject(event)">
+                <input type="hidden" id="objectId">
+                <div class="form-grid single">
+                    <div class="field">
+                        <label>Номи объект *</label>
+                        <input type="text" id="objName" placeholder="Садбарг" required>
+                    </div>
+                    <div class="field">
+                        <label>Slug (URL)</label>
+                        <input type="text" id="objSlug" placeholder="sadbarg (автомат сохта мешавад)">
+                        <span class="hint">Холӣ гузоред — аз номи объект автомат сохта мешавад</span>
+                    </div>
+                    <div class="field">
+                        <label>Расм</label>
+                        <div class="file-input-wrap">
+                            <div class="file-preview" id="objImagePreview">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <input type="file" id="objImage" accept="image/*" onchange="previewObjImage(event)">
+                        </div>
+                        <span class="hint">PNG, JPG (то 5МБ)</span>
+                    </div>
+                    <div class="field">
+                        <label>Суроға</label>
+                        <input type="text" id="objAddress" placeholder="ш. Душанбе, к. Рудакӣ 100">
+                    </div>
+                    <div class="field">
+                        <label>Сохтмончӣ / Соҳиб</label>
+                        <input type="text" id="objDeveloper" placeholder="Номи сохтмончӣ">
+                    </div>
+                    <div class="field">
+                        <label>Тавсиф</label>
+                        <textarea id="objDescription" placeholder="Тавсифи объект..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-back" onclick="closeObjectModal()">Бекор</button>
+            <button class="btn-add" onclick="document.getElementById('objectForm').requestSubmit()">
+                <i class="fas fa-save"></i> Захира
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Condition -->
+<div class="modal-bg" id="conditionModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2 id="conditionModalTitle">Илова кардани шарт</h2>
+            <button class="modal-close" onclick="closeConditionModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="conditionForm" onsubmit="saveCondition(event)">
+                <input type="hidden" id="conditionId">
+                <input type="hidden" id="conditionObjId">
+                <div class="form-grid">
+                    <div class="field span2">
+                        <label>Унвони шарт</label>
+                        <input type="text" id="condTitle" placeholder="Шарти стандартӣ">
+                    </div>
+                    <div class="field">
+                        <label>Валюта *</label>
+                        <select id="condCurrency" required>
+                            <option value="TJS">Сомонӣ (TJS)</option>
+                            <option value="USD">Доллари ИМА (USD)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Мӯҳлат (моҳ) *</label>
+                        <input type="number" id="condMonths" min="1" placeholder="12" value="12" required>
+                    </div>
+                    <div class="field">
+                        <label>Пешпардохт (%) *</label>
+                        <input type="number" id="condDownPayment" step="0.1" min="0" max="100" placeholder="30" value="30" required>
+                    </div>
+                    <div class="field">
+                        <label>Пешпардохти минималӣ (бо валюта)</label>
+                        <input type="number" id="condInterest" step="1" min="0" placeholder="0" value="0">
+                        <small style="color:#777;font-size:11px;display:block;margin-top:4px;"></small>
+                    </div>
+                    <div class="field">
+                        <label>Нархи минималӣ</label>
+                        <input type="number" id="condMinPrice" min="0" placeholder="10000">
+                    </div>
+                    <div class="field">
+                        <label>Нархи максималӣ</label>
+                        <input type="number" id="condMaxPrice" min="0" placeholder="500000">
+                    </div>
+                    <div class="field span2">
+                        <label>Қоидаи пардохти моҳона</label>
+                        <textarea id="condRule" placeholder="Масалан: Пардохти баробар ҳар моҳ" style="min-height:60px;"></textarea>
+                    </div>
+                    <div class="field span2">
+                        <label>Шартҳои иловагӣ</label>
+                        <textarea id="condExtra" placeholder="Шартҳои махсус..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-back" onclick="closeConditionModal()">Бекор</button>
+            <button class="btn-add" onclick="document.getElementById('conditionForm').requestSubmit()">
+                <i class="fas fa-save"></i> Захира
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+let allObjects = [];
+let expandedObjId = null;
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+}
+
+function fmt(n) {
+    return new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
+}
+
+function showToast(text, type = 'success') {
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.className = `toast ${type === 'error' ? 'error' : ''}`;
+    t.innerHTML = `<i class="fas fa-${type === 'error' ? 'circle-exclamation' : 'circle-check'}"></i><span>${escapeHtml(text)}</span>`;
+    wrap.appendChild(t);
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(20px)';
+        setTimeout(() => t.remove(), 300);
+    }, 3000);
+}
+
+// ============ OBJECTS ============
+async function loadObjects() {
+    try {
+        const res = await fetch('/api/installment-objects');
+        if (!res.ok) throw new Error('Хато');
+        allObjects = await res.json();
+        renderObjects();
+    } catch (e) {
+        document.getElementById('objectsList').innerHTML =
+            `<div class="empty-state"><i class="fas fa-circle-exclamation"></i><h3>Хато</h3><p>Маълумотро бор кардан имконнопазир аст</p></div>`;
+    }
+}
+
+function renderObjects() {
+    const list = document.getElementById('objectsList');
+    if (!allObjects.length) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-store"></i>
+                <h3>Объектҳо ҳоло илова нашудаанд</h3>
+                <p>Объекти навро бо тугмаи "Илова кардани объект" илова кунед</p>
+                <button class="btn-add" onclick="openObjectModal()">
+                    <i class="fas fa-plus"></i> Илова кардани аввалин объект
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = allObjects.map(obj => {
+        const isExpanded = expandedObjId === obj.id;
+        const conditions = obj.conditions || [];
+
+        const imageHtml = obj.image
+            ? `<img src="${escapeHtml(obj.image)}" alt="" onerror="this.parentNode.innerHTML='<i class=\\'fas fa-store\\'></i>'">`
+            : `<i class="fas fa-store"></i>`;
+
+        let conditionsHtml = '';
+        if (conditions.length === 0) {
+            conditionsHtml = `<div class="empty-mini">Шартҳо ҳоло илова нашудаанд</div>`;
+        } else {
+            conditionsHtml = conditions.map(c => {
+                const isUSD = c.currency === 'USD';
+                const sym = isUSD ? '$' : 'сом.';
+                const title = c.title || 'Шарти стандартӣ';
+                return `
+                    <div class="condition-mini">
+                        <span class="currency-tag ${isUSD ? 'usd' : ''}">${c.currency}</span>
+                        <div class="info">
+                            <span class="title">${escapeHtml(title)}</span>
+                            <span>Пешпардохт: <b>${c.down_payment_percent}%</b></span>
+                            <span><b>${c.months}</b> моҳ</span>
+                            <span>Пешп. мин.: <b>${fmt(c.interest_percent)} ${sym}</b></span>
+                            <span>Нарх: <b>${fmt(c.min_price)}-${fmt(c.max_price)} ${sym}</b></span>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="icon-btn" onclick="editCondition(${c.id}, ${obj.id})" title="Таҳрир">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="icon-btn danger" onclick="deleteCondition(${c.id})" title="Нест кардан">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        return `
+            <div class="object-row ${isExpanded ? 'expanded' : ''}">
+                <div class="object-row-header" onclick="toggleObject(${obj.id})">
+                    <div class="object-image-mini">${imageHtml}</div>
+                    <div class="object-row-info">
+                        <h4>${escapeHtml(obj.name)}</h4>
+                        <div class="meta">
+                            <span class="slug-tag">/rasrochka/${escapeHtml(obj.slug)}</span>
+                            ${obj.address ? `<span><i class="fas fa-location-dot"></i> ${escapeHtml(obj.address)}</span>` : ''}
+                            <span><i class="fas fa-list-check"></i> ${conditions.length} шарт</span>
+                        </div>
+                    </div>
+                    <div class="object-row-actions" onclick="event.stopPropagation()">
+                        <button class="icon-btn" onclick="editObject(${obj.id})" title="Таҳрир">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="icon-btn danger" onclick="deleteObject(${obj.id})" title="Нест кардан">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="icon-btn toggle" onclick="toggleObject(${obj.id})" title="Шартҳо">
+                            <i class="fas fa-chevron-${isExpanded ? 'up' : 'down'}"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="object-row-body">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <h5 style="font-size:14px;color:var(--text-dark);font-weight:700;">Шартҳои рассрочка</h5>
+                        <button class="btn-add" style="padding:8px 14px;font-size:12px;" onclick="openConditionModal(${obj.id})">
+                            <i class="fas fa-plus"></i> Илова шарт
+                        </button>
+                    </div>
+                    <div class="conditions-mini-list">
+                        ${conditionsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleObject(objId) {
+    expandedObjId = expandedObjId === objId ? null : objId;
+    renderObjects();
+}
+
+function openObjectModal(obj = null) {
+    document.getElementById('objectForm').reset();
+    document.getElementById('objectId').value = '';
+    document.getElementById('objImagePreview').innerHTML = '<i class="fas fa-image"></i>';
+
+    if (obj) {
+        document.getElementById('objectModalTitle').textContent = 'Таҳрири объект';
+        document.getElementById('objectId').value = obj.id;
+        document.getElementById('objName').value = obj.name || '';
+        document.getElementById('objSlug').value = obj.slug || '';
+        document.getElementById('objAddress').value = obj.address || '';
+        document.getElementById('objDeveloper').value = obj.developer || '';
+        document.getElementById('objDescription').value = obj.description || '';
+        if (obj.image) {
+            document.getElementById('objImagePreview').innerHTML = `<img src="${escapeHtml(obj.image)}" alt="">`;
+        }
+    } else {
+        document.getElementById('objectModalTitle').textContent = 'Илова кардани объект';
+    }
+
+    document.getElementById('objectModal').classList.add('show');
+}
+
+function closeObjectModal() {
+    document.getElementById('objectModal').classList.remove('show');
+}
+
+function previewObjImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        document.getElementById('objImagePreview').innerHTML = `<img src="${ev.target.result}" alt="">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+function editObject(objId) {
+    const obj = allObjects.find(o => o.id === objId);
+    if (obj) openObjectModal(obj);
+}
+
+async function deleteObject(objId) {
+    const obj = allObjects.find(o => o.id === objId);
+    if (!obj) return;
+    if (!confirm(`Объекти "${obj.name}"-ро бо ҳамаи шартҳояш нест кунед?`)) return;
+
+    try {
+        const res = await fetch(`/api/installment-objects/${objId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Объект нест карда шуд');
+            loadObjects();
+        } else {
+            showToast(data.error || 'Хато', 'error');
+        }
+    } catch (e) {
+        showToast('Хато дар нест кардан', 'error');
+    }
+}
+
+async function saveObject(e) {
+    e.preventDefault();
+    const id = document.getElementById('objectId').value;
+    const formData = new FormData();
+    formData.append('name', document.getElementById('objName').value);
+    formData.append('slug', document.getElementById('objSlug').value);
+    formData.append('address', document.getElementById('objAddress').value);
+    formData.append('developer', document.getElementById('objDeveloper').value);
+    formData.append('description', document.getElementById('objDescription').value);
+
+    const imageFile = document.getElementById('objImage').files[0];
+    if (imageFile) formData.append('image', imageFile);
+
+    try {
+        const url = id ? `/api/installment-objects/${id}` : '/api/installment-objects';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast(id ? 'Объект таҳрир шуд' : 'Объект илова шуд');
+            closeObjectModal();
+            loadObjects();
+        } else {
+            showToast(data.error || 'Хато', 'error');
+        }
+    } catch (err) {
+        showToast('Хато дар захира', 'error');
+    }
+}
+
+// ============ CONDITIONS ============
+function openConditionModal(objId, condition = null) {
+    document.getElementById('conditionForm').reset();
+    document.getElementById('conditionId').value = '';
+    document.getElementById('conditionObjId').value = objId;
+
+    if (condition) {
+        document.getElementById('conditionModalTitle').textContent = 'Таҳрири шарт';
+        document.getElementById('conditionId').value = condition.id;
+        document.getElementById('condTitle').value = condition.title || '';
+        document.getElementById('condCurrency').value = condition.currency || 'TJS';
+        document.getElementById('condMonths').value = condition.months || 12;
+        document.getElementById('condDownPayment').value = condition.down_payment_percent || 30;
+        document.getElementById('condInterest').value = condition.interest_percent || 0;
+        document.getElementById('condMinPrice').value = condition.min_price || 0;
+        document.getElementById('condMaxPrice').value = condition.max_price || 0;
+        document.getElementById('condRule').value = condition.monthly_payment_rule || '';
+        document.getElementById('condExtra').value = condition.extra_conditions || '';
+    } else {
+        document.getElementById('conditionModalTitle').textContent = 'Илова кардани шарт';
+        document.getElementById('condMonths').value = 12;
+        document.getElementById('condDownPayment').value = 30;
+        document.getElementById('condInterest').value = 0;
+    }
+
+    document.getElementById('conditionModal').classList.add('show');
+}
+
+function closeConditionModal() {
+    document.getElementById('conditionModal').classList.remove('show');
+}
+
+function editCondition(condId, objId) {
+    const obj = allObjects.find(o => o.id === objId);
+    if (!obj) return;
+    const cond = (obj.conditions || []).find(c => c.id === condId);
+    if (cond) openConditionModal(objId, cond);
+}
+
+async function deleteCondition(condId) {
+    if (!confirm('Шартро нест кунед?')) return;
+    try {
+        const res = await fetch(`/api/installment-conditions/${condId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Шарт нест карда шуд');
+            loadObjects();
+        } else {
+            showToast(data.error || 'Хато', 'error');
+        }
+    } catch (e) {
+        showToast('Хато дар нест кардан', 'error');
+    }
+}
+
+async function saveCondition(e) {
+    e.preventDefault();
+    const id = document.getElementById('conditionId').value;
+    const objId = document.getElementById('conditionObjId').value;
+
+    const data = {
+        title: document.getElementById('condTitle').value,
+        currency: document.getElementById('condCurrency').value,
+        months: document.getElementById('condMonths').value,
+        down_payment_percent: document.getElementById('condDownPayment').value,
+        interest_percent: document.getElementById('condInterest').value,
+        min_price: document.getElementById('condMinPrice').value,
+        max_price: document.getElementById('condMaxPrice').value,
+        monthly_payment_rule: document.getElementById('condRule').value,
+        extra_conditions: document.getElementById('condExtra').value
+    };
+
+    try {
+        const url = id ? `/api/installment-conditions/${id}` : `/api/installment-objects/${objId}/conditions`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            showToast(id ? 'Шарт таҳрир шуд' : 'Шарт илова шуд');
+            closeConditionModal();
+            loadObjects();
+        } else {
+            showToast(result.error || 'Хато', 'error');
+        }
+    } catch (err) {
+        showToast('Хато дар захира', 'error');
+    }
+}
+
+document.querySelectorAll('.modal-bg').forEach(m => {
+    m.addEventListener('click', e => {
+        if (e.target === m) m.classList.remove('show');
+    });
+});
+
+document.addEventListener('DOMContentLoaded', loadObjects);
+</script>
+{% endblock %}

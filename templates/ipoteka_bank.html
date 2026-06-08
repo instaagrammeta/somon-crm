@@ -1,0 +1,867 @@
+{% extends "base.html" %}
+{% block title %}{{ bank.name if bank else 'Бонк' }} — Ипотека{% endblock %}
+
+{% block content %}
+<style>
+    .bank-page {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-soft);
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+        color: var(--text-medium);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb a:hover {
+        color: var(--green-primary);
+    }
+
+    .breadcrumb i {
+        font-size: 10px;
+    }
+
+    /* Bank header */
+    .bank-hero {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 28px;
+        border: 1.5px solid var(--border-soft);
+        margin-bottom: 22px;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .bank-hero-logo {
+        width: 110px;
+        height: 110px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, var(--green-soft), var(--green-light));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 38px;
+        font-weight: 800;
+        color: var(--green-primary);
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .bank-hero-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 12px;
+    }
+
+    .bank-hero-info {
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .bank-hero-info h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+        letter-spacing: -0.5px;
+    }
+
+    .bank-hero-info p {
+        color: var(--text-medium);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Stats grid */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .stat-mini-card {
+        background: white;
+        border: 1.5px solid var(--border-soft);
+        border-radius: 16px;
+        padding: 18px;
+        transition: all 0.2s;
+    }
+
+    .stat-mini-card:hover {
+        border-color: var(--green-primary);
+        transform: translateY(-2px);
+    }
+
+    .stat-mini-icon {
+        width: 38px;
+        height: 38px;
+        background: var(--green-soft);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green-primary);
+        margin-bottom: 12px;
+    }
+
+    .stat-mini-label {
+        font-size: 11px;
+        color: var(--text-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .stat-mini-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .stat-mini-suffix {
+        font-size: 12px;
+        color: var(--text-soft);
+        margin-left: 4px;
+        font-weight: 500;
+    }
+
+    /* Layout: conditions + calculator */
+    .bank-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+        .bank-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .panel-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1.5px solid var(--border-soft);
+    }
+
+    .panel-card h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .panel-card h3 i {
+        color: var(--green-primary);
+    }
+
+    /* Conditions list */
+    .conditions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .condition-item {
+        background: var(--green-soft);
+        border-radius: 14px;
+        padding: 16px;
+        border-left: 3px solid var(--green-primary);
+    }
+
+    .condition-item.usd {
+        background: #fef9e6;
+        border-left-color: #f59e0b;
+    }
+
+    .condition-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .condition-currency {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 15px;
+    }
+
+    .condition-currency .badge {
+        padding: 3px 10px;
+        background: var(--green-primary);
+        color: white;
+        border-radius: 16px;
+        font-size: 11px;
+    }
+
+    .condition-item.usd .condition-currency .badge {
+        background: #f59e0b;
+    }
+
+    .condition-rate-big {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--green-primary);
+    }
+
+    .condition-item.usd .condition-rate-big {
+        color: #f59e0b;
+    }
+
+    .condition-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px 16px;
+        font-size: 13px;
+    }
+
+    .condition-grid > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 4px 0;
+    }
+
+    .condition-grid .label {
+        color: var(--text-medium);
+    }
+
+    .condition-grid .value {
+        color: var(--text-dark);
+        font-weight: 600;
+    }
+
+    .condition-extra {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed rgba(0,0,0,0.08);
+        font-size: 12px;
+        color: var(--text-medium);
+        line-height: 1.5;
+    }
+
+    /* Calculator */
+    .calc-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .calc-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .calc-row label {
+        font-size: 12px;
+        color: var(--text-medium);
+        font-weight: 600;
+    }
+
+    .calc-row input,
+    .calc-row select {
+        padding: 12px 14px;
+        background: var(--bg-page);
+        border: 1.5px solid transparent;
+        border-radius: 12px;
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--text-dark);
+        transition: all 0.2s;
+        outline: none;
+    }
+
+    .calc-row input:focus,
+    .calc-row select:focus {
+        border-color: var(--green-primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.08);
+    }
+
+    .calc-input-group {
+        position: relative;
+    }
+
+    .calc-input-group input {
+        width: 100%;
+        padding-right: 60px;
+    }
+
+    .calc-input-group .suffix {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        color: var(--text-soft);
+        font-weight: 600;
+    }
+
+    .calc-btn {
+        background: var(--green-primary);
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+        font-family: inherit;
+        margin-top: 4px;
+    }
+
+    .calc-btn:hover {
+        background: var(--green-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(31, 122, 77, 0.3);
+    }
+
+    /* Calculator result */
+    .calc-result {
+        margin-top: 18px;
+        background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+        border-radius: 16px;
+        padding: 20px;
+        color: white;
+        display: none;
+    }
+
+    .calc-result.show {
+        display: block;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .calc-result-main {
+        font-size: 13px;
+        opacity: 0.9;
+        margin-bottom: 4px;
+    }
+
+    .calc-result-value {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 14px;
+        letter-spacing: -0.5px;
+    }
+
+    .calc-result-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .calc-result-grid > div {
+        font-size: 13px;
+    }
+
+    .calc-result-grid .lbl {
+        opacity: 0.85;
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+
+    .calc-result-grid .val {
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .calc-warning {
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: #fef3c7;
+        color: #b45309;
+        border-radius: 10px;
+        font-size: 12px;
+        display: none;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .calc-warning.show {
+        display: flex;
+    }
+
+    /* 404 */
+    .not-found-state {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 80px 20px;
+        text-align: center;
+        border: 1.5px dashed var(--border-soft);
+    }
+
+    .not-found-state i {
+        font-size: 56px;
+        color: var(--green-primary);
+        opacity: 0.4;
+        margin-bottom: 18px;
+    }
+
+    .not-found-state h2 {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .not-found-state p {
+        color: var(--text-soft);
+        margin-bottom: 18px;
+    }
+
+    .empty-mini {
+        color: var(--text-soft);
+        font-size: 13px;
+        text-align: center;
+        padding: 20px;
+        background: var(--bg-page);
+        border-radius: 12px;
+    }
+
+    @media (max-width: 768px) {
+        .bank-hero-info h1 {
+            font-size: 22px;
+        }
+        .bank-hero-logo {
+            width: 80px;
+            height: 80px;
+            font-size: 28px;
+        }
+        .calc-result-value {
+            font-size: 26px;
+        }
+    }
+</style>
+
+<div class="bank-page">
+    {% if bank %}
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="/">Дашборд</a>
+        <i class="fas fa-chevron-right"></i>
+        <a href="/ipoteka">Ипотека</a>
+        <i class="fas fa-chevron-right"></i>
+        <span style="color:var(--text-dark);font-weight:600;">{{ bank.name }}</span>
+    </div>
+
+    <!-- Hero -->
+    <div class="bank-hero">
+        <div class="bank-hero-logo" id="bankLogoBox">
+            {% if bank.logo %}
+            <img src="{{ bank.logo }}" alt="{{ bank.name }}" onerror="this.style.display='none';">
+            {% else %}
+            {{ bank.name[0]|upper if bank.name else 'Б' }}
+            {% endif %}
+        </div>
+        <div class="bank-hero-info">
+            <h1>{{ bank.name }}</h1>
+            <p>{{ bank.description or 'Шартҳои ипотекаи бонк' }}</p>
+        </div>
+        {% if session.role == 'admin' %}
+        <a href="/admin/ipoteka" style="padding:11px 20px;border-radius:12px;background:var(--green-soft);color:var(--green-primary);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:13px;border:1.5px solid var(--green-soft);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--green-primary)'" onmouseout="this.style.borderColor='var(--green-soft)'">
+            <i class="fas fa-cog"></i> Идоракунӣ
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+        <!-- Заполняется через JS -->
+    </div>
+
+    <!-- Two columns: conditions + calculator -->
+    <div class="bank-layout">
+        <!-- Conditions -->
+        <div class="panel-card">
+            <h3><i class="fas fa-list-check"></i> Шартҳои ипотека</h3>
+            <div class="conditions-list" id="conditionsList">
+                <div class="empty-mini">Бор шуда истодааст...</div>
+            </div>
+        </div>
+
+        <!-- Calculator -->
+        <div class="panel-card" style="height:fit-content;position:sticky;top:14px;">
+            <h3><i class="fas fa-calculator"></i> Ҳисобкунаки ипотека</h3>
+            <form class="calc-form" onsubmit="calculateMortgage(event)">
+                <div class="calc-row">
+                    <label>Валюта</label>
+                    <select id="calcCurrency" onchange="onCurrencyChange()">
+                        <option value="">Шартҳо боргузорӣ мешаванд...</option>
+                    </select>
+                </div>
+
+                <div class="calc-row">
+                    <label>Нархи манзил</label>
+                    <div class="calc-input-group">
+                        <input type="number" id="calcPrice" placeholder="500000" min="0" step="1000" required>
+                        <span class="suffix" id="calcPriceSuffix">сомонӣ</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <label>Пешпардохт (% аз нархи манзил)</label>
+                    <div class="calc-input-group">
+                        <input type="number" id="calcDown" placeholder="30" min="0" max="100" step="0.1" required>
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <label>Мӯҳлати қарз</label>
+                    <div class="calc-input-group">
+                        <input type="number" id="calcMonths" placeholder="120" min="1" step="1" required>
+                        <span class="suffix">моҳ</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <label>Фоизи солона</label>
+                    <div class="calc-input-group">
+                        <input type="number" id="calcRate" placeholder="20" min="0" step="0.01" required>
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="calc-btn">
+                    <i class="fas fa-calculator"></i> Ҳисоб кардан
+                </button>
+            </form>
+
+            <div class="calc-warning" id="calcWarning">
+                <i class="fas fa-circle-info" style="margin-top:2px;"></i>
+                <span id="calcWarningText"></span>
+            </div>
+
+            <div class="calc-result" id="calcResult">
+                <div class="calc-result-main">Пардохти моҳона</div>
+                <div class="calc-result-value" id="resultMonthly">0</div>
+                <div class="calc-result-grid">
+                    <div>
+                        <div class="lbl">Маблағи қарз</div>
+                        <div class="val" id="resultLoan">0</div>
+                    </div>
+                    <div>
+                        <div class="lbl">Пешпардохт</div>
+                        <div class="val" id="resultDown">0</div>
+                    </div>
+                    <div>
+                        <div class="lbl">Пардохти умумӣ</div>
+                        <div class="val" id="resultTotal">0</div>
+                    </div>
+                    <div>
+                        <div class="lbl">Изофапардохт</div>
+                        <div class="val" id="resultOverpay">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- 404 -->
+    <div class="breadcrumb">
+        <a href="/">Дашборд</a>
+        <i class="fas fa-chevron-right"></i>
+        <a href="/ipoteka">Ипотека</a>
+        <i class="fas fa-chevron-right"></i>
+        <span style="color:var(--text-dark);">Ёфт нашуд</span>
+    </div>
+    <div class="not-found-state">
+        <i class="fas fa-circle-question"></i>
+        <h2>Бонк ёфт нашуд</h2>
+        <p>Бонки бо номи "{{ slug }}" дар системаи мо мавҷуд нест.</p>
+        <a href="/ipoteka" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;background:var(--green-primary);color:white;text-decoration:none;font-weight:600;font-size:13px;">
+            <i class="fas fa-arrow-left"></i> Бозгашт ба рӯйхати бонкҳо
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if bank %}
+<script>
+const BANK_ID = {{ bank.id }};
+const BANK_NAME = "{{ bank.name|e }}";
+let bankConditions = [];
+let activeCondition = null;
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+}
+
+function fmt(n) {
+    return new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
+}
+
+function fmt2(n) {
+    return new Intl.NumberFormat('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n || 0);
+}
+
+function getCurrencySymbol(currency) {
+    return currency === 'USD' ? '$' : 'сомонӣ';
+}
+
+async function loadConditions() {
+    try {
+        const res = await fetch(`/api/banks/${BANK_ID}/conditions`);
+        if (!res.ok) throw new Error('Хато');
+        bankConditions = await res.json();
+        renderConditions();
+        renderStats();
+        fillCurrencySelect();
+    } catch (e) {
+        document.getElementById('conditionsList').innerHTML =
+            `<div class="empty-mini">Хато дар боргузорӣ</div>`;
+    }
+}
+
+function renderStats() {
+    const tjs = bankConditions.find(c => c.currency === 'TJS');
+    const usd = bankConditions.find(c => c.currency === 'USD');
+    const c = tjs || bankConditions[0];
+
+    if (!c) {
+        document.getElementById('statsRow').innerHTML = '';
+        return;
+    }
+
+    const cards = [];
+
+    if (tjs) {
+        cards.push(`
+            <div class="stat-mini-card">
+                <div class="stat-mini-icon"><i class="fas fa-coins"></i></div>
+                <div class="stat-mini-label">Сомонӣ — солона</div>
+                <div class="stat-mini-value">${tjs.interest_yearly}<span class="stat-mini-suffix">%</span></div>
+            </div>
+        `);
+    }
+    if (usd) {
+        cards.push(`
+            <div class="stat-mini-card">
+                <div class="stat-mini-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-mini-label">USD — солона</div>
+                <div class="stat-mini-value">${usd.interest_yearly}<span class="stat-mini-suffix">%</span></div>
+            </div>
+        `);
+    }
+    cards.push(`
+        <div class="stat-mini-card">
+            <div class="stat-mini-icon"><i class="fas fa-percent"></i></div>
+            <div class="stat-mini-label">Пешпардохт аз</div>
+            <div class="stat-mini-value">${c.down_payment_percent}<span class="stat-mini-suffix">%</span></div>
+        </div>
+    `);
+    cards.push(`
+        <div class="stat-mini-card">
+            <div class="stat-mini-icon"><i class="fas fa-calendar-days"></i></div>
+            <div class="stat-mini-label">Мӯҳлат то</div>
+            <div class="stat-mini-value">${c.max_months}<span class="stat-mini-suffix">моҳ</span></div>
+        </div>
+    `);
+
+    document.getElementById('statsRow').innerHTML = cards.join('');
+}
+
+function renderConditions() {
+    const list = document.getElementById('conditionsList');
+    if (!bankConditions.length) {
+        list.innerHTML = `
+            <div class="empty-mini">
+                Шартҳо ҳоло илова нашудаанд
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = bankConditions.map(c => {
+        const isUSD = c.currency === 'USD';
+        const sym = isUSD ? '$' : 'сом.';
+        const cls = isUSD ? 'condition-item usd' : 'condition-item';
+
+        let extras = [];
+        if (c.guarantor_required) extras.push('<i class="fas fa-user-check"></i> Зомин лозим аст');
+        if (c.collateral_required) extras.push('<i class="fas fa-shield-halved"></i> Гарав лозим аст');
+
+        return `
+            <div class="${cls}">
+                <div class="condition-header">
+                    <div class="condition-currency">
+                        <i class="fas fa-${isUSD ? 'dollar-sign' : 'coins'}"></i>
+                        ${isUSD ? 'Доллари ИМА' : 'Сомонӣ'}
+                        <span class="badge">${c.currency}</span>
+                    </div>
+                    <div class="condition-rate-big">${c.interest_yearly}% / сол</div>
+                </div>
+                <div class="condition-grid">
+                    <div><span class="label">Фоизи моҳона:</span><span class="value">${c.interest_monthly}%</span></div>
+                    <div><span class="label">Пешпардохт:</span><span class="value">${c.down_payment_percent}%</span></div>
+                    <div><span class="label">Мӯҳлат:</span><span class="value">${c.min_months}-${c.max_months} моҳ</span></div>
+                    <div><span class="label">Маблағи қарз:</span><span class="value">${fmt(c.min_amount)}-${fmt(c.max_amount)} ${sym}</span></div>
+                </div>
+                ${extras.length || c.extra_conditions ? `
+                    <div class="condition-extra">
+                        ${extras.length ? extras.join(' &nbsp;•&nbsp; ') : ''}
+                        ${c.extra_conditions ? `<div style="margin-top:6px;">${escapeHtml(c.extra_conditions)}</div>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function fillCurrencySelect() {
+    const sel = document.getElementById('calcCurrency');
+    if (!bankConditions.length) {
+        sel.innerHTML = '<option value="">Шартҳо мавҷуд нест</option>';
+        return;
+    }
+    sel.innerHTML = bankConditions.map((c, i) => {
+        const label = c.currency === 'USD' ? 'Доллари ИМА (USD)' : 'Сомонӣ (TJS)';
+        return `<option value="${i}">${label} — ${c.interest_yearly}% / сол</option>`;
+    }).join('');
+    sel.selectedIndex = 0;
+    onCurrencyChange();
+}
+
+function onCurrencyChange() {
+    const idx = parseInt(document.getElementById('calcCurrency').value, 10);
+    if (isNaN(idx) || !bankConditions[idx]) return;
+    activeCondition = bankConditions[idx];
+
+    document.getElementById('calcPriceSuffix').textContent =
+        activeCondition.currency === 'USD' ? '$' : 'сомонӣ';
+    document.getElementById('calcDown').value = activeCondition.down_payment_percent;
+    document.getElementById('calcMonths').value = Math.min(120, activeCondition.max_months);
+    document.getElementById('calcRate').value = activeCondition.interest_yearly;
+
+    if (!document.getElementById('calcPrice').value) {
+        const suggest = activeCondition.max_amount > 0
+            ? Math.min(500000, activeCondition.max_amount)
+            : 500000;
+        document.getElementById('calcPrice').value = suggest;
+    }
+
+    document.getElementById('calcResult').classList.remove('show');
+    document.getElementById('calcWarning').classList.remove('show');
+}
+
+function showWarning(text) {
+    document.getElementById('calcWarningText').textContent = text;
+    document.getElementById('calcWarning').classList.add('show');
+}
+
+function hideWarning() {
+    document.getElementById('calcWarning').classList.remove('show');
+}
+
+function calculateMortgage(e) {
+    e.preventDefault();
+    hideWarning();
+
+    if (!activeCondition) {
+        showWarning('Аввал валютаро интихоб кунед');
+        return;
+    }
+
+    const price = parseFloat(document.getElementById('calcPrice').value) || 0;
+    const downPct = parseFloat(document.getElementById('calcDown').value) || 0;
+    const months = parseInt(document.getElementById('calcMonths').value, 10) || 0;
+    const yearlyRate = parseFloat(document.getElementById('calcRate').value) || 0;
+
+    if (price <= 0) { showWarning('Нархи манзилро ворид кунед'); return; }
+    if (months <= 0) { showWarning('Мӯҳлатро ворид кунед'); return; }
+
+    const downAmount = price * downPct / 100;
+    const loanAmount = price - downAmount;
+
+    if (loanAmount <= 0) {
+        showWarning('Маблағи қарз бояд аз 0 калонтар бошад');
+        return;
+    }
+
+    // Annuity formula
+    const monthlyRate = yearlyRate / 100 / 12;
+    let monthlyPayment;
+    if (monthlyRate === 0) {
+        monthlyPayment = loanAmount / months;
+    } else {
+        monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, months))
+                        / (Math.pow(1 + monthlyRate, months) - 1);
+    }
+
+    const totalPayment = monthlyPayment * months;
+    const overpayment = totalPayment - loanAmount;
+
+    // Validation against bank limits
+    const warnings = [];
+    if (activeCondition.min_amount > 0 && loanAmount < activeCondition.min_amount) {
+        warnings.push(`Маблағи қарз аз минимуми бонк (${fmt(activeCondition.min_amount)}) камтар аст`);
+    }
+    if (activeCondition.max_amount > 0 && loanAmount > activeCondition.max_amount) {
+        warnings.push(`Маблағи қарз аз максимуми бонк (${fmt(activeCondition.max_amount)}) зиёдтар аст`);
+    }
+    if (months < activeCondition.min_months) {
+        warnings.push(`Мӯҳлат аз минимуми бонк (${activeCondition.min_months} моҳ) камтар аст`);
+    }
+    if (months > activeCondition.max_months) {
+        warnings.push(`Мӯҳлат аз максимуми бонк (${activeCondition.max_months} моҳ) зиёдтар аст`);
+    }
+    if (downPct < activeCondition.down_payment_percent) {
+        warnings.push(`Пешпардохт бояд на камтар аз ${activeCondition.down_payment_percent}% бошад`);
+    }
+    if (warnings.length) {
+        showWarning(warnings.join(' • '));
+    }
+
+    const sym = activeCondition.currency === 'USD' ? '$' : 'сом.';
+
+    document.getElementById('resultMonthly').textContent = `${fmt(monthlyPayment)} ${sym}`;
+    document.getElementById('resultLoan').textContent = `${fmt(loanAmount)} ${sym}`;
+    document.getElementById('resultDown').textContent = `${fmt(downAmount)} ${sym}`;
+    document.getElementById('resultTotal').textContent = `${fmt(totalPayment + downAmount)} ${sym}`;
+    document.getElementById('resultOverpay').textContent = `${fmt(overpayment)} ${sym}`;
+
+    document.getElementById('calcResult').classList.add('show');
+}
+
+document.addEventListener('DOMContentLoaded', loadConditions);
+</script>
+{% endif %}
+{% endblock %}

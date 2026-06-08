@@ -1,0 +1,1616 @@
+{% extends "base.html" %}
+{% block title %}SIM картаҳо ва Телефонҳои корхона{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
+    
+    .sim-container {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid #eef2f6;
+        overflow: hidden;
+        margin: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .page-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #eef2f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: linear-gradient(135deg, #fff, #fafbfc);
+    }
+    
+    .search-box {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .search-box input {
+        padding: 10px 16px;
+        background: #f8fafc;
+        border: 1px solid #e1e4e8;
+        border-radius: 12px;
+        width: 260px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(37,99,235,0.2);
+    }
+    
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 10px 20px;
+        border-radius: 12px;
+        color: #475569;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+        background: #e2e8f0;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        border: 1px solid #e2e8f0;
+        padding: 8px 16px;
+        border-radius: 10px;
+        color: #475569;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+    
+    .btn-outline:hover {
+        background: #f8fafc;
+        border-color: #2563eb;
+        color: #2563eb;
+    }
+    
+    .btn-danger-sm {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border: none;
+        padding: 5px 10px;
+        border-radius: 8px;
+        color: white;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 0 4px;
+    }
+    
+    .btn-danger-sm:hover {
+        background: #dc2626;
+        transform: scale(1.02);
+    }
+    
+    .btn-success-sm {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        padding: 5px 10px;
+        border-radius: 8px;
+        color: white;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 0 4px;
+    }
+    
+    .btn-success-sm:hover {
+        background: #059669;
+        transform: scale(1.02);
+    }
+    
+    .btn-warning-sm {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: none;
+        padding: 5px 10px;
+        border-radius: 8px;
+        color: white;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 0 4px;
+    }
+    
+    .btn-warning-sm:hover {
+        background: #d97706;
+    }
+    
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid #eef2f6;
+        background: white;
+        padding: 0 24px;
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .tab-btn i {
+        margin-right: 8px;
+    }
+    
+    .tab-btn.active {
+        color: #2563eb;
+    }
+    
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #2563eb;
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 0;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .sim-table-container {
+        overflow-x: auto;
+        padding: 0;
+    }
+    
+    .sim-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .sim-table th,
+    .sim-table td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    
+    .sim-table th {
+        background: #fafbfc;
+        color: #5b6e8c;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .sim-table td {
+        color: #1a1a2e;
+        font-size: 13px;
+    }
+    
+    .sim-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .employee-select, .phone-select {
+        padding: 6px 10px;
+        background: #f8fafc;
+        border: 1px solid #e1e4e8;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        width: 100%;
+        min-width: 140px;
+    }
+    
+    .phone-number {
+        font-family: monospace;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2563eb;
+    }
+    
+    .badge-assigned {
+        background: #d1fae5;
+        color: #059669;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .badge-free {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .badge-active {
+        background: #dbeafe;
+        color: #1d4ed8;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .badge-expired {
+        background: #fef3c7;
+        color: #d97706;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .btn-icon {
+        background: transparent;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        color: #8b9dc3;
+    }
+    
+    .btn-icon:hover {
+        background: #f0f2f5;
+        color: #ef4444;
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin: 20px 24px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid #eef2f6;
+        text-align: center;
+        transition: all 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card h4 {
+        font-size: 12px;
+        color: #8b9dc3;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-card h4 i {
+        margin-right: 5px;
+    }
+    
+    .stat-card .value {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    
+    .stat-card .small {
+        font-size: 12px;
+        color: #8b9dc3;
+        margin-top: 4px;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+        background: white;
+        margin: 3% auto;
+        width: 90%;
+        max-width: 750px;
+        border-radius: 28px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        animation: modalFadeIn 0.3s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #eef2f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #f8fafc, #fff);
+        border-radius: 28px 28px 0 0;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+    
+    .modal-header h2 {
+        font-size: 18px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #1e293b;
+    }
+    
+    .close {
+        font-size: 28px;
+        cursor: pointer;
+        color: #94a3b8;
+        transition: color 0.2s;
+    }
+    
+    .close:hover {
+        color: #ef4444;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+    }
+    
+    .form-group label i {
+        margin-right: 6px;
+        color: #2563eb;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.2s;
+        background: #fff;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    
+    .modal-buttons {
+        padding: 16px 24px;
+        border-top: 1px solid #eef2f6;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        background: #fafbfc;
+        border-radius: 0 0 28px 28px;
+        position: sticky;
+        bottom: 0;
+        background: white;
+        z-index: 10;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #8b9dc3;
+    }
+    
+    .filter-bar {
+        padding: 16px 24px;
+        background: #fafbfc;
+        border-bottom: 1px solid #eef2f6;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .filter-bar input, .filter-bar select {
+        padding: 8px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 13px;
+        background: white;
+    }
+    
+    .export-buttons {
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+    }
+    
+    .payment-history {
+        max-height: 450px;
+        overflow-y: auto;
+        padding: 16px;
+    }
+    
+    .payment-item {
+        background: white;
+        border: 1px solid #eef2f6;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 10px;
+        transition: all 0.2s;
+    }
+    
+    .payment-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-color: #cbd5e1;
+    }
+    
+    .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .row-2cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .row-3cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+    }
+    
+    hr {
+        margin: 15px 0;
+        border-color: #eef2f6;
+    }
+    
+    .tariff-box {
+        background: #f0f9ff;
+        padding: 16px;
+        border-radius: 16px;
+        margin-top: 10px;
+        border-left: 4px solid #2563eb;
+    }
+    
+    .tariff-title {
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: #1e293b;
+    }
+    
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 20px 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #eef2f6;
+        color: #1e293b;
+    }
+    
+    .section-title i {
+        margin-right: 8px;
+        color: #2563eb;
+    }
+    
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        z-index: 2000;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .toast-notification.error {
+        background: #ef4444;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .row-2cols, .row-3cols {
+            grid-template-columns: 1fr;
+        }
+        .export-buttons {
+            margin-left: 0;
+        }
+    }
+</style>
+
+<div class="sim-container">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-sim-card"></i> SIM картаҳо ва Телефонҳои корхона</h1>
+            <p style="color: #8b9dc3; margin-top: 4px; font-size: 13px;"><i class="fas fa-chart-line"></i> Управление SIM картами, телефонами и тарифами сотрудников</p>
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search" style="color: #8b9dc3;"></i>
+            <input type="text" id="searchInput" placeholder="Поиск по номеру, модели..." onkeyup="filterAll()">
+            <button class="btn-primary" onclick="showAddSimModal()"><i class="fas fa-plus-circle"></i> SIM карта</button>
+            <button class="btn-primary" onclick="showAddPhoneModal()" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fas fa-mobile-alt"></i> Телефон</button>
+        </div>
+    </div>
+    
+    <div class="stats-cards" id="statsContainer">
+        <div class="stat-card">
+            <h4><i class="fas fa-sim-card"></i> SIM картаҳо</h4>
+            <div class="value" id="totalSims">0</div>
+            <div class="small">Аз он: <span id="assignedSims">0</span> истифода</div>
+        </div>
+        <div class="stat-card">
+            <h4><i class="fas fa-mobile-alt"></i> Телефонҳо</h4>
+            <div class="value" id="totalPhones">0</div>
+            <div class="small">Аз он: <span id="usedPhones">0</span> истифода</div>
+        </div>
+        <div class="stat-card">
+            <h4><i class="fas fa-calendar-check"></i> Тарифҳои фаъол</h4>
+            <div class="value" id="activeTariffs">0</div>
+            <div class="small">Тарифҳои амалкунанда</div>
+        </div>
+        <div class="stat-card">
+            <h4><i class="fas fa-credit-card"></i> Маблағи моҳона</h4>
+            <div class="value" id="monthlyCost">0</div>
+            <div class="small"><i class="fas fa-dollar-sign"></i> сомонӣ / моҳ</div>
+        </div>
+    </div>
+    
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('sims')"><i class="fas fa-sim-card"></i> SIM картаҳо</button>
+        <button class="tab-btn" onclick="showTab('phones')"><i class="fas fa-mobile-alt"></i> Телефонҳо</button>
+        <button class="tab-btn" onclick="showTab('tariffs')"><i class="fas fa-charging-station"></i> Тарифҳо</button>
+        <button class="tab-btn" onclick="showTab('payments')"><i class="fas fa-history"></i> История оплат</button>
+    </div>
+    
+    <!-- TAB 1: SIM CARDS -->
+    <div id="simsTab" class="tab-content active">
+        <div class="filter-bar">
+            <input type="text" id="simSearch" placeholder="🔍 Фильтр по номеру..." onkeyup="filterSims()">
+            <select id="simStatusFilter" onchange="filterSims()">
+                <option value="all">📱 Ҳамаи SIM</option>
+                <option value="assigned">✅ В использовании</option>
+                <option value="free">📭 Свободные</option>
+            </select>
+            <div class="export-buttons">
+                <button class="btn-outline" onclick="exportToExcel('sims')"><i class="fas fa-file-excel"></i> Экспорт SIM</button>
+                <button class="btn-outline" onclick="exportToExcel('phones')"><i class="fas fa-file-excel"></i> Экспорт телефонов</button>
+                <button class="btn-outline" onclick="exportToExcel('tariffs')"><i class="fas fa-file-excel"></i> Экспорт тарифов</button>
+                <button class="btn-outline" onclick="exportToExcel('payments')"><i class="fas fa-file-excel"></i> Экспорт оплат</button>
+            </div>
+        </div>
+        <div class="sim-table-container">
+            <table class="sim-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th><i class="fas fa-phone"></i> Номер</th>
+                        <th><i class="fas fa-building"></i> Оператор</th>
+                        <th><i class="fas fa-user"></i> Сотрудник</th>
+                        <th><i class="fas fa-mobile-alt"></i> Телефон</th>
+                        <th><i class="fas fa-align-left"></i> Описание</th>
+                        <th><i class="fas fa-chart-simple"></i> Тариф</th>
+                        <th><i class="fas fa-flag-checkered"></i> Статус</th>
+                        <th><i class="fas fa-cogs"></i> Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="simTableBody">
+                    <tr><td colspan="9" class="empty-state"><i class="fas fa-spinner fa-spin"></i> Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- TAB 2: COMPANY PHONES -->
+    <div id="phonesTab" class="tab-content">
+        <div class="filter-bar">
+            <input type="text" id="phoneSearch" placeholder="🔍 Поиск по модели..." onkeyup="filterPhones()">
+            <select id="phoneStatusFilter" onchange="filterPhones()">
+                <option value="all">📱 Ҳамаи телефонҳо</option>
+                <option value="used">✅ Истифода мешавад</option>
+                <option value="free">📭 Свободные</option>
+            </select>
+        </div>
+        <div class="sim-table-container">
+            <table class="sim-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th><i class="fas fa-tag"></i> Модель</th>
+                        <th><i class="fas fa-barcode"></i> Код</th>
+                        <th><i class="fas fa-user"></i> Сотрудник</th>
+                        <th><i class="fas fa-align-left"></i> Описание</th>
+                        <th><i class="fas fa-flag-checkered"></i> Статус</th>
+                        <th><i class="fas fa-cogs"></i> Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="phoneTableBody">
+                    <tr><td colspan="7" class="empty-state">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- TAB 3: TARIFFS -->
+    <div id="tariffsTab" class="tab-content">
+        <div class="filter-bar">
+            <input type="text" id="tariffSearch" placeholder="🔍 Поиск по номеру SIM..." onkeyup="filterTariffs()">
+            <select id="tariffStatusFilter" onchange="filterTariffs()">
+                <option value="all">🌐 Ҳамаи тарифҳо</option>
+                <option value="active">✅ Фаъол</option>
+                <option value="inactive">⛔ Ғайрифаъол</option>
+            </select>
+        </div>
+        <div class="sim-table-container">
+            <table class="sim-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th><i class="fas fa-sim-card"></i> SIM карта</th>
+                        <th><i class="fas fa-building"></i> Оператор</th>
+                        <th><i class="fas fa-hourglass-half"></i> Минуты</th>
+                        <th><i class="fas fa-database"></i> ГБ</th>
+                        <th><i class="fas fa-envelope"></i> SMS</th>
+                        <th><i class="fas fa-money-bill-wave"></i> Нарх</th>
+                        <th><i class="fas fa-calendar-alt"></i> Санаи оғоз</th>
+                        <th><i class="fas fa-calendar-check"></i> Санаи анҷом</th>
+                        <th><i class="fas fa-toggle-on"></i> Статус</th>
+                        <th><i class="fas fa-cogs"></i> Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="tariffTableBody">
+                    <tr><td colspan="11" class="empty-state">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- TAB 4: PAYMENTS HISTORY -->
+    <div id="paymentsTab" class="tab-content">
+        <div class="filter-bar">
+            <input type="text" id="paymentSearch" placeholder="🔍 Поиск по номеру SIM..." onkeyup="filterPayments()">
+        </div>
+        <div class="payment-history" id="paymentList">
+            <div class="empty-state">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL FOR SIM CARD -->
+<div id="simModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="simModalTitle"><i class="fas fa-plus-circle"></i> SIM карта</h2>
+            <span class="close" onclick="closeSimModal()">&times;</span>
+        </div>
+        <form id="simForm">
+            <input type="hidden" id="simId">
+            <div style="padding: 24px;">
+                <div class="section-title"><i class="fas fa-sim-card"></i> Маълумоти SIM карта</div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-phone"></i> Номер телефона *</label>
+                        <input type="tel" id="phoneNumber" required placeholder="+992 XX XXX XX XX">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-building"></i> Оператор *</label>
+                        <select id="operator" required>
+                            <option value="Tcell">📶 Tcell</option>
+                            <option value="Megafon">📶 Megafon</option>
+                            <option value="Babilon">📶 Babilon</option>
+                            <option value="Zet-Mobile">📶 Zet-Mobile</option>
+                            <option value="O-Mobile">📶 O-Mobile</option>
+                            <option value="Anor">📶 Anor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-user-tie"></i> Сотрудник</label>
+                        <select id="assignedTo">
+                            <option value="">-- Свободный --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-mobile-alt"></i> Телефон (модел)</label>
+                        <select id="phoneIdSelect">
+                            <option value="">-- Свободный --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Описание</label>
+                    <textarea id="simDescription" rows="2" placeholder="Дополнительная информация..."></textarea>
+                </div>
+                
+                <div class="section-title"><i class="fas fa-charging-station"></i> Тариф (ихтиёрӣ)</div>
+                <div class="row-3cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-hourglass-half"></i> Минуты</label>
+                        <input type="number" id="tariffMinutes" value="0" placeholder="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-database"></i> ГБ интернет</label>
+                        <input type="number" id="tariffGb" step="0.5" value="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> SMS</label>
+                        <input type="number" id="tariffSms" value="0" placeholder="0">
+                    </div>
+                </div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-money-bill-wave"></i> Нарх (сомонӣ)</label>
+                        <input type="number" id="tariffCost" step="0.01" value="0" placeholder="Сумма">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Санаи оғоз</label>
+                        <input type="date" id="tariffStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-check"></i> Санаи анҷом</label>
+                        <input type="date" id="tariffEndDate">
+                    </div>
+                </div>
+                <div class="tariff-box">
+                    <div class="tariff-title"><i class="fas fa-info-circle"></i> Маълумот:</div>
+                    <small>Агар тарифро пур кунед, пас аз сохтани SIM карта тариф автомати фаъол карда мешавад ва маблағ ба "История оплат" илова мегардад. Агар тарифро холо гузоред, метавонед баъдтар аз қисми "Тарифҳо" илова кунед (барои ин дар сатри SIM карта тугмаи <strong>➕ Тариф</strong>-ро зер кунед).</small>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Сохранить</button>
+                <button type="button" class="btn-secondary" onclick="closeSimModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL FOR TARIFF (ADD/EDIT) -->
+<div id="tariffModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="tariffModalTitle"><i class="fas fa-charging-station"></i> Тариф</h2>
+            <span class="close" onclick="closeTariffModal()">&times;</span>
+        </div>
+        <form id="tariffForm">
+            <input type="hidden" id="tariffId">
+            <input type="hidden" id="tariffSimId">
+            <div style="padding: 24px;">
+                <div class="form-group">
+                    <label><i class="fas fa-sim-card"></i> SIM карта</label>
+                    <input type="text" id="tariffSimNumber" readonly style="background:#f1f5f9;">
+                </div>
+                <div class="row-3cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-hourglass-half"></i> Минуты</label>
+                        <input type="number" id="tariffEditMinutes" value="0" placeholder="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-database"></i> ГБ интернет</label>
+                        <input type="number" id="tariffEditGb" step="0.5" value="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> SMS</label>
+                        <input type="number" id="tariffEditSms" value="0" placeholder="0">
+                    </div>
+                </div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-money-bill-wave"></i> Нарх (сомонӣ)</label>
+                        <input type="number" id="tariffEditCost" step="0.01" value="0" placeholder="Сумма">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Санаи оғоз</label>
+                        <input type="date" id="tariffEditStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-check"></i> Санаи анҷом</label>
+                        <input type="date" id="tariffEditEndDate">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Сохранить и активировать</button>
+                <button type="button" class="btn-secondary" onclick="closeTariffModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL FOR COMPANY PHONE -->
+<div id="phoneModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="phoneModalTitle"><i class="fas fa-mobile-alt"></i> Телефон корхона</h2>
+            <span class="close" onclick="closePhoneModal()">&times;</span>
+        </div>
+        <form id="phoneForm">
+            <input type="hidden" id="phoneId">
+            <div style="padding: 24px;">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Модель телефона *</label>
+                    <input type="text" id="phoneModel" required placeholder="iPhone 13, Samsung A53, Xiaomi...">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-barcode"></i> Код телефона</label>
+                    <input type="text" id="phoneCode" readonly style="background:#f1f5f9;">
+                    <small><i class="fas fa-magic"></i> Автоматически генерируется</small>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user-tie"></i> Сотрудник</label>
+                    <select id="phoneAssignedTo">
+                        <option value="">-- Свободный --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Описание</label>
+                    <textarea id="phoneDescription" rows="2" placeholder="Цвет, состояние, комплектация..."></textarea>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Сохранить</button>
+                <button type="button" class="btn-secondary" onclick="closePhoneModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Global variables
+let simCardsData = [];
+let companyPhonesData = [];
+let tariffsData = [];
+let paymentsData = [];
+let employeesList = [];
+
+// Helper functions
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    let d = new Date(dateStr);
+    return d.toLocaleDateString('ru-RU');
+}
+
+function showToast(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification' + (isError ? ' error' : '');
+    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// TABS
+function showTab(tabName, event = null) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`${tabName}Tab`).classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
+    else {
+        const btns = document.querySelectorAll('.tab-btn');
+        for (let btn of btns) {
+            if (btn.innerText.toLowerCase().includes(tabName)) {
+                btn.classList.add('active');
+                break;
+            }
+        }
+    }
+    if (tabName === 'tariffs') loadTariffs();
+    if (tabName === 'payments') loadPayments();
+}
+
+// Load data
+async function loadEmployees() {
+    const resp = await fetch('/api/users/list');
+    employeesList = await resp.json();
+    const select = document.getElementById('assignedTo');
+    const phoneSelect = document.getElementById('phoneAssignedTo');
+    if (select) {
+        select.innerHTML = '<option value="">-- Свободный --</option>' + 
+            employeesList.map(emp => `<option value="${emp.id}">${escapeHtml(emp.full_name)} (${emp.category})</option>`).join('');
+    }
+    if (phoneSelect) {
+        phoneSelect.innerHTML = '<option value="">-- Свободный --</option>' + 
+            employeesList.map(emp => `<option value="${emp.id}">${escapeHtml(emp.full_name)} (${emp.category})</option>`).join('');
+    }
+}
+
+async function loadCompanyPhones() {
+    const resp = await fetch('/api/company-phones');
+    companyPhonesData = await resp.json();
+    const phoneSelect = document.getElementById('phoneIdSelect');
+    if (phoneSelect) {
+        phoneSelect.innerHTML = '<option value="">-- Свободный --</option>' + 
+            companyPhonesData.map(ph => `<option value="${ph.id}">${escapeHtml(ph.model)} (${ph.phone_id})</option>`).join('');
+    }
+    renderPhonesTable();
+    updateStats();
+}
+
+async function loadSimCards() {
+    const resp = await fetch('/api/sim-cards');
+    simCardsData = await resp.json();
+    renderSimsTable();
+    updateStats();
+}
+
+async function loadTariffs() {
+    const resp = await fetch('/api/sim-tariffs');
+    tariffsData = await resp.json();
+    renderTariffsTable();
+    updateStats();
+}
+
+async function loadPayments() {
+    const resp = await fetch('/api/tariff-payments');
+    paymentsData = await resp.json();
+    renderPaymentsList();
+    updateStats();
+}
+
+async function updateStats() {
+    const totalSims = simCardsData.length;
+    const assignedSims = simCardsData.filter(s => s.assigned_to && s.assigned_to > 0).length;
+    const totalPhones = companyPhonesData.length;
+    const usedPhones = companyPhonesData.filter(p => p.assigned_to && p.assigned_to > 0).length;
+    const activeTariffs = tariffsData.filter(t => t.status === 'active').length;
+    
+    let monthlyCost = 0;
+    tariffsData.forEach(t => {
+        if (t.status === 'active' && t.cost) {
+            monthlyCost += parseFloat(t.cost) || 0;
+        }
+    });
+    
+    document.getElementById('totalSims').textContent = totalSims;
+    document.getElementById('assignedSims').textContent = assignedSims;
+    document.getElementById('totalPhones').textContent = totalPhones;
+    document.getElementById('usedPhones').textContent = usedPhones;
+    document.getElementById('activeTariffs').textContent = activeTariffs;
+    document.getElementById('monthlyCost').textContent = monthlyCost.toFixed(2);
+}
+
+// RENDER SIMS
+function filterSims() {
+    const search = document.getElementById('simSearch').value.toLowerCase();
+    const status = document.getElementById('simStatusFilter').value;
+    let filtered = [...simCardsData];
+    if (search) filtered = filtered.filter(s => s.phone_number.toLowerCase().includes(search));
+    if (status === 'assigned') filtered = filtered.filter(s => s.assigned_to && s.assigned_to > 0);
+    else if (status === 'free') filtered = filtered.filter(s => !s.assigned_to || s.assigned_to === 0);
+    renderSimsTable(filtered);
+}
+
+function renderSimsTable(data = null) {
+    const tbody = document.getElementById('simTableBody');
+    const items = data || simCardsData;
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><i class="fas fa-database"></i> Нет SIM карт</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = items.map(sim => {
+        const employee = employeesList.find(e => e.id === sim.assigned_to);
+        const phone = companyPhonesData.find(p => p.id === sim.phone_id);
+        const statusClass = (sim.assigned_to && sim.assigned_to > 0) ? 'badge-assigned' : 'badge-free';
+        const statusText = (sim.assigned_to && sim.assigned_to > 0) ? '✅ В использовании' : '📱 Свободна';
+        
+        const activeTariff = tariffsData.find(t => t.sim_id === sim.id && t.status === 'active');
+        const tariffDisplay = activeTariff ? `${activeTariff.minutes}мин / ${activeTariff.gb}ГБ / ${activeTariff.cost}сом` : '<span style="color:#cbd5e1;">Нет тарифа</span>';
+        
+        return `
+            <tr>
+                <td>${sim.id}</td>
+                <td class="phone-number"><i class="fas fa-phone"></i> ${escapeHtml(sim.phone_number)}</td>
+                <td><i class="fas fa-building"></i> ${escapeHtml(sim.operator)}</td>
+                <td>
+                    <select class="employee-select" onchange="changeSimAssignment(${sim.id}, this.value)">
+                        <option value="">-- Свободный --</option>
+                        ${employeesList.map(emp => `<option value="${emp.id}" ${sim.assigned_to === emp.id ? 'selected' : ''}>${escapeHtml(emp.full_name)}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select class="phone-select" onchange="changeSimPhone(${sim.id}, this.value)">
+                        <option value="">-- Свободный --</option>
+                        ${companyPhonesData.map(ph => `<option value="${ph.id}" ${sim.phone_id === ph.id ? 'selected' : ''}>${escapeHtml(ph.model)}</option>`).join('')}
+                    </select>
+                </td>
+                <td><small>${escapeHtml(sim.description || '-')}</small></td>
+                <td><small>${tariffDisplay}</small></td>
+                <td><span class="${statusClass}">${statusText}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="editSimCard(${sim.id})" title="Редактировать"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon" onclick="showAddTariffModal(${sim.id}, '${escapeHtml(sim.phone_number)}')" title="Добавить тариф"><i class="fas fa-plus-circle"></i></button>
+                    <button class="btn-icon" onclick="deleteSimCard(${sim.id})" title="Удалить"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// RENDER PHONES
+function filterPhones() {
+    const search = document.getElementById('phoneSearch').value.toLowerCase();
+    const status = document.getElementById('phoneStatusFilter').value;
+    let filtered = [...companyPhonesData];
+    if (search) filtered = filtered.filter(p => p.model.toLowerCase().includes(search) || (p.phone_id && p.phone_id.toLowerCase().includes(search)));
+    if (status === 'used') filtered = filtered.filter(p => p.assigned_to && p.assigned_to > 0);
+    else if (status === 'free') filtered = filtered.filter(p => !p.assigned_to || p.assigned_to === 0);
+    renderPhonesTable(filtered);
+}
+
+function renderPhonesTable(data = null) {
+    const tbody = document.getElementById('phoneTableBody');
+    const items = data || companyPhonesData;
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-mobile-alt"></i> Нет телефонов</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.map(phone => {
+        const employee = employeesList.find(e => e.id === phone.assigned_to);
+        const statusClass = (phone.assigned_to && phone.assigned_to > 0) ? 'badge-assigned' : 'badge-free';
+        const statusText = (phone.assigned_to && phone.assigned_to > 0) ? '✅ Используется' : '📱 Свободен';
+        return `
+            <tr>
+                <td>${phone.id}</td>
+                <td><i class="fas fa-mobile-alt"></i> <strong>${escapeHtml(phone.model)}</strong></td>
+                <td><code>${escapeHtml(phone.phone_id || '-')}</code></td>
+                <td>
+                    <select class="employee-select" onchange="changePhoneAssignment(${phone.id}, this.value)">
+                        <option value="">-- Свободный --</option>
+                        ${employeesList.map(emp => `<option value="${emp.id}" ${phone.assigned_to === emp.id ? 'selected' : ''}>${escapeHtml(emp.full_name)}</option>`).join('')}
+                    </select>
+                </td>
+                <td><small>${escapeHtml(phone.description || '-')}</small></td>
+                <td><span class="${statusClass}">${statusText}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="editPhone(${phone.id})" title="Редактировать"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon" onclick="deletePhone(${phone.id})" title="Удалить"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// RENDER TARIFFS
+function filterTariffs() {
+    const search = document.getElementById('tariffSearch').value.toLowerCase();
+    const status = document.getElementById('tariffStatusFilter').value;
+    let filtered = [...tariffsData];
+    if (search) filtered = filtered.filter(t => (t.phone_number && t.phone_number.toLowerCase().includes(search)));
+    if (status !== 'all') filtered = filtered.filter(t => t.status === status);
+    renderTariffsTable(filtered);
+}
+
+function renderTariffsTable(data = null) {
+    const tbody = document.getElementById('tariffTableBody');
+    const items = data || tariffsData;
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><i class="fas fa-charging-station"></i> Нет тарифов</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.map(t => {
+        const statusClass = t.status === 'active' ? 'badge-active' : 'badge-expired';
+        const statusText = t.status === 'active' ? '✅ Фаъол' : '⛔ Ғайрифаъол';
+        return `
+            <tr>
+                <td>${t.id}</td>
+                <td><i class="fas fa-sim-card"></i> ${escapeHtml(t.phone_number || '-')}</td>
+                <td>${escapeHtml(t.operator || '-')}</td>
+                <td>${t.minutes || 0}</td>
+                <td>${t.gb || 0}</td>
+                <td>${t.sms || 0}</td>
+                <td><strong>${parseFloat(t.cost || 0).toFixed(2)} сом</strong></td>
+                <td>${t.start_date || '-'}</td>
+                <td>${t.end_date || '-'}</td>
+                <td><span class="${statusClass}">${statusText}</span></td>
+                <td>
+                    <button class="btn-warning-sm" onclick="editTariff(${t.id})" title="Редактировать"><i class="fas fa-edit"></i> Ред.</button>
+                    ${t.status === 'active' ? 
+                        `<button class="btn-danger-sm" onclick="deactivateTariff(${t.id})"><i class="fas fa-power-off"></i> Деакт.</button>` : 
+                        `<button class="btn-success-sm" onclick="activateTariffAgain(${t.id})"><i class="fas fa-play"></i> Акт.</button>`
+                    }
+                    <button class="btn-danger-sm" onclick="deleteTariffAndPayment(${t.id})"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// RENDER PAYMENTS
+function filterPayments() {
+    const search = document.getElementById('paymentSearch').value.toLowerCase();
+    let filtered = [...paymentsData];
+    if (search) filtered = filtered.filter(p => (p.phone_number && p.phone_number.toLowerCase().includes(search)));
+    renderPaymentsList(filtered);
+}
+
+function renderPaymentsList(data = null) {
+    const container = document.getElementById('paymentList');
+    const items = data || paymentsData;
+    if (!items.length) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i> Нет истории оплат</div>';
+        return;
+    }
+    container.innerHTML = items.map(p => `
+        <div class="payment-item">
+            <div class="flex-between">
+                <div>
+                    <strong><i class="fas fa-sim-card"></i> ${escapeHtml(p.phone_number || '-')}</strong> 
+                    <span style="color:#64748b;">(${escapeHtml(p.operator || '-')})</span>
+                </div>
+                <div><strong style="color:#10b981;">${parseFloat(p.amount || 0).toFixed(2)} сом</strong></div>
+            </div>
+            <div style="font-size:12px; color:#64748b; margin-top:8px;">
+                <i class="fas fa-calendar-check"></i> Оплачено: ${p.payment_date || '-'} &nbsp;|&nbsp;
+                <i class="fas fa-calendar-alt"></i> Период: ${p.start_date || '-'} — ${p.end_date || '-'}
+            </div>
+            <div style="margin-top:10px;">
+                <button class="btn-danger-sm" onclick="deletePayment(${p.id})"><i class="fas fa-trash"></i> Удалить оплату</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// TARIFF CRUD
+async function showAddTariffModal(simId, phoneNumber) {
+    document.getElementById('tariffModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Иловаи тариф';
+    document.getElementById('tariffId').value = '';
+    document.getElementById('tariffSimId').value = simId;
+    document.getElementById('tariffSimNumber').value = phoneNumber;
+    document.getElementById('tariffEditMinutes').value = 0;
+    document.getElementById('tariffEditGb').value = 0;
+    document.getElementById('tariffEditSms').value = 0;
+    document.getElementById('tariffEditCost').value = 0;
+    document.getElementById('tariffEditStartDate').value = '';
+    document.getElementById('tariffEditEndDate').value = '';
+    document.getElementById('tariffModal').style.display = 'block';
+}
+
+async function editTariff(tariffId) {
+    const tariff = tariffsData.find(t => t.id === tariffId);
+    if (!tariff) return;
+    const sim = simCardsData.find(s => s.id === tariff.sim_id);
+    document.getElementById('tariffModalTitle').innerHTML = '<i class="fas fa-edit"></i> Таҳрири тариф';
+    document.getElementById('tariffId').value = tariff.id;
+    document.getElementById('tariffSimId').value = tariff.sim_id;
+    document.getElementById('tariffSimNumber').value = sim ? sim.phone_number : '';
+    document.getElementById('tariffEditMinutes').value = tariff.minutes || 0;
+    document.getElementById('tariffEditGb').value = tariff.gb || 0;
+    document.getElementById('tariffEditSms').value = tariff.sms || 0;
+    document.getElementById('tariffEditCost').value = tariff.cost || 0;
+    document.getElementById('tariffEditStartDate').value = tariff.start_date || '';
+    document.getElementById('tariffEditEndDate').value = tariff.end_date || '';
+    document.getElementById('tariffModal').style.display = 'block';
+}
+
+function closeTariffModal() {
+    document.getElementById('tariffModal').style.display = 'none';
+}
+
+document.getElementById('tariffForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const tariffId = document.getElementById('tariffId').value;
+    const data = {
+        sim_id: parseInt(document.getElementById('tariffSimId').value),
+        minutes: parseInt(document.getElementById('tariffEditMinutes').value) || 0,
+        gb: parseFloat(document.getElementById('tariffEditGb').value) || 0,
+        sms: parseInt(document.getElementById('tariffEditSms').value) || 0,
+        cost: parseFloat(document.getElementById('tariffEditCost').value) || 0,
+        start_date: document.getElementById('tariffEditStartDate').value,
+        end_date: document.getElementById('tariffEditEndDate').value
+    };
+    
+    if (!data.start_date || !data.end_date) {
+        showToast('Лутфан санаи оғоз ва анҷомро интихоб кунед!', true);
+        return;
+    }
+    
+    if (data.cost <= 0) {
+        showToast('Нарх бояд аз 0 калон бошад!', true);
+        return;
+    }
+    
+    const url = tariffId ? `/api/sim-tariffs/${tariffId}` : '/api/sim-tariffs';
+    const method = tariffId ? 'PUT' : 'POST';
+    
+    const resp = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    const result = await resp.json();
+    
+    if (result.success) {
+        closeTariffModal();
+        loadTariffs();
+        loadPayments();
+        showToast(tariffId ? 'Тариф таҳрир шуд ва фаъол карда шуд' : 'Тариф илова шуд ва фаъол карда шуд');
+    } else {
+        showToast('Хатогӣ: ' + (result.error || 'Номаълум'), true);
+    }
+});
+
+async function deactivateTariff(tariffId) {
+    if (!confirm('Деактивировать этот тариф? SIM карта перестанет работать по этому тарифу.')) return;
+    const resp = await fetch(`/api/sim-tariffs/${tariffId}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status: 'inactive' })
+    });
+    if (resp.ok) {
+        loadTariffs();
+        showToast('Тариф деактивирован');
+    } else showToast('Ошибка при деактивации', true);
+}
+
+async function activateTariffAgain(tariffId) {
+    if (!confirm('Активировать этот тариф? Предыдущий активный тариф будет деактивирован.')) return;
+    const resp = await fetch(`/api/sim-tariffs/${tariffId}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status: 'active' })
+    });
+    if (resp.ok) {
+        loadTariffs();
+        showToast('Тариф активирован');
+    } else showToast('Ошибка при активации', true);
+}
+
+async function deleteTariffAndPayment(tariffId) {
+    if (confirm('Удалить тариф и все связанные с ним оплаты? Это действие необратимо.')) {
+        const resp = await fetch(`/api/sim-tariffs/${tariffId}`, { method: 'DELETE' });
+        if (resp.ok) {
+            loadTariffs();
+            loadPayments();
+            showToast('Тариф и история оплат удалены');
+        } else showToast('Ошибка при удалении', true);
+    }
+}
+
+async function deletePayment(paymentId) {
+    if (confirm('Удалить запись об оплате?')) {
+        const resp = await fetch(`/api/tariff-payments/${paymentId}`, { method: 'DELETE' });
+        if (resp.ok) {
+            loadPayments();
+            showToast('Оплата удалена');
+        } else showToast('Ошибка при удалении', true);
+    }
+}
+
+// SIM CARD CRUD
+async function changeSimAssignment(id, employeeId) {
+    const resp = await fetch(`/api/sim-cards/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ assigned_to: employeeId ? parseInt(employeeId) : null })
+    });
+    if (resp.ok) loadSimCards();
+    else showToast('Ошибка', true);
+}
+
+async function changeSimPhone(id, phoneId) {
+    const resp = await fetch(`/api/sim-cards/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ phone_id: phoneId ? parseInt(phoneId) : null })
+    });
+    if (resp.ok) loadSimCards();
+    else showToast('Ошибка', true);
+}
+
+async function deleteSimCard(id) {
+    if (confirm('Удалить SIM карту?')) {
+        const resp = await fetch(`/api/sim-cards/${id}`, { method: 'DELETE' });
+        if (resp.ok) {
+            loadSimCards();
+            loadTariffs();
+            loadPayments();
+            showToast('SIM карта удалена');
+        } else showToast('Ошибка', true);
+    }
+}
+
+function editSimCard(id) {
+    const sim = simCardsData.find(s => s.id === id);
+    if (!sim) return;
+    document.getElementById('simModalTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать SIM карту';
+    document.getElementById('simId').value = sim.id;
+    document.getElementById('phoneNumber').value = sim.phone_number;
+    document.getElementById('operator').value = sim.operator;
+    document.getElementById('assignedTo').value = sim.assigned_to || '';
+    document.getElementById('phoneIdSelect').value = sim.phone_id || '';
+    document.getElementById('simDescription').value = sim.description || '';
+    // Reset tariff fields for edit (not needed for editing SIM)
+    document.getElementById('tariffMinutes').value = 0;
+    document.getElementById('tariffGb').value = 0;
+    document.getElementById('tariffSms').value = 0;
+    document.getElementById('tariffCost').value = 0;
+    document.getElementById('tariffStartDate').value = '';
+    document.getElementById('tariffEndDate').value = '';
+    document.getElementById('simModal').style.display = 'block';
+}
+
+function showAddSimModal() {
+    document.getElementById('simModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> SIM карта';
+    document.getElementById('simForm').reset();
+    document.getElementById('simId').value = '';
+    document.getElementById('tariffMinutes').value = 0;
+    document.getElementById('tariffGb').value = 0;
+    document.getElementById('tariffSms').value = 0;
+    document.getElementById('tariffCost').value = 0;
+    document.getElementById('tariffStartDate').value = '';
+    document.getElementById('tariffEndDate').value = '';
+    document.getElementById('simModal').style.display = 'block';
+}
+
+function closeSimModal() { document.getElementById('simModal').style.display = 'none'; }
+
+// PHONE CRUD
+async function changePhoneAssignment(id, employeeId) {
+    const resp = await fetch(`/api/company-phones/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ assigned_to: employeeId ? parseInt(employeeId) : null, model: companyPhonesData.find(p => p.id === id)?.model })
+    });
+    if (resp.ok) loadCompanyPhones();
+    else showToast('Ошибка', true);
+}
+
+async function deletePhone(id) {
+    if (confirm('Удалить телефон? Все связанные SIM карты будут отсоединены')) {
+        const resp = await fetch(`/api/company-phones/${id}`, { method: 'DELETE' });
+        if (resp.ok) {
+            loadCompanyPhones();
+            loadSimCards();
+            showToast('Телефон удален');
+        } else showToast('Ошибка', true);
+    }
+}
+
+function editPhone(id) {
+    const phone = companyPhonesData.find(p => p.id === id);
+    if (!phone) return;
+    document.getElementById('phoneModalTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать телефон';
+    document.getElementById('phoneId').value = phone.id;
+    document.getElementById('phoneModel').value = phone.model;
+    document.getElementById('phoneCode').value = phone.phone_id || '';
+    document.getElementById('phoneAssignedTo').value = phone.assigned_to || '';
+    document.getElementById('phoneDescription').value = phone.description || '';
+    document.getElementById('phoneModal').style.display = 'block';
+}
+
+function showAddPhoneModal() {
+    document.getElementById('phoneModalTitle').innerHTML = '<i class="fas fa-mobile-alt"></i> Добавить телефон';
+    document.getElementById('phoneForm').reset();
+    document.getElementById('phoneId').value = '';
+    document.getElementById('phoneCode').value = 'Авто';
+    document.getElementById('phoneModal').style.display = 'block';
+}
+
+function closePhoneModal() { document.getElementById('phoneModal').style.display = 'none'; }
+
+// EXPORT FUNCTIONS
+function exportToExcel(type) {
+    let url = '';
+    switch(type) {
+        case 'sims': url = '/api/sim-phones/export/excel?type=sims'; break;
+        case 'phones': url = '/api/sim-phones/export/excel?type=phones'; break;
+        case 'tariffs': url = '/api/sim-phones/export/excel?type=tariffs'; break;
+        case 'payments': url = '/api/sim-phones/export/excel?type=payments'; break;
+        default: url = '/api/sim-phones/export/excel';
+    }
+    window.location.href = url;
+}
+
+function filterAll() {
+    filterSims();
+    filterPhones();
+    filterTariffs();
+    filterPayments();
+}
+
+// FORMS SUBMIT
+document.getElementById('simForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('simId').value;
+    
+    const simData = {
+        phone_number: document.getElementById('phoneNumber').value,
+        operator: document.getElementById('operator').value,
+        assigned_to: document.getElementById('assignedTo').value ? parseInt(document.getElementById('assignedTo').value) : null,
+        phone_id: document.getElementById('phoneIdSelect').value ? parseInt(document.getElementById('phoneIdSelect').value) : null,
+        description: document.getElementById('simDescription').value
+    };
+    
+    const url = id ? `/api/sim-cards/${id}` : '/api/sim-cards';
+    const method = id ? 'PUT' : 'POST';
+    const resp = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(simData) });
+    
+    if (resp.ok) {
+        const result = await resp.json();
+        const simId = result.id || id;
+        
+        // If adding new SIM and tariff data is provided
+        const tariffMinutes = parseInt(document.getElementById('tariffMinutes').value) || 0;
+        const tariffGb = parseFloat(document.getElementById('tariffGb').value) || 0;
+        const tariffSms = parseInt(document.getElementById('tariffSms').value) || 0;
+        const tariffCost = parseFloat(document.getElementById('tariffCost').value) || 0;
+        const startDate = document.getElementById('tariffStartDate').value;
+        const endDate = document.getElementById('tariffEndDate').value;
+        
+        if (!id && tariffCost > 0 && startDate && endDate) {
+            const tariffData = {
+                sim_id: simId,
+                minutes: tariffMinutes,
+                gb: tariffGb,
+                sms: tariffSms,
+                cost: tariffCost,
+                start_date: startDate,
+                end_date: endDate
+            };
+            const tariffResp = await fetch('/api/sim-tariffs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(tariffData) });
+            if (tariffResp.ok) {
+                showToast('SIM карта ва тариф илова шуд');
+            }
+        }
+        
+        closeSimModal();
+        loadSimCards();
+        loadTariffs();
+        loadPayments();
+        showToast(id ? 'SIM карта таҳрир шуд' : 'SIM карта илова шуд');
+    } else {
+        const err = await resp.json();
+        showToast('Ошибка: ' + err.error, true);
+    }
+});
+
+document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('phoneId').value;
+    const data = {
+        model: document.getElementById('phoneModel').value,
+        assigned_to: document.getElementById('phoneAssignedTo').value ? parseInt(document.getElementById('phoneAssignedTo').value) : null,
+        description: document.getElementById('phoneDescription').value
+    };
+    const url = id ? `/api/company-phones/${id}` : '/api/company-phones';
+    const method = id ? 'PUT' : 'POST';
+    const resp = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (resp.ok) {
+        closePhoneModal();
+        loadCompanyPhones();
+        showToast(id ? 'Телефон обновлен' : 'Телефон добавлен');
+    } else {
+        const err = await resp.json();
+        showToast('Ошибка: ' + (err.error || 'Неизвестная ошибка'), true);
+    }
+});
+
+// Load all
+loadEmployees();
+loadCompanyPhones();
+loadSimCards();
+loadTariffs();
+loadPayments();
+
+// Auto-refresh every 60 sec
+setInterval(() => {
+    loadSimCards();
+    loadCompanyPhones();
+    loadTariffs();
+    loadPayments();
+}, 60000);
+</script>
+{% endblock %}

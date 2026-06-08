@@ -1,0 +1,1298 @@
+{% extends "base.html" %}
+{% block title %}Недвижимость{% endblock %}
+
+{% block content %}
+<style>
+    /* Main Container */
+    .houses-main {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 6px;
+    }
+    
+    .page-header p {
+        color: #8b9dc3;
+        font-size: 14px;
+    }
+    
+    .header-buttons {
+        display: flex;
+        gap: 12px;
+    }
+    
+    /* Filters Section */
+    .filters-section {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 28px;
+        border: 1px solid #eef2f6;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    
+    .filters-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #1a1a2e;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eef2f6;
+    }
+    
+    /* Filter Rows */
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #5b6e8c;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .filter-group input, 
+    .filter-group select {
+        padding: 10px 14px;
+        background: #f8fafc;
+        border: 1px solid #e1e4e8;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.2s;
+        width: 100%;
+    }
+    
+    .filter-group input:focus, 
+    .filter-group select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    
+    /* Range Inputs */
+    .range-inputs {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .range-inputs input {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .range-inputs input[type="number"] {
+        -moz-appearance: textfield;
+    }
+    
+    .range-inputs input[type="number"]::-webkit-inner-spin-button,
+    .range-inputs input[type="number"]::-webkit-outer-spin-button {
+        opacity: 0.5;
+    }
+    
+    .range-inputs span {
+        color: #8b9dc3;
+        font-weight: 500;
+    }
+    
+    /* Filter Actions */
+    .filter-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eef2f6;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #5b6e8c;
+        border: 1px solid #e1e4e8;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+        border-color: #2563eb;
+        color: #2563eb;
+        background: #f8faff;
+    }
+    
+    .btn-excel {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    
+    .btn-excel:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+    
+    /* Houses Grid */
+    .houses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 24px;
+    }
+    
+    /* House Card */
+    .house-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #eef2f6;
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .house-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px -12px rgba(0,0,0,0.12);
+    }
+    
+    .house-image-container {
+        position: relative;
+        height: 220px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea20, #764ba220);
+        cursor: pointer;
+    }
+    
+    .house-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    
+    .house-card:hover .house-image {
+        transform: scale(1.05);
+    }
+    
+    .house-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(8px);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+        z-index: 2;
+    }
+    
+    .image-count {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 11px;
+        color: white;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .eye-icon {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        background: rgba(0,0,0,0.65);
+        backdrop-filter: blur(4px);
+        padding: 8px 14px;
+        border-radius: 30px;
+        font-size: 13px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .eye-icon:hover {
+        background: rgba(0,0,0,0.85);
+        transform: scale(1.03);
+    }
+    
+    .house-content {
+        padding: 18px;
+    }
+    
+    .house-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 6px;
+        line-height: 1.3;
+    }
+    
+    .house-address {
+        font-size: 12px;
+        color: #8b9dc3;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .house-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 12px 0;
+        padding: 10px 0;
+        border-top: 1px solid #f0f2f5;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #5b6e8c;
+    }
+    
+    .detail-item i {
+        width: 18px;
+        font-size: 13px;
+        color: #2563eb;
+    }
+    
+    .house-price {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2563eb;
+        margin: 10px 0 8px;
+    }
+    
+    .price-per-m2 {
+        font-size: 11px;
+        color: #8b9dc3;
+        font-weight: normal;
+    }
+    
+    .house-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #f0f2f5;
+    }
+    
+    .house-meta {
+        font-size: 10px;
+        color: #8b9dc3;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .action-buttons button {
+        background: transparent;
+        border: none;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 5px 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .edit-house-btn { color: #2563eb; }
+    .delete-house-btn { color: #ef4444; }
+    .action-buttons button:hover { background: #f0f2f5; }
+    
+    /* Detail Modal */
+    .detail-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.92);
+        overflow-y: auto;
+    }
+    
+    .detail-modal-content {
+        background: white;
+        margin: 2% auto;
+        border-radius: 28px;
+        width: 92%;
+        max-width: 1100px;
+        max-height: 92vh;
+        overflow-y: auto;
+        position: relative;
+    }
+    
+    .detail-modal-header {
+        padding: 20px 28px;
+        border-bottom: 1px solid #eef2f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        border-radius: 28px 28px 0 0;
+    }
+    
+    .detail-modal-header h2 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    
+    .close-detail {
+        font-size: 32px;
+        cursor: pointer;
+        color: #8b9dc3;
+        transition: color 0.2s;
+        line-height: 1;
+    }
+    
+    .close-detail:hover {
+        color: #ef4444;
+    }
+    
+    .detail-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        padding: 24px;
+        background: #f8fafc;
+    }
+    
+    .detail-gallery img {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .detail-gallery img:hover {
+        transform: scale(1.02);
+    }
+    
+    .detail-info {
+        padding: 24px 28px;
+    }
+    
+    .detail-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .detail-info-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        background: #f8fafc;
+        border-radius: 16px;
+    }
+    
+    .detail-info-item i {
+        font-size: 22px;
+        color: #2563eb;
+        width: 40px;
+        text-align: center;
+    }
+    
+    .detail-info-item .label {
+        font-size: 11px;
+        color: #8b9dc3;
+    }
+    
+    .detail-info-item .value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+    
+    .detail-documents {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eef2f6;
+    }
+    
+    .detail-documents h4 {
+        margin-bottom: 14px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .doc-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .doc-item {
+        background: #f8fafc;
+        padding: 8px 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #2563eb;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+    
+    .doc-item:hover {
+        background: #eef2ff;
+    }
+    
+    /* Add/Edit Modal */
+    .modal-large .modal-content {
+        max-width: 850px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 24px;
+    }
+    
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .file-input-wrapper {
+        border: 2px dashed #e1e4e8;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .file-input-wrapper:hover {
+        border-color: #2563eb;
+        background: #f0f4ff;
+    }
+    
+    .file-list {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .file-item {
+        background: #f0f2f5;
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .file-item i {
+        cursor: pointer;
+        color: #ef4444;
+    }
+    
+    .image-preview {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #8b9dc3;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 60px;
+        color: #8b9dc3;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+        .houses-grid {
+            grid-template-columns: 1fr;
+        }
+        .detail-info-grid {
+            grid-template-columns: 1fr;
+        }
+        .header-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+        .header-buttons button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="houses-main">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-building"></i> Недвижимость</h1>
+            <p>Управление объектами недвижимости компании</p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-excel" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Экспорт в Excel</button>
+            <button class="btn-primary" onclick="showAddHouseModal()"><i class="fas fa-plus"></i> Добавить объект</button>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="filters-title">
+            <i class="fas fa-sliders-h"></i> Фильтры поиска
+        </div>
+        
+        <!-- Row 1: Поиск и основные фильтры -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <label><i class="fas fa-search"></i> Поиск</label>
+                <input type="text" id="searchInput" placeholder="Название или адрес..." onkeyup="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-tag"></i> Тип строительства</label>
+                <select id="typeFilter" onchange="applyFilters()">
+                    <option value="all">🏗️ Все типы</option>
+                    <option value="новостройка">🆕 Новостройка</option>
+                    <option value="коробка">📦 Коробка</option>
+                    <option value="котлован">🕳️ Котлован</option>
+                    <option value="Вторичка">Вторичка</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-map-marker-alt"></i> Район</label>
+                <select id="districtFilter" onchange="applyFilters()">
+                    <option value="all">📍 Все районы</option>
+                    <option value="н.Сино">Сино</option>
+                    <option value="н.Шоҳмансур">Шоҳмансур</option>
+                    <option value="н.Фирдавси">Фирдавси</option>
+                    <option value="н.Сомони">Сомони</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Row 2: Площадь и Комнаты -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <label><i class="fas fa-arrows-alt"></i> Площадь (м²)</label>
+                <div class="range-inputs">
+                    <input type="number" id="areaMin" step="0.1" placeholder="от" onkeyup="applyFilters()">
+                    <span>—</span>
+                    <input type="number" id="areaMax" step="0.1" placeholder="до" onkeyup="applyFilters()">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-door-open"></i> Количество комнат</label>
+                <div class="range-inputs">
+                    <input type="number" id="roomsMin" placeholder="от" onkeyup="applyFilters()">
+                    <span>—</span>
+                    <input type="number" id="roomsMax" placeholder="до" onkeyup="applyFilters()">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-layer-group"></i> Этаж</label>
+                <div class="range-inputs">
+                    <input type="number" id="floorMin" placeholder="от" onkeyup="applyFilters()">
+                    <span>—</span>
+                    <input type="number" id="floorMax" placeholder="до" onkeyup="applyFilters()">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 3: Цена за м² и Общая цена -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <label><i class="fas fa-chart-line"></i> Цена за м² (₽)</label>
+                <div class="range-inputs">
+                    <input type="number" id="pricePerM2Min" step="1000" placeholder="от" onkeyup="applyFilters()" value="">
+                    <span>—</span>
+                    <input type="number" id="pricePerM2Max" step="1000" placeholder="до" onkeyup="applyFilters()" value="">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-credit-card"></i> Общая цена (₽)</label>
+                <div class="range-inputs">
+                    <input type="number" id="priceMin" step="10000" placeholder="от" onkeyup="applyFilters()" value="">
+                    <span>—</span>
+                    <input type="number" id="priceMax" step="10000" placeholder="до" onkeyup="applyFilters()" value="">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-building"></i> Этажность здания</label>
+                <div class="range-inputs">
+                    <input type="number" id="totalFloorsMin" placeholder="от" onkeyup="applyFilters()">
+                    <span>—</span>
+                    <input type="number" id="totalFloorsMax" placeholder="до" onkeyup="applyFilters()">
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-actions">
+            <button class="btn-secondary" onclick="resetFilters()"><i class="fas fa-undo-alt"></i> Сбросить все фильтры</button>
+        </div>
+    </div>
+
+    <!-- Houses Grid -->
+    <div class="houses-grid" id="housesGrid">
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Загрузка объектов...</div>
+    </div>
+</div>
+
+<!-- Detailed View Modal -->
+<div id="detailModal" class="detail-modal">
+    <div class="detail-modal-content">
+        <div class="detail-modal-header">
+            <h2 id="detailTitle"><i class="fas fa-home"></i> Детальная информация</h2>
+            <span class="close-detail" onclick="closeDetailModal()">&times;</span>
+        </div>
+        <div id="detailContent"></div>
+    </div>
+</div>
+
+<!-- Add/Edit House Modal -->
+<div id="houseModal" class="modal modal-large">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="houseModalTitle"><i class="fas fa-plus-circle"></i> Добавить объект</h2>
+            <span class="close" onclick="closeHouseModal()">&times;</span>
+        </div>
+        <form id="houseForm" enctype="multipart/form-data">
+            <input type="hidden" id="houseId">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label><i class="fas fa-heading"></i> Название объекта *</label>
+                    <input type="text" id="houseTitle" required placeholder="Пример: ЖК Парламент">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Тип строительства *</label>
+                    <select id="constructionType" required>
+                        <option value="новостройка">🏗️ Новостройка</option>
+                        <option value="коробка">📦 Коробка</option>
+                        <option value="котлован">🕳️ Котлован</option>
+                        <option value="Вторичка">Вторичка</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Район *</label>
+                    <select id="district" required>
+                        <option value="н.Сино">Сино</option>
+                        <option value="н.Шоҳмансур">Шоҳмансур</option>
+                        <option value="н.Фирдавси">Фирдавси</option>
+                        <option value="н.Сомони">Сомони</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label><i class="fas fa-location-dot"></i> Адрес *</label>
+                    <input type="text" id="address" required placeholder="ул. Примерная, д.1">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-arrows-alt"></i> Площадь (м²) *</label>
+                    <input type="number" id="area" step="0.01" required placeholder="114.85">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-door-open"></i> Комнаты *</label>
+                    <input type="number" id="rooms" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-window-maximize"></i> Окна *</label>
+                    <input type="number" id="windows" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-layer-group"></i> Этаж *</label>
+                    <input type="number" id="floor" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> Этажность *</label>
+                    <input type="number" id="totalFloors" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-chart-line"></i> Цена за м² (₽) *</label>
+                    <input type="number" id="pricePerM2" step="1" required placeholder="Например: 1500000">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-credit-card"></i> Общая цена (₽) *</label>
+                    <input type="number" id="totalPrice" step="1" required placeholder="Например: 150000000">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-industry"></i> Застройщик</label>
+                    <input type="text" id="developer" placeholder="Название компании">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Контактный телефон</label>
+                    <input type="tel" id="contactPhone" placeholder="+7 999 123-45-67">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-file-alt"></i> Техпаспорт</label>
+                    <select id="hasTechPassport">
+                        <option value="нет">Нет</option>
+                        <option value="да">Да</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-tools"></i> Разрешение на ремонт</label>
+                    <select id="hasRenovationPermit">
+                        <option value="нет">Нет</option>
+                        <option value="да">Да</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label><i class="fas fa-images"></i> Фото и документы</label>
+                    <div class="file-input-wrapper" onclick="document.getElementById('houseFiles').click()">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 32px; margin-bottom: 8px; display: block;"></i>
+                        <span>Нажмите для выбора файлов</span>
+                        <small style="display: block; margin-top: 4px;">(jpg, png, pdf - можно выбрать несколько файлов)</small>
+                        <input type="file" id="houseFiles" multiple accept="image/*,application/pdf" style="display:none" onchange="previewFiles()">
+                    </div>
+                    <div id="filePreviewList" class="file-list"></div>
+                    <div id="existingFilesList" class="file-list"></div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Сохранить</button>
+                <button type="button" class="btn-secondary" onclick="closeHouseModal()"><i class="fas fa-times"></i> Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let allHouses = [];
+let currentUserId = {{ session.user_id }};
+let currentUserRole = "{{ session.role }}";
+
+function previewFiles() {
+    const files = document.getElementById('houseFiles').files;
+    const previewDiv = document.getElementById('filePreviewList');
+    previewDiv.innerHTML = '';
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const isImage = file.type.startsWith('image/');
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                div.innerHTML = `<img src="${e.target.result}" class="image-preview"> <span>${file.name.substring(0, 20)}</span> <i class="fas fa-times" onclick="removeFile(${i})"></i>`;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            div.innerHTML = `<i class="fas fa-file-pdf"></i> ${file.name.substring(0, 20)} <i class="fas fa-times" onclick="removeFile(${i})"></i>`;
+        }
+        previewDiv.appendChild(div);
+    }
+}
+
+function removeFile(index) {
+    const dt = new DataTransfer();
+    const files = document.getElementById('houseFiles').files;
+    for (let i = 0; i < files.length; i++) {
+        if (i !== index) dt.items.add(files[i]);
+    }
+    document.getElementById('houseFiles').files = dt.files;
+    previewFiles();
+}
+
+async function loadHouses() {
+    const response = await fetch('/api/houses');
+    allHouses = await response.json();
+    applyFilters();
+}
+
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value;
+    const district = document.getElementById('districtFilter').value;
+    const areaMin = parseFloat(document.getElementById('areaMin').value) || 0;
+    const areaMax = parseFloat(document.getElementById('areaMax').value) || Infinity;
+    const roomsMin = parseInt(document.getElementById('roomsMin').value) || 0;
+    const roomsMax = parseInt(document.getElementById('roomsMax').value) || Infinity;
+    const floorMin = parseInt(document.getElementById('floorMin').value) || 0;
+    const floorMax = parseInt(document.getElementById('floorMax').value) || Infinity;
+    const totalFloorsMin = parseInt(document.getElementById('totalFloorsMin').value) || 0;
+    const totalFloorsMax = parseInt(document.getElementById('totalFloorsMax').value) || Infinity;
+    const pricePerM2Min = parseFloat(document.getElementById('pricePerM2Min').value) || 0;
+    const pricePerM2Max = parseFloat(document.getElementById('pricePerM2Max').value) || Infinity;
+    const priceMin = parseFloat(document.getElementById('priceMin').value) || 0;
+    const priceMax = parseFloat(document.getElementById('priceMax').value) || Infinity;
+    
+    const filtered = allHouses.filter(house => {
+        if (search && !house.title.toLowerCase().includes(search) && !house.address.toLowerCase().includes(search)) return false;
+        if (type !== 'all' && house.construction_type !== type) return false;
+        if (district !== 'all' && house.district !== district) return false;
+        if (house.area < areaMin || house.area > areaMax) return false;
+        if (house.rooms < roomsMin || house.rooms > roomsMax) return false;
+        if (house.floor < floorMin || house.floor > floorMax) return false;
+        if (house.total_floors < totalFloorsMin || house.total_floors > totalFloorsMax) return false;
+        if (house.price_per_m2 < pricePerM2Min || house.price_per_m2 > pricePerM2Max) return false;
+        if (house.total_price < priceMin || house.total_price > priceMax) return false;
+        return true;
+    });
+    
+    renderHouses(filtered);
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = 'all';
+    document.getElementById('districtFilter').value = 'all';
+    document.getElementById('areaMin').value = '';
+    document.getElementById('areaMax').value = '';
+    document.getElementById('roomsMin').value = '';
+    document.getElementById('roomsMax').value = '';
+    document.getElementById('floorMin').value = '';
+    document.getElementById('floorMax').value = '';
+    document.getElementById('totalFloorsMin').value = '';
+    document.getElementById('totalFloorsMax').value = '';
+    document.getElementById('pricePerM2Min').value = '';
+    document.getElementById('pricePerM2Max').value = '';
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    applyFilters();
+}
+
+function exportToExcel() {
+    // Get current filter values
+    const search = document.getElementById('searchInput').value;
+    const constructionType = document.getElementById('typeFilter').value;
+    const district = document.getElementById('districtFilter').value;
+    const areaMin = document.getElementById('areaMin').value;
+    const areaMax = document.getElementById('areaMax').value;
+    const roomsMin = document.getElementById('roomsMin').value;
+    const roomsMax = document.getElementById('roomsMax').value;
+    const floorMin = document.getElementById('floorMin').value;
+    const floorMax = document.getElementById('floorMax').value;
+    const totalFloorsMin = document.getElementById('totalFloorsMin').value;
+    const totalFloorsMax = document.getElementById('totalFloorsMax').value;
+    const pricePerM2Min = document.getElementById('pricePerM2Min').value;
+    const pricePerM2Max = document.getElementById('pricePerM2Max').value;
+    const priceMin = document.getElementById('priceMin').value;
+    const priceMax = document.getElementById('priceMax').value;
+    
+    // Build URL with all filter parameters
+    let url = '/api/houses/export?';
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (constructionType !== 'all') url += `construction_type=${constructionType}&`;
+    if (district !== 'all') url += `district=${district}&`;
+    if (areaMin) url += `area_min=${areaMin}&`;
+    if (areaMax) url += `area_max=${areaMax}&`;
+    if (roomsMin) url += `rooms_min=${roomsMin}&`;
+    if (roomsMax) url += `rooms_max=${roomsMax}&`;
+    if (floorMin) url += `floor_min=${floorMin}&`;
+    if (floorMax) url += `floor_max=${floorMax}&`;
+    if (totalFloorsMin) url += `total_floors_min=${totalFloorsMin}&`;
+    if (totalFloorsMax) url += `total_floors_max=${totalFloorsMax}&`;
+    if (pricePerM2Min) url += `price_per_m2_min=${pricePerM2Min}&`;
+    if (pricePerM2Max) url += `price_per_m2_max=${pricePerM2Max}&`;
+    if (priceMin) url += `price_min=${priceMin}&`;
+    if (priceMax) url += `price_max=${priceMax}&`;
+    
+    window.open(url, '_blank');
+}
+
+function showHouseDetail(house) {
+    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-home"></i> ${escapeHtml(house.title)}`;
+    
+    const images = house.files ? JSON.parse(house.files).filter(f => f.type === 'image') : [];
+    const documents = house.files ? JSON.parse(house.files).filter(f => f.type === 'document') : [];
+    
+    const typeIcon = house.construction_type === 'новостройка' ? '🏗️' : house.construction_type === 'коробка' ? '📦' : '🕳️';
+    const districtMap = {
+        'н.Сино': 'Сино', 'н.Шоҳмансур': 'Шоҳмансур', 'н.Фирдавси': 'Фирдавси', 'н.Сомони': 'Сомони'
+    };
+    
+    document.getElementById('detailContent').innerHTML = `
+        <div class="detail-gallery">
+            ${images.length > 0 ? images.map(img => `<img src="${img.path}" onclick="window.open(this.src)" alt="Фото">`).join('') : '<div style="grid-column:1/-1;text-align:center;color:#8b9dc3;padding:40px;">📷 Нет фотографий</div>'}
+        </div>
+        <div class="detail-info">
+            <div class="detail-info-grid">
+                <div class="detail-info-item">
+                    <i class="fas fa-tag"></i>
+                    <div><div class="label">Тип строительства</div><div class="value">${typeIcon} ${house.construction_type}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div><div class="label">Район</div><div class="value">${districtMap[house.district] || house.district}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-location-dot"></i>
+                    <div><div class="label">Адрес</div><div class="value">${escapeHtml(house.address)}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-arrows-alt"></i>
+                    <div><div class="label">Площадь</div><div class="value">${house.area} м²</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-door-open"></i>
+                    <div><div class="label">Комнаты</div><div class="value">${house.rooms}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-window-maximize"></i>
+                    <div><div class="label">Окна</div><div class="value">${house.windows}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-layer-group"></i>
+                    <div><div class="label">Этаж</div><div class="value">${house.floor} / ${house.total_floors}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-credit-card"></i>
+                    <div><div class="label">Общая цена</div><div class="value">${formatPrice(house.total_price)} ₽</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div><div class="label">Цена за м²</div><div class="value">${formatPrice(house.price_per_m2)} ₽</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-industry"></i>
+                    <div><div class="label">Застройщик</div><div class="value">${escapeHtml(house.developer || 'Не указан')}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-phone"></i>
+                    <div><div class="label">Контакт</div><div class="value">${escapeHtml(house.contact_phone || 'Не указан')}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-file-alt"></i>
+                    <div><div class="label">Техпаспорт</div><div class="value">${house.has_tech_passport === 'да' ? '✅ Есть' : '❌ Нет'}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-tools"></i>
+                    <div><div class="label">Разрешение на ремонт</div><div class="value">${house.has_renovation_permit === 'да' ? '✅ Есть' : '❌ Нет'}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-user"></i>
+                    <div><div class="label">Автор</div><div class="value">${escapeHtml(house.author_name)}</div></div>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-calendar"></i>
+                    <div><div class="label">Дата добавления</div><div class="value">${new Date(house.created_date).toLocaleString()}</div></div>
+                </div>
+            </div>
+            
+            ${documents.length > 0 ? `
+            <div class="detail-documents">
+                <h4><i class="fas fa-file-pdf"></i> Документы</h4>
+                <div class="doc-list">
+                    ${documents.map(doc => `<a href="${doc.path}" class="doc-item" download target="_blank"><i class="fas fa-download"></i> ${escapeHtml(doc.name)}</a>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    document.getElementById('detailModal').style.display = 'block';
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+function renderHouses(houses) {
+    const grid = document.getElementById('housesGrid');
+    if (houses.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><i class="fas fa-home" style="font-size:48px;margin-bottom:16px;display:block;"></i> Нет объектов недвижимости</div>';
+        return;
+    }
+    
+    grid.innerHTML = houses.map(house => {
+        const images = house.files ? JSON.parse(house.files).filter(f => f.type === 'image') : [];
+        const firstImage = images.length > 0 ? images[0].path : null;
+        const isAuthor = house.author_id === currentUserId || currentUserRole === 'admin';
+        
+        const typeIcon = house.construction_type === 'новостройка' ? '🏗️' : house.construction_type === 'коробка' ? '📦' : '🕳️';
+        const districtMap = {
+            'н.Сино': 'Сино', 'н.Шоҳмансур': 'Шоҳмансур', 'н.Фирдавси': 'Фирдавси', 'н.Сомони': 'Сомони'
+        };
+        
+        return `
+        <div class="house-card">
+            <div class="house-image-container">
+                ${firstImage ? 
+                    `<img src="${firstImage}" class="house-image" onerror="this.src='https://via.placeholder.com/400x220?text=No+Image'">` : 
+                    `<div class="house-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-home" style="font-size: 48px; color: white;"></i>
+                     </div>`
+                }
+                <div class="house-badge">${typeIcon} ${house.construction_type}</div>
+                <div class="eye-icon" onclick='showHouseDetail(${JSON.stringify(house)})'>
+                    <i class="fas fa-eye"></i> <span>Подробнее</span>
+                </div>
+                ${images.length > 1 ? `<div class="image-count"><i class="fas fa-images"></i> ${images.length} фото</div>` : ''}
+            </div>
+            <div class="house-content">
+                <h3 class="house-title">${escapeHtml(house.title)}</h3>
+                <div class="house-address">
+                    <i class="fas fa-map-marker-alt"></i> ${escapeHtml(districtMap[house.district] || house.district)}, ${escapeHtml(house.address.substring(0, 40))}${house.address.length > 40 ? '...' : ''}
+                </div>
+                <div class="house-details">
+                    <div class="detail-item"><i class="fas fa-arrows-alt"></i> ${house.area} м²</div>
+                    <div class="detail-item"><i class="fas fa-door-open"></i> ${house.rooms} комн.</div>
+                    <div class="detail-item"><i class="fas fa-layer-group"></i> ${house.floor}/${house.total_floors} эт.</div>
+                    <div class="detail-item"><i class="fas fa-window-maximize"></i> ${house.windows} окон</div>
+                </div>
+                <div class="house-price">
+                    ${formatPrice(house.total_price)} ₽
+                    <div class="price-per-m2">${formatPrice(house.price_per_m2)} ₽/м²</div>
+                </div>
+                <div class="house-footer">
+                    <div class="house-meta">
+                        <i class="fas fa-user"></i> ${escapeHtml(house.author_name)}<br>
+                        <i class="fas fa-calendar"></i> ${new Date(house.created_date).toLocaleDateString()}
+                    </div>
+                    ${isAuthor ? `
+                    <div class="action-buttons">
+                        <button class="edit-house-btn" onclick="editHouse(${house.id})"><i class="fas fa-edit"></i></button>
+                        <button class="delete-house-btn" onclick="deleteHouse(${house.id})"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function editHouse(id) {
+    const house = allHouses.find(h => h.id === id);
+    if (!house) return;
+    
+    document.getElementById('houseModalTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать объект';
+    document.getElementById('houseId').value = house.id;
+    document.getElementById('houseTitle').value = house.title;
+    document.getElementById('constructionType').value = house.construction_type;
+    document.getElementById('district').value = house.district;
+    document.getElementById('address').value = house.address;
+    document.getElementById('area').value = house.area;
+    document.getElementById('rooms').value = house.rooms;
+    document.getElementById('windows').value = house.windows;
+    document.getElementById('floor').value = house.floor;
+    document.getElementById('totalFloors').value = house.total_floors;
+    document.getElementById('pricePerM2').value = house.price_per_m2;
+    document.getElementById('totalPrice').value = house.total_price;
+    document.getElementById('developer').value = house.developer || '';
+    document.getElementById('contactPhone').value = house.contact_phone || '';
+    document.getElementById('hasTechPassport').value = house.has_tech_passport || 'нет';
+    document.getElementById('hasRenovationPermit').value = house.has_renovation_permit || 'нет';
+    
+    if (house.files) {
+        const files = JSON.parse(house.files);
+        const existingDiv = document.getElementById('existingFilesList');
+        existingDiv.innerHTML = files.map(f => `
+            <div class="file-item">
+                ${f.type === 'image' ? 
+                    `<img src="${f.path}" class="image-preview">` : 
+                    `<i class="fas fa-file-pdf"></i>`
+                }
+                <span>${f.name.substring(0, 20)}</span>
+                <i class="fas fa-times" onclick="deleteExistingFile(${house.id}, '${f.path}')"></i>
+            </div>
+        `).join('');
+    }
+    
+    document.getElementById('houseModal').style.display = 'block';
+}
+
+async function deleteHouse(id) {
+    if (confirm('Удалить объект недвижимости?')) {
+        const response = await fetch(`/api/houses/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            loadHouses();
+        } else {
+            alert('Ошибка при удалении');
+        }
+    }
+}
+
+async function deleteExistingFile(houseId, filePath) {
+    const response = await fetch(`/api/houses/${houseId}/files`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_path: filePath })
+    });
+    if (response.ok) {
+        loadHouses();
+        editHouse(houseId);
+    }
+}
+
+document.getElementById('houseForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const houseId = document.getElementById('houseId').value;
+    const formData = new FormData();
+    
+    formData.append('title', document.getElementById('houseTitle').value);
+    formData.append('construction_type', document.getElementById('constructionType').value);
+    formData.append('district', document.getElementById('district').value);
+    formData.append('address', document.getElementById('address').value);
+    formData.append('area', document.getElementById('area').value);
+    formData.append('rooms', document.getElementById('rooms').value);
+    formData.append('windows', document.getElementById('windows').value);
+    formData.append('floor', document.getElementById('floor').value);
+    formData.append('total_floors', document.getElementById('totalFloors').value);
+    formData.append('price_per_m2', document.getElementById('pricePerM2').value);
+    formData.append('total_price', document.getElementById('totalPrice').value);
+    formData.append('developer', document.getElementById('developer').value);
+    formData.append('contact_phone', document.getElementById('contactPhone').value);
+    formData.append('has_tech_passport', document.getElementById('hasTechPassport').value);
+    formData.append('has_renovation_permit', document.getElementById('hasRenovationPermit').value);
+    
+    const files = document.getElementById('houseFiles').files;
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    
+    const url = houseId ? `/api/houses/${houseId}` : '/api/houses';
+    const method = houseId ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, { method: method, body: formData });
+    
+    if (response.ok) {
+        closeHouseModal();
+        loadHouses();
+        alert(houseId ? 'Объект обновлен!' : 'Объект добавлен!');
+    } else {
+        const error = await response.json();
+        alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'));
+    }
+});
+
+function showAddHouseModal() {
+    document.getElementById('houseModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Добавить объект';
+    document.getElementById('houseForm').reset();
+    document.getElementById('houseId').value = '';
+    document.getElementById('filePreviewList').innerHTML = '';
+    document.getElementById('existingFilesList').innerHTML = '';
+    document.getElementById('houseModal').style.display = 'block';
+}
+
+function closeHouseModal() {
+    document.getElementById('houseModal').style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDetailModal();
+        closeHouseModal();
+    }
+});
+
+loadHouses();
+</script>
+{% endblock %}

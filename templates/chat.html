@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+{% block title %}Суҳбат{% endblock %}
+
+{% block content %}
+<style>
+    .chat-wrapper {
+        background: white;
+        border-radius: var(--radius);
+        border: 1px solid var(--border-soft);
+        overflow: hidden;
+        height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-soft);
+        background: white;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .chat-header-icon {
+        width: 44px;
+        height: 44px;
+        background: var(--green-soft);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green-primary);
+        font-size: 20px;
+    }
+
+    .chat-header-info h1 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+    }
+
+    .chat-header-info p {
+        font-size: 12px;
+        color: var(--text-soft);
+    }
+
+    .chat-header-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+    }
+
+    .chat-online-dot {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        background: var(--bg-page);
+    }
+
+    .message-item {
+        margin-bottom: 18px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .message-own {
+        align-items: flex-end;
+    }
+
+    .message-other {
+        align-items: flex-start;
+    }
+
+    .message-bubble {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .message-own .message-bubble {
+        background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message-other .message-bubble {
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--border-soft);
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 11px;
+        gap: 12px;
+    }
+
+    .message-own .message-header {
+        color: rgba(255,255,255,0.85);
+    }
+
+    .message-other .message-header {
+        color: var(--text-soft);
+    }
+
+    .message-header strong {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .message-text {
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    .message-media {
+        margin-top: 8px;
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .message-media img {
+        max-width: 100%;
+        border-radius: 12px;
+        max-height: 280px;
+        cursor: pointer;
+        display: block;
+    }
+
+    .message-media video {
+        max-width: 100%;
+        border-radius: 12px;
+        max-height: 280px;
+        display: block;
+    }
+
+    .message-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: rgba(0,0,0,0.05);
+        border-radius: 12px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 8px;
+    }
+
+    .message-own .message-file {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+
+    .message-other .message-file {
+        color: var(--green-primary);
+        background: var(--green-soft);
+    }
+
+    .message-actions {
+        margin-top: 4px;
+        display: flex;
+        gap: 8px;
+        font-size: 11px;
+    }
+
+    .message-actions button {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        color: var(--text-soft);
+        font-family: inherit;
+    }
+
+    .message-actions button:hover {
+        background: var(--green-soft);
+        color: var(--green-primary);
+    }
+
+    .message-time {
+        font-size: 10px;
+    }
+
+    .chat-input-area {
+        padding: 14px 20px;
+        border-top: 1px solid var(--border-soft);
+        background: white;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 12px 18px;
+        background: var(--bg-page);
+        border: 1.5px solid transparent;
+        border-radius: 24px;
+        font-size: 14px;
+        resize: none;
+        font-family: inherit;
+        transition: all 0.2s;
+        max-height: 120px;
+        color: var(--text-dark);
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--green-primary);
+        background: white;
+    }
+
+    .file-label {
+        background: var(--bg-page);
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--text-medium);
+        flex-shrink: 0;
+    }
+
+    .file-label:hover {
+        background: var(--green-soft);
+        color: var(--green-primary);
+    }
+
+    .btn-send {
+        background: var(--green-primary);
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+
+    .btn-send:hover {
+        background: var(--green-dark);
+        transform: scale(1.05);
+    }
+
+    .selected-file-info {
+        font-size: 12px;
+        color: var(--text-medium);
+        margin-top: 10px;
+        padding: 10px 14px;
+        background: var(--green-soft);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .selected-file-info i.remove-file {
+        margin-left: auto;
+        cursor: pointer;
+        color: #ef4444;
+    }
+
+    .edit-message-input {
+        width: 100%;
+        padding: 8px 10px;
+        background: rgba(0,0,0,0.06);
+        border: none;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        color: inherit;
+    }
+
+    .message-own .edit-message-input {
+        background: rgba(255,255,255,0.25);
+        color: white;
+    }
+
+    .edit-actions {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .edit-actions button {
+        padding: 5px 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: inherit;
+    }
+
+    .edit-save-btn {
+        background: white;
+        color: var(--green-primary);
+        font-weight: 600;
+    }
+
+    .edit-cancel-btn {
+        background: rgba(0,0,0,0.1);
+        color: inherit;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-soft);
+    }
+
+    .empty-chat {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-soft);
+    }
+
+    .empty-chat i {
+        font-size: 48px;
+        color: var(--green-primary);
+        opacity: 0.3;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .chat-wrapper {
+            height: calc(100vh - 180px);
+        }
+        .message-bubble {
+            max-width: 85%;
+        }
+        .chat-header {
+            padding: 14px 18px;
+        }
+        .chat-messages {
+            padding: 14px 18px;
+        }
+        .chat-input-area {
+            padding: 12px 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .chat-wrapper {
+            height: calc(100vh - 160px);
+            border-radius: 16px;
+        }
+        .message-bubble {
+            max-width: 90%;
+            padding: 10px 14px;
+        }
+        .chat-header-info h1 {
+            font-size: 16px;
+        }
+    }
+</style>
+
+<div class="chat-wrapper">
+    <div class="chat-header">
+        <div class="chat-header-icon"><i class="fas fa-comments"></i></div>
+        <div class="chat-header-info">
+            <h1>Суҳбати умумӣ</h1>
+            <p><span class="chat-online-dot"></span>Муҳокимаи масъалаҳои корӣ</p>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Бор шуда истодааст...</div>
+    </div>
+
+    <div class="chat-input-area">
+        <form id="chatForm" class="chat-form" enctype="multipart/form-data">
+            <label class="file-label" title="Илова кардани файл">
+                <i class="fas fa-paperclip"></i>
+                <input type="file" id="chatFile" style="display:none;" onchange="showSelectedFile()">
+            </label>
+            <textarea id="messageInput" class="chat-input" rows="1" placeholder="Паёматонро нависед..."></textarea>
+            <button type="submit" class="btn-send" title="Фиристодан"><i class="fas fa-paper-plane"></i></button>
+        </form>
+        <div id="selectedFileInfo" class="selected-file-info" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+let messageCheckInterval;
+let editMode = false;
+let editMessageId = null;
+const currentUserId = {{ session.user_id|default(0) }};
+
+function showSelectedFile() {
+    const file = document.getElementById('chatFile').files[0];
+    if (file) {
+        const sizeKB = (file.size / 1024).toFixed(2);
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const sizeText = file.size > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+        document.getElementById('selectedFileInfo').innerHTML =
+            `<i class="fas fa-file"></i> <span>${escapeHtml(file.name)} (${sizeText})</span>` +
+            `<i class="fas fa-times remove-file" onclick="clearSelectedFile()"></i>`;
+        document.getElementById('selectedFileInfo').style.display = 'flex';
+    }
+}
+
+function clearSelectedFile() {
+    document.getElementById('chatFile').value = '';
+    document.getElementById('selectedFileInfo').style.display = 'none';
+    document.getElementById('selectedFileInfo').innerHTML = '';
+}
+
+async function loadMessages() {
+    try {
+        const response = await fetch('/api/messages');
+        if (!response.ok) return;
+        const messages = await response.json();
+
+        const container = document.getElementById('chatMessages');
+        if (!messages || messages.length === 0) {
+            container.innerHTML = '<div class="empty-chat"><i class="fas fa-comment-dots"></i><div>Паём нест. Якумро нависед!</div></div>';
+            return;
+        }
+
+        const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+        container.innerHTML = messages.reverse().map(msg => `
+            <div class="message-item ${msg.user_id === currentUserId ? 'message-own' : 'message-other'}" data-message-id="${msg.id}">
+                <div class="message-bubble">
+                    <div class="message-header">
+                        <strong><i class="fas fa-user-circle"></i> ${escapeHtml(msg.user_name)}</strong>
+                        <span class="message-time">${formatChatTime(msg.created_date)}</span>
+                    </div>
+                    <div class="message-text" id="message-text-${msg.id}">${escapeHtml(msg.message || '')}</div>
+                    ${msg.file_path ? `
+                        <div class="message-media">
+                            ${msg.file_type === 'image' ?
+                                `<img src="${msg.file_path}" onclick="window.open(this.src)" loading="lazy" onerror="this.style.display='none'">` :
+                                msg.file_type === 'video' ?
+                                `<video src="${msg.file_path}" controls preload="metadata" onerror="this.style.display='none'"></video>` :
+                                `<a href="${msg.file_path}" class="message-file" download target="_blank"><i class="fas fa-download"></i> ${escapeHtml(msg.file_name || 'Файл')}</a>`
+                            }
+                        </div>
+                    ` : ''}
+                </div>
+                ${msg.user_id === currentUserId ? `
+                    <div class="message-actions">
+                        <button onclick="editMessage(${msg.id}, decodeURIComponent('${encodeURIComponent(msg.message || '')}'))"><i class="fas fa-edit"></i> Таҳрир</button>
+                        <button onclick="deleteMessage(${msg.id})"><i class="fas fa-trash-alt"></i> Ҳазф</button>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+
+        if (wasAtBottom) {
+            container.scrollTop = container.scrollHeight;
+        }
+    } catch (err) {
+        console.error('Хатогии бор кардани паёмҳо:', err);
+    }
+}
+
+function formatChatTime(dateStr) {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+        return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function editMessage(id, oldText) {
+    editMode = true;
+    editMessageId = id;
+    const messageDiv = document.getElementById(`message-text-${id}`);
+    const originalText = oldText;
+    const escaped = escapeHtml(originalText);
+    messageDiv.dataset.original = escaped;
+    messageDiv.innerHTML = `<textarea class="edit-message-input" id="edit-input-${id}" rows="2"></textarea>
+                            <div class="edit-actions">
+                                <button class="edit-save-btn" onclick="saveEditMessage(${id})">Захира кардан</button>
+                                <button class="edit-cancel-btn" onclick="cancelEditMessage(${id})">Бекор кардан</button>
+                            </div>`;
+    document.getElementById(`edit-input-${id}`).value = originalText;
+}
+
+async function saveEditMessage(id) {
+    const newText = document.getElementById(`edit-input-${id}`).value;
+
+    try {
+        const response = await fetch(`/api/messages/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: newText })
+        });
+
+        if (response.ok) {
+            editMode = false;
+            editMessageId = null;
+            await loadMessages();
+        } else {
+            const error = await response.json();
+            alert('Хатогӣ: ' + (error.error || 'номаълум'));
+        }
+    } catch (err) {
+        alert('Хатогӣ: ' + err.message);
+    }
+}
+
+function cancelEditMessage(id) {
+    const div = document.getElementById(`message-text-${id}`);
+    div.innerHTML = div.dataset.original || '';
+    editMode = false;
+    editMessageId = null;
+}
+
+async function deleteMessage(id) {
+    if (confirm('Паёмро ҳазф мекунед?')) {
+        try {
+            const response = await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                await loadMessages();
+            } else {
+                alert('Хатогии ҳазф');
+            }
+        } catch (err) {
+            alert('Хатогӣ: ' + err.message);
+        }
+    }
+}
+
+document.getElementById('chatForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (editMode) {
+        alert('Аввал таҳрирро анҷом диҳед');
+        return;
+    }
+
+    const message = document.getElementById('messageInput').value;
+    const formData = new FormData();
+
+    if (message.trim()) {
+        formData.append('message', message);
+    }
+
+    const file = document.getElementById('chatFile').files[0];
+    if (file) {
+        formData.append('file', file);
+    }
+
+    if (!message.trim() && !file) return;
+
+    try {
+        const response = await fetch('/api/messages', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            document.getElementById('messageInput').value = '';
+            document.getElementById('messageInput').style.height = 'auto';
+            clearSelectedFile();
+            await loadMessages();
+            const container = document.getElementById('chatMessages');
+            container.scrollTop = container.scrollHeight;
+        } else {
+            const error = await response.json();
+            alert('Хатогии фиристодан: ' + (error.error || 'номаълум'));
+        }
+    } catch (err) {
+        alert('Хатогӣ: ' + err.message);
+    }
+});
+
+document.getElementById('messageInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+document.getElementById('messageInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+    }
+});
+
+loadMessages();
+messageCheckInterval = setInterval(loadMessages, 3000);
+
+window.addEventListener('beforeunload', () => {
+    if (messageCheckInterval) clearInterval(messageCheckInterval);
+});
+</script>
+{% endblock %}

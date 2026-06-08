@@ -1,0 +1,1035 @@
+{% extends "base.html" %}
+{% block title %}Идоракунии Ипотека{% endblock %}
+
+{% block content %}
+<style>
+    .admin-page {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .admin-header-left h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+        letter-spacing: -0.3px;
+    }
+
+    .admin-header-left p {
+        color: var(--text-soft);
+        font-size: 14px;
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-add {
+        background: var(--green-primary);
+        color: white;
+        border: none;
+        padding: 11px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-add:hover {
+        background: var(--green-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(31, 122, 77, 0.25);
+    }
+
+    .btn-back {
+        background: white;
+        color: var(--text-dark);
+        border: 1.5px solid var(--border-soft);
+        padding: 11px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+        border-color: var(--green-primary);
+        color: var(--green-primary);
+    }
+
+    /* Banks list */
+    .banks-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .bank-row {
+        background: white;
+        border: 1.5px solid var(--border-soft);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+
+    .bank-row:hover {
+        border-color: var(--green-primary);
+        box-shadow: var(--shadow-card);
+    }
+
+    .bank-row-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        cursor: pointer;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .bank-row-header:hover {
+        background: var(--green-soft);
+    }
+
+    .bank-row.expanded .bank-row-header {
+        background: var(--green-soft);
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .bank-logo-mini {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: var(--green-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green-primary);
+        font-weight: 700;
+        font-size: 20px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .bank-logo-mini img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 4px;
+    }
+
+    .bank-row-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .bank-row-info h4 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+    }
+
+    .bank-row-info .meta {
+        font-size: 12px;
+        color: var(--text-soft);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .bank-row-info .meta .slug-tag {
+        background: var(--bg-page);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--text-medium);
+    }
+
+    .bank-row-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border-soft);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-medium);
+        transition: all 0.2s;
+        font-size: 13px;
+    }
+
+    .icon-btn:hover {
+        background: var(--green-soft);
+        color: var(--green-primary);
+        border-color: var(--green-primary);
+    }
+
+    .icon-btn.danger:hover {
+        background: #fef2f2;
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+
+    .icon-btn.toggle {
+        background: var(--green-soft);
+        color: var(--green-primary);
+        border: none;
+    }
+
+    /* Bank conditions section */
+    .bank-row-body {
+        padding: 18px 20px;
+        background: var(--bg-page);
+        display: none;
+    }
+
+    .bank-row.expanded .bank-row-body {
+        display: block;
+    }
+
+    .conditions-mini-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .condition-mini {
+        background: white;
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .condition-mini .currency-tag {
+        background: var(--green-primary);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .condition-mini .currency-tag.usd {
+        background: #f59e0b;
+    }
+
+    .condition-mini .info {
+        flex: 1;
+        font-size: 13px;
+        color: var(--text-medium);
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .condition-mini .info span {
+        color: var(--text-medium);
+    }
+
+    .condition-mini .info b {
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    /* Modal */
+    .modal-bg {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        align-items: flex-start;
+        justify-content: center;
+        padding: 4vh 16px;
+        overflow-y: auto;
+    }
+
+    .modal-bg.show {
+        display: flex;
+    }
+
+    .modal-box {
+        background: white;
+        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 600px;
+        max-height: 92vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalIn 0.2s ease-out;
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: translateY(-20px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-head {
+        padding: 22px 24px;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-head h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .modal-close {
+        background: var(--bg-page);
+        border: none;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: var(--text-medium);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .modal-close:hover {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+
+    .modal-body {
+        padding: 22px 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-foot {
+        padding: 18px 24px;
+        border-top: 1px solid var(--border-soft);
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    /* Form */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .form-grid.single {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid > .span2 {
+        grid-column: span 2;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-medium);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+        padding: 11px 14px;
+        background: var(--bg-page);
+        border: 1.5px solid transparent;
+        border-radius: 10px;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--text-dark);
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+        border-color: var(--green-primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.08);
+    }
+
+    .field textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .field .hint {
+        font-size: 11px;
+        color: var(--text-soft);
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--green-primary);
+        cursor: pointer;
+    }
+
+    .checkbox-row label {
+        font-size: 13px;
+        color: var(--text-medium);
+        cursor: pointer;
+    }
+
+    .file-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .file-input-wrap input[type="file"] {
+        flex: 1;
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .file-preview {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        background: var(--green-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        color: var(--green-primary);
+    }
+
+    .file-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    /* Empty state */
+    .empty-state {
+        background: white;
+        border-radius: var(--radius);
+        border: 1.5px dashed var(--border-soft);
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: var(--green-primary);
+        opacity: 0.4;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .empty-state h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--text-soft);
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    .empty-mini {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-soft);
+        font-size: 13px;
+        background: white;
+        border-radius: 10px;
+        border: 1.5px dashed var(--border-soft);
+    }
+
+    /* Toast */
+    .toast-wrap {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .toast {
+        background: white;
+        border-radius: 12px;
+        padding: 12px 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        animation: toastIn 0.3s ease-out;
+        border-left: 4px solid var(--green-primary);
+    }
+
+    .toast.error {
+        border-left-color: #ef4444;
+    }
+
+    @keyframes toastIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-grid > .span2 {
+            grid-column: span 1;
+        }
+        .bank-row-header {
+            flex-wrap: wrap;
+        }
+        .admin-header-left h1 {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<div class="admin-page">
+    <!-- Header -->
+    <div class="admin-header">
+        <div class="admin-header-left">
+            <h1><i class="fas fa-building-columns" style="color:var(--green-primary);margin-right:8px;"></i>Идоракунии Ипотека</h1>
+            <p>Илова, таҳрир ва нест кардани бонкҳо ва шартҳои ипотека</p>
+        </div>
+        <div class="admin-actions">
+            <a href="/ipoteka" class="btn-back">
+                <i class="fas fa-eye"></i> Намуди корбар
+            </a>
+            <button class="btn-add" onclick="openBankModal()">
+                <i class="fas fa-plus"></i> Илова кардани бонк
+            </button>
+        </div>
+    </div>
+
+    <!-- Banks list -->
+    <div class="banks-list" id="banksList">
+        <div class="empty-mini">Бор шуда истодааст...</div>
+    </div>
+</div>
+
+<!-- ============== Modal: Bank ============== -->
+<div class="modal-bg" id="bankModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2 id="bankModalTitle">Илова кардани бонк</h2>
+            <button class="modal-close" onclick="closeBankModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="bankForm" onsubmit="saveBank(event)">
+                <input type="hidden" id="bankId">
+                <div class="form-grid single">
+                    <div class="field">
+                        <label>Номи бонк *</label>
+                        <input type="text" id="bankName" placeholder="Алиф Бонк" required>
+                    </div>
+                    <div class="field">
+                        <label>Slug (URL)</label>
+                        <input type="text" id="bankSlug" placeholder="alif (автомат сохта мешавад)">
+                        <span class="hint">Холӣ гузоред — аз номи бонк автомат сохта мешавад</span>
+                    </div>
+                    <div class="field">
+                        <label>Логотип</label>
+                        <div class="file-input-wrap">
+                            <div class="file-preview" id="bankLogoPreview">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <input type="file" id="bankLogo" accept="image/*" onchange="previewBankLogo(event)">
+                        </div>
+                        <span class="hint">PNG, JPG, SVG (то 2МБ)</span>
+                    </div>
+                    <div class="field">
+                        <label>Тавсиф</label>
+                        <textarea id="bankDescription" placeholder="Тавсифи бонк ва афзалиятҳои он..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-back" onclick="closeBankModal()">Бекор</button>
+            <button class="btn-add" onclick="document.getElementById('bankForm').requestSubmit()">
+                <i class="fas fa-save"></i> Захира
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============== Modal: Condition ============== -->
+<div class="modal-bg" id="conditionModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2 id="conditionModalTitle">Илова кардани шарт</h2>
+            <button class="modal-close" onclick="closeConditionModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="conditionForm" onsubmit="saveCondition(event)">
+                <input type="hidden" id="conditionId">
+                <input type="hidden" id="conditionBankId">
+                <div class="form-grid">
+                    <div class="field span2">
+                        <label>Валюта *</label>
+                        <select id="condCurrency" required>
+                            <option value="TJS">Сомонӣ (TJS)</option>
+                            <option value="USD">Доллари ИМА (USD)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Фоизи солона *</label>
+                        <input type="number" id="condYearly" step="0.01" min="0" placeholder="20" required>
+                    </div>
+                    <div class="field">
+                        <label>Фоизи моҳона *</label>
+                        <input type="number" id="condMonthly" step="0.01" min="0" placeholder="1.6" required>
+                    </div>
+                    <div class="field">
+                        <label>Маблағи минималӣ</label>
+                        <input type="number" id="condMinAmount" min="0" placeholder="10000">
+                    </div>
+                    <div class="field">
+                        <label>Маблағи максималӣ</label>
+                        <input type="number" id="condMaxAmount" min="0" placeholder="1000000">
+                    </div>
+                    <div class="field">
+                        <label>Мӯҳлати минималӣ (моҳ)</label>
+                        <input type="number" id="condMinMonths" min="1" placeholder="12" value="12">
+                    </div>
+                    <div class="field">
+                        <label>Мӯҳлати максималӣ (моҳ)</label>
+                        <input type="number" id="condMaxMonths" min="1" placeholder="240" value="240">
+                    </div>
+                    <div class="field span2">
+                        <label>Пешпардохт (% аз нархи манзил) *</label>
+                        <input type="number" id="condDownPayment" step="0.1" min="0" max="100" placeholder="30" required>
+                    </div>
+                    <div class="field span2">
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="condGuarantor">
+                            <label for="condGuarantor">Зомин лозим аст</label>
+                        </div>
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="condCollateral">
+                            <label for="condCollateral">Гарав лозим аст</label>
+                        </div>
+                    </div>
+                    <div class="field span2">
+                        <label>Шартҳои иловагӣ</label>
+                        <textarea id="condExtra" placeholder="Шартҳои махсуси бонк..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-back" onclick="closeConditionModal()">Бекор</button>
+            <button class="btn-add" onclick="document.getElementById('conditionForm').requestSubmit()">
+                <i class="fas fa-save"></i> Захира
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+let allBanks = [];
+let expandedBankId = null;
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+}
+
+function fmt(n) {
+    return new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
+}
+
+function showToast(text, type = 'success') {
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.className = `toast ${type === 'error' ? 'error' : ''}`;
+    t.innerHTML = `<i class="fas fa-${type === 'error' ? 'circle-exclamation' : 'circle-check'}"></i><span>${escapeHtml(text)}</span>`;
+    wrap.appendChild(t);
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(20px)';
+        setTimeout(() => t.remove(), 300);
+    }, 3000);
+}
+
+// ============ BANKS ============
+async function loadBanks() {
+    try {
+        const res = await fetch('/api/banks');
+        if (!res.ok) throw new Error('Хато');
+        allBanks = await res.json();
+        renderBanks();
+    } catch (e) {
+        document.getElementById('banksList').innerHTML =
+            `<div class="empty-state"><i class="fas fa-circle-exclamation"></i><h3>Хато</h3><p>Маълумотро бор кардан имконнопазир аст</p></div>`;
+    }
+}
+
+function renderBanks() {
+    const list = document.getElementById('banksList');
+    if (!allBanks.length) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-building-columns"></i>
+                <h3>Бонкҳо ҳоло илова нашудаанд</h3>
+                <p>Бонки навро бо тугмаи "Илова кардани бонк" илова кунед</p>
+                <button class="btn-add" onclick="openBankModal()">
+                    <i class="fas fa-plus"></i> Илова кардани аввалин бонк
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = allBanks.map(bank => {
+        const isExpanded = expandedBankId === bank.id;
+        const conditions = bank.conditions || [];
+
+        const logoHtml = bank.logo
+            ? `<img src="${escapeHtml(bank.logo)}" alt="" onerror="this.style.display='none';this.parentNode.innerHTML='${escapeHtml(bank.name[0] ? bank.name[0].toUpperCase() : 'Б')}'">`
+            : escapeHtml((bank.name || 'Б')[0].toUpperCase());
+
+        let conditionsHtml = '';
+        if (conditions.length === 0) {
+            conditionsHtml = `<div class="empty-mini">Шартҳо ҳоло илова нашудаанд</div>`;
+        } else {
+            conditionsHtml = conditions.map(c => {
+                const isUSD = c.currency === 'USD';
+                const sym = isUSD ? '$' : 'сом.';
+                return `
+                    <div class="condition-mini">
+                        <span class="currency-tag ${isUSD ? 'usd' : ''}">${c.currency}</span>
+                        <div class="info">
+                            <span><b>${c.interest_yearly}%</b> солона</span>
+                            <span><b>${c.interest_monthly}%</b> моҳона</span>
+                            <span>Пешпардохт: <b>${c.down_payment_percent}%</b></span>
+                            <span>Мӯҳлат: <b>${c.min_months}-${c.max_months} моҳ</b></span>
+                            <span>Маблағ: <b>${fmt(c.min_amount)}-${fmt(c.max_amount)} ${sym}</b></span>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="icon-btn" onclick="editCondition(${c.id}, ${bank.id})" title="Таҳрир">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="icon-btn danger" onclick="deleteCondition(${c.id})" title="Нест кардан">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        return `
+            <div class="bank-row ${isExpanded ? 'expanded' : ''}" id="bank-row-${bank.id}">
+                <div class="bank-row-header" onclick="toggleBank(${bank.id})">
+                    <div class="bank-logo-mini">${logoHtml}</div>
+                    <div class="bank-row-info">
+                        <h4>${escapeHtml(bank.name)}</h4>
+                        <div class="meta">
+                            <span class="slug-tag">/ipoteka/${escapeHtml(bank.slug)}</span>
+                            <span><i class="fas fa-list-check"></i> ${conditions.length} шарт</span>
+                        </div>
+                    </div>
+                    <div class="bank-row-actions" onclick="event.stopPropagation()">
+                        <button class="icon-btn" onclick="editBank(${bank.id})" title="Таҳрир">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="icon-btn danger" onclick="deleteBank(${bank.id})" title="Нест кардан">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="icon-btn toggle" onclick="toggleBank(${bank.id})" title="Шартҳо">
+                            <i class="fas fa-chevron-${isExpanded ? 'up' : 'down'}"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="bank-row-body">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <h5 style="font-size:14px;color:var(--text-dark);font-weight:700;">Шартҳои ипотека</h5>
+                        <button class="btn-add" style="padding:8px 14px;font-size:12px;" onclick="openConditionModal(${bank.id})">
+                            <i class="fas fa-plus"></i> Илова шарт
+                        </button>
+                    </div>
+                    <div class="conditions-mini-list">
+                        ${conditionsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleBank(bankId) {
+    expandedBankId = expandedBankId === bankId ? null : bankId;
+    renderBanks();
+}
+
+function openBankModal(bank = null) {
+    document.getElementById('bankForm').reset();
+    document.getElementById('bankId').value = '';
+    document.getElementById('bankLogoPreview').innerHTML = '<i class="fas fa-image"></i>';
+
+    if (bank) {
+        document.getElementById('bankModalTitle').textContent = 'Таҳрири бонк';
+        document.getElementById('bankId').value = bank.id;
+        document.getElementById('bankName').value = bank.name || '';
+        document.getElementById('bankSlug').value = bank.slug || '';
+        document.getElementById('bankDescription').value = bank.description || '';
+        if (bank.logo) {
+            document.getElementById('bankLogoPreview').innerHTML = `<img src="${escapeHtml(bank.logo)}" alt="">`;
+        }
+    } else {
+        document.getElementById('bankModalTitle').textContent = 'Илова кардани бонк';
+    }
+
+    document.getElementById('bankModal').classList.add('show');
+}
+
+function closeBankModal() {
+    document.getElementById('bankModal').classList.remove('show');
+}
+
+function previewBankLogo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        document.getElementById('bankLogoPreview').innerHTML = `<img src="${ev.target.result}" alt="">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+function editBank(bankId) {
+    const bank = allBanks.find(b => b.id === bankId);
+    if (bank) openBankModal(bank);
+}
+
+async function deleteBank(bankId) {
+    const bank = allBanks.find(b => b.id === bankId);
+    if (!bank) return;
+    if (!confirm(`Бонки "${bank.name}"-ро бо ҳамаи шартҳояш нест кунед?`)) return;
+
+    try {
+        const res = await fetch(`/api/banks/${bankId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Бонк нест карда шуд');
+            loadBanks();
+        } else {
+            showToast(data.error || 'Хато', 'error');
+        }
+    } catch (e) {
+        showToast('Хато дар нест кардан', 'error');
+    }
+}
+
+async function saveBank(e) {
+    e.preventDefault();
+    const id = document.getElementById('bankId').value;
+    const formData = new FormData();
+    formData.append('name', document.getElementById('bankName').value);
+    formData.append('slug', document.getElementById('bankSlug').value);
+    formData.append('description', document.getElementById('bankDescription').value);
+
+    const logoFile = document.getElementById('bankLogo').files[0];
+    if (logoFile) formData.append('logo', logoFile);
+
+    try {
+        const url = id ? `/api/banks/${id}` : '/api/banks';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast(id ? 'Бонк таҳрир шуд' : 'Бонк илова шуд');
+            closeBankModal();
+            loadBanks();
+        } else {
+            showToast(data.error || 'Хато', 'error');
+        }
+    } catch (err) {
+        showToast('Хато дар захира', 'error');
+    }
+}
+
+// ============ CONDITIONS ============
+function openConditionModal(bankId, condition = null) {
+    document.getElementById('conditionForm').reset();
+    document.getElementById('conditionId').value = '';
+    document.getElementById('conditionBankId').value = bankId;
+
+    if (condition) {
+        document.getElementById('conditionModalTitle').textContent = 'Таҳрири шарт';
+        document.getElementById('conditionId').value = condition.id;
+        document.getElementById('condCurrency').value = condition.currency || 'TJS';
+        document.getElementById('condYearly').value = condition.interest_yearly || 0;
+        document.getElementById('condMonthly').value = condition.interest_monthly || 0;
+        document.getElementById('condMinAmount').value = condition.min_amount || 0;
+        document.getElementById('condMaxAmount').value = condition.max_amount || 0;
+        document.getElementById('condMinMonths').value = condition.min_months || 12;
+        document.getElementById('condMaxMonths').value = condition.max_months || 240;
+        document.getElementById('condDownPayment').value = condition.down_payment_percent || 30;
+        document.getElementById('condGuarantor').checked = !!condition.guarantor_required;
+        document.getElementById('condCollateral').checked = !!condition.collateral_required;
+        document.getElementById('condExtra').value = condition.extra_conditions || '';
+    } else {
+        document.getElementById('conditionModalTitle').textContent = 'Илова кардани шарт';
+        document.getElementById('condDownPayment').value = 30;
+        document.getElementById('condMinMonths').value = 12;
+        document.getElementById('condMaxMonths').value = 240;
+    }
+
+    document.getElementById('conditionModal').classList.add('show');
+}
+
+function closeConditionModal() {
+    document.getElementById('conditionModal').classList.remove('show');
+}
+
+function editCondition(condId, bankId) {
+    const bank = allBanks.find(b => b.id === bankId);
+    if (!bank) return;
+    const cond = (bank.conditions || []).find(c => c.id === condId);
+    if (cond) openConditionModal(bankId, cond);
+}
+
+async function deleteCondition(condId) {
+    if (!confirm('Шартро нест кунед?')) return;
+    try {
+        const res = await fetch(`/api/conditions/${condId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Шарт нест карда шуд');
+            loadBanks();
+        } else {
+            showToast(data.error || 'Хато', 'error');
+        }
+    } catch (e) {
+        showToast('Хато дар нест кардан', 'error');
+    }
+}
+
+async function saveCondition(e) {
+    e.preventDefault();
+    const id = document.getElementById('conditionId').value;
+    const bankId = document.getElementById('conditionBankId').value;
+
+    const data = {
+        currency: document.getElementById('condCurrency').value,
+        interest_yearly: document.getElementById('condYearly').value,
+        interest_monthly: document.getElementById('condMonthly').value,
+        min_amount: document.getElementById('condMinAmount').value,
+        max_amount: document.getElementById('condMaxAmount').value,
+        min_months: document.getElementById('condMinMonths').value,
+        max_months: document.getElementById('condMaxMonths').value,
+        down_payment_percent: document.getElementById('condDownPayment').value,
+        guarantor_required: document.getElementById('condGuarantor').checked,
+        collateral_required: document.getElementById('condCollateral').checked,
+        extra_conditions: document.getElementById('condExtra').value
+    };
+
+    try {
+        const url = id ? `/api/conditions/${id}` : `/api/banks/${bankId}/conditions`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            showToast(id ? 'Шарт таҳрир шуд' : 'Шарт илова шуд');
+            closeConditionModal();
+            loadBanks();
+        } else {
+            showToast(result.error || 'Хато', 'error');
+        }
+    } catch (err) {
+        showToast('Хато дар захира', 'error');
+    }
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-bg').forEach(m => {
+    m.addEventListener('click', e => {
+        if (e.target === m) m.classList.remove('show');
+    });
+});
+
+document.addEventListener('DOMContentLoaded', loadBanks);
+</script>
+{% endblock %}

@@ -1,0 +1,1464 @@
+{% extends "base.html" %}
+{% block title %}Шахматка недвижимости{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --bg-primary: #f8fafc;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f1f5f9;
+        --border-color: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-tertiary: #94a3b8;
+        --accent-blue: #1f7a4d;
+        --accent-purple: #0f5f3a;
+        --accent-green: #10b981;
+        --accent-red: #ef4444;
+        --accent-orange: #f59e0b;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .dashboard-container { max-width: 1600px; margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .page-header h1 {
+        font-size: 26px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .page-header p { color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+    .header-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Tabs */
+    .projects-tabs {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .project-tab {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        background: var(--bg-secondary);
+        border-radius: 40px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        white-space: nowrap;
+        box-shadow: var(--shadow-sm);
+    }
+    .project-tab:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent-blue); }
+    .project-tab.active { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); border-color: transparent; color: white; }
+    .project-tab.active i { color: white; }
+    .project-tab-actions { display: flex; gap: 8px; margin-left: 10px; }
+    .project-tab-actions i { font-size: 12px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
+    .project-tab-actions i:hover { opacity: 1; }
+    .add-project-tab { background: transparent; border: 1px dashed var(--accent-blue); color: var(--accent-blue); }
+
+    /* Stats */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-info h4 { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .stat-number { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+    .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 24px; background: linear-gradient(135deg, #1f7a4d10, #0f5f3a10); color: var(--accent-blue); }
+
+    /* Filters */
+    .filters-bar {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--border-color);
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-tertiary);
+        padding: 8px 14px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+    }
+    .filter-group i { color: var(--accent-blue); font-size: 14px; }
+    .filter-group input, .filter-group select {
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        padding: 4px 0;
+        font-size: 13px;
+        outline: none;
+    }
+    .filter-group select option { background: var(--bg-secondary); }
+    .filter-group input[type="number"] { width: 70px; }
+    .reset-btn {
+        background: var(--accent-red);
+        border: none;
+        padding: 8px 20px;
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+    .reset-btn:hover { filter: brightness(0.9); transform: translateY(-1px); }
+
+    /* Chessboard */
+    .chessboard-wrapper {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color);
+        overflow: auto;
+        max-height: calc(100vh - 380px);
+        position: relative;
+    }
+    .chessboard { min-width: 800px; }
+    .chessboard-header {
+        display: flex;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .block-header-cell {
+        width: 200px;
+        flex-shrink: 0;
+        padding: 14px 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-right: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+    }
+    .floor-header-cell {
+        width: 75px;
+        flex-shrink: 0;
+        padding: 14px 8px;
+        text-align: center;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-right: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        font-size: 13px;
+    }
+    .chessboard-row {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s;
+        cursor: grab;
+    }
+    .chessboard-row:active { cursor: grabbing; }
+    .chessboard-row.drag-over { background: #e0f2fe; }
+    .chessboard-row:hover { background: var(--bg-tertiary); }
+    .block-cell {
+        width: 200px;
+        flex-shrink: 0;
+        padding: 12px;
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: var(--bg-secondary);
+    }
+    .block-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--accent-blue);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .block-name-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .block-drag-handle {
+        cursor: grab;
+        color: var(--text-tertiary);
+    }
+    .block-drag-handle:active { cursor: grabbing; }
+    .block-area { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+    .block-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .block-actions i {
+        font-size: 14px;
+        cursor: pointer;
+        color: var(--text-tertiary);
+        transition: color 0.2s;
+    }
+    .block-actions i:hover { color: var(--accent-blue); }
+    .block-actions i.fa-trash-alt:hover { color: var(--accent-red); }
+    .cell {
+        width: 75px;
+        height: 75px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-right: 1px solid var(--border-color);
+        gap: 4px;
+    }
+    .cell:hover { transform: scale(0.98); filter: brightness(0.95); }
+    .cell-status { font-size: 20px; }
+    .cell-price { font-size: 10px; font-weight: 500; }
+    .status-free { background: #dcfce7; }
+    .status-reserved { background: #fed7aa; }
+    .status-sold { background: #fee2e2; }
+    .status-empty { background: var(--bg-tertiary); cursor: default; }
+    .status-empty:hover { transform: none; filter: none; }
+
+    /* Drawer */
+    .drawer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: none;
+    }
+    .drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        max-width: 550px;
+        height: 100%;
+        background: var(--bg-secondary);
+        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+        z-index: 1001;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: var(--bg-secondary);
+        z-index: 10;
+    }
+    .drawer-header h2 { font-size: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-primary); }
+    .drawer-close { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-tertiary); transition: color 0.2s; }
+    .drawer-close:hover { color: var(--accent-red); }
+    .drawer-body { padding: 24px; }
+    .plan-image {
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 24px;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .plan-image:hover { transform: scale(1.02); }
+    .plan-image img { max-width: 100%; max-height: 200px; border-radius: var(--radius-md); object-fit: contain; }
+    .plan-image-upload { margin-top: 12px; }
+    .plan-image-upload label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--accent-blue);
+        color: white;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 13px;
+    }
+    
+    /* Image Modal for Fullscreen */
+    .image-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .image-modal.active { display: flex; }
+    .image-modal img { max-width: 90%; max-height: 90%; object-fit: contain; }
+    .image-modal-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 40px;
+        color: white;
+        cursor: pointer;
+        background: none;
+        border: none;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .info-item {
+        background: var(--bg-tertiary);
+        padding: 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+    }
+    .info-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+    .info-value { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .edit-input, .edit-textarea {
+        width: 100%;
+        padding: 10px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    .edit-textarea { resize: vertical; min-height: 80px; }
+    .status-select {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+    .drawer-buttons { display: flex; gap: 12px; margin-top: 16px; }
+    
+    /* Buttons */
+    .btn-primary, .btn-secondary, .btn-danger {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+    .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+    .btn-danger { background: var(--accent-red); color: white; }
+    .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover { transform: translateY(-1px); filter: brightness(0.98); }
+    .btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1100;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-xl);
+        max-width: 600px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+    }
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header h2 { font-size: 18px; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .modal-body { padding: 24px; }
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 14px;
+    }
+    .form-group input[type="number"] { 
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+    .form-group input[type="number"]::-webkit-inner-spin-button,
+    .form-group input[type="number"]::-webkit-outer-spin-button {
+        opacity: 0.5;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .progress-bar-upload {
+        width: 100%;
+        height: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+        display: none;
+    }
+    .progress-fill { width: 0%; height: 100%; background: var(--accent-blue); transition: width 0.3s; }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: var(--bg-secondary);
+        border-left: 4px solid var(--accent-green);
+        padding: 12px 20px;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        z-index: 1200;
+        animation: slideIn 0.3s ease;
+        color: var(--text-primary);
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .loading { text-align: center; padding: 60px; color: var(--text-tertiary); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-container { padding: 0 12px; }
+        .block-header-cell, .block-cell { width: 150px; }
+        .floor-header-cell, .cell { width: 55px; height: 55px; }
+        .cell-status { font-size: 16px; }
+        .cell-price { font-size: 8px; }
+        .stats-row { grid-template-columns: 1fr 1fr; }
+        .drawer { max-width: 100%; }
+        .form-row { grid-template-columns: 1fr; }
+        .filters-bar { flex-direction: column; align-items: stretch; }
+        .filter-group { justify-content: space-between; }
+        .reset-btn { justify-content: center; }
+    }
+
+    /* ========== UNIVERSAL RESPONSIVE (Donezo theme) ========== */
+    @media (max-width: 1024px) {
+        .filter-row, .filters-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        .page-header h1 {
+            font-size: 22px !important;
+        }
+        .filter-row, .filters-grid {
+            grid-template-columns: 1fr !important;
+        }
+        .modal-content {
+            width: 95% !important;
+            margin: 5% auto !important;
+        }
+        table {
+            font-size: 12px;
+        }
+        th, td {
+            padding: 8px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header h1 {
+            font-size: 20px !important;
+        }
+        .header-buttons, .header-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        .header-buttons .btn-primary,
+        .header-buttons .btn-secondary,
+        .header-actions .btn-primary,
+        .header-actions .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+        .modal-content {
+            border-radius: 16px !important;
+        }
+        .modal-buttons {
+            flex-direction: column;
+        }
+        .modal-buttons button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (min-width: 1920px) {
+        .houses-main, .obiekt-main, .posts-container, .lids-container, .sim-cards-main {
+            max-width: 1700px !important;
+        }
+    }
+
+</style>
+
+<div class="dashboard-container">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-building"></i> Шахматка недвижимости</h1>
+            <p>Системаи идоракунии фурӯши амвол</p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-primary" id="addProjectBtn"><i class="fas fa-plus"></i> Проект</button>
+            <button class="btn-primary" id="addBlockBtn"><i class="fas fa-layer-group"></i> Блок</button>
+            <button class="btn-secondary" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn-secondary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+        </div>
+    </div>
+
+    <div class="projects-tabs" id="projectsTabs"></div>
+
+    <div class="stats-row">
+        <div class="stat-card"><div class="stat-info"><h4><i class="fas fa-building"></i> Ҳамагӣ</h4><div class="stat-number" id="statTotal">0</div></div><div class="stat-icon"><i class="fas fa-building"></i></div></div>
+        <div class="stat-card"><div class="stat-info"><h4><i class="fas fa-check-circle"></i> Свободна</h4><div class="stat-number" id="statFree">0</div></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div></div>
+        <div class="stat-card"><div class="stat-info"><h4><i class="fas fa-clock"></i> Бронь</h4><div class="stat-number" id="statReserved">0</div></div><div class="stat-icon"><i class="fas fa-clock"></i></div></div>
+        <div class="stat-card"><div class="stat-info"><h4><i class="fas fa-shopping-cart"></i> Фурӯхта</h4><div class="stat-number" id="statSold">0</div></div><div class="stat-icon"><i class="fas fa-shopping-cart"></i></div></div>
+    </div>
+
+    <div class="filters-bar">
+        <div class="filter-group"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Ҷустуҷӯ..."></div>
+        <div class="filter-group"><i class="fas fa-tag"></i><select id="statusFilter"><option value="all">Ҳама статусҳо</option><option value="free">🟢 Свободна</option><option value="reserved">🟡 Бронь</option><option value="sold">🔴 Фурӯхта</option></select></div>
+        <div class="filter-group"><i class="fas fa-layer-group"></i><input type="number" id="floorFromFilter" placeholder="Аз ошёна"><span>-</span><input type="number" id="floorToFilter" placeholder="То ошёна"></div>
+        <div class="filter-group"><i class="fas fa-ruler-combined"></i><input type="number" id="areaMin" placeholder="Аз" step="any" style="width:75px;"><span>-</span><input type="number" id="areaMax" placeholder="То" step="any" style="width:75px;"></div>
+        <div class="filter-group"><i class="fas fa-dollar-sign"></i><input type="number" id="priceMin" placeholder="Аз" style="width:80px;"><span>-</span><input type="number" id="priceMax" placeholder="То" style="width:80px;"></div>
+        <div class="filter-group"><i class="fas fa-door-open"></i><input type="number" id="roomsFilter" placeholder="Ҳуҷра..."></div>
+        <div class="filter-group"><i class="fas fa-toilet"></i><select id="bathroomTypeFilter"><option value="all">Ҳама санузел</option><option value="separate">Ҷудогона</option><option value="combined">Якҷоя</option></select></div>
+        <div class="filter-group"><i class="fas fa-sort-numeric-up"></i><input type="number" id="bathroomCountMin" placeholder="Аз" style="width:60px;"><span>-</span><input type="number" id="bathroomCountMax" placeholder="То" style="width:60px;"></div>
+        <div class="filter-group" id="blockFilterGroup"><i class="fas fa-cubes"></i><select id="blockFilter"><option value="all">Ҳама блокҳо</option></select></div>
+        <button class="reset-btn" id="resetFiltersBtn"><i class="fas fa-undo-alt"></i> Сброс</button>
+    </div>
+
+    <div class="chessboard-wrapper">
+        <div class="chessboard" id="chessboard"><div class="loading"><i class="fas fa-spinner fa-pulse"></i> Боргирӣ...</div></div>
+    </div>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+    <div class="drawer-header"><h2><i class="fas fa-home"></i> <span id="drawerTitle">Маълумоти квартира</span></h2><button class="drawer-close" id="closeDrawerBtn">&times;</button></div>
+    <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<div class="image-modal" id="imageModal">
+    <button class="image-modal-close" id="imageModalClose">&times;</button>
+    <img id="modalImage" src="">
+</div>
+
+<div class="modal" id="projectModal">
+    <div class="modal-content">
+        <div class="modal-header"><h2><i class="fas fa-building"></i> Проекти нав</h2><button class="drawer-close" id="closeProjectModalBtn">&times;</button></div>
+        <form id="projectForm">
+            <div class="modal-body">
+                <div class="form-group"><label>Номи проект *</label><input type="text" id="projectName" required></div>
+                <div class="form-group"><label>Суроға</label><input type="text" id="projectAddress"></div>
+                <div class="form-group"><label>Сохтмончӣ</label><input type="text" id="projectDeveloper"></div>
+                <div class="form-group"><label>Тавсиф</label><textarea id="projectDescription" rows="3"></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-secondary" id="cancelProjectBtn">Бекор</button><button type="submit" class="btn-primary" id="submitProjectBtn">Сабт</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="blockModal">
+    <div class="modal-content">
+        <div class="modal-header"><h2><i class="fas fa-layer-group"></i> Блоки нав</h2><button class="drawer-close" id="closeBlockModalBtn">&times;</button></div>
+        <form id="blockForm" enctype="multipart/form-data">
+            <div class="modal-body">
+                <div class="form-group"><label>Номи блок *</label><input type="text" id="blockName" required placeholder="Мисол: A1, A2, Б"></div>
+                <div class="form-row"><div class="form-group"><label>Аз этаж *</label><input type="number" id="floorFrom" required></div><div class="form-group"><label>То этаж *</label><input type="number" id="floorTo" required></div></div>
+                <div class="form-row"><div class="form-group"><label>Масоҳат (м²) *</label><input type="number" id="defaultArea" step="any" required placeholder="Мисол: 21.5"></div><div class="form-group"><label>Ҳуҷраҳо *</label><input type="number" id="defaultRooms" required></div></div>
+                <div class="form-row"><div class="form-group"><label>Тирезаҳо *</label><input type="number" id="defaultWindows" required></div><div class="form-group"><label>Нарх як м² ($) *</label><input type="number" id="defaultPricePerM2" step="10" required></div></div>
+                <div class="form-row">
+                    <div class="form-group"><label><input type="checkbox" id="defaultBalcony"> Балкон</label></div>
+                    <div class="form-group">
+                        <label>Намуди санузел</label>
+                        <select id="defaultBathroomType">
+                            <option value="combined">Якҷоя</option>
+                            <option value="separate">Ҷудогона</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>Шумораи санузел</label><input type="number" id="defaultBathroomCount" min="1" max="10" value="1"></div>
+                <div class="form-group"><label>Акси планировка</label><input type="file" id="blockPlanImage" accept="image/*"><div class="progress-bar-upload" id="uploadProgress"><div class="progress-fill" id="uploadProgressFill"></div></div></div>
+                <div class="form-group"><label>Шарҳ</label><textarea id="blockDescription" rows="2"></textarea></div>
+                <div class="form-group" style="background: var(--bg-tertiary); padding: 12px; border-radius: var(--radius-md);"><small><i class="fas fa-info-circle"></i> Баъди сабт, барои ҳар этаж автоматикӣ квартира эҷод мешавад.</small></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-secondary" id="cancelBlockBtn">Бекор</button><button type="submit" class="btn-primary" id="submitBlockBtn">Эҷод</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="editProjectModal">
+    <div class="modal-content">
+        <div class="modal-header"><h2><i class="fas fa-edit"></i> Таҳрири проект</h2><button class="drawer-close" id="closeEditProjectModalBtn">&times;</button></div>
+        <form id="editProjectForm">
+            <input type="hidden" id="editProjectId">
+            <div class="modal-body">
+                <div class="form-group"><label>Номи проект</label><input type="text" id="editProjectName" required></div>
+                <div class="form-group"><label>Суроға</label><input type="text" id="editProjectAddress"></div>
+                <div class="form-group"><label>Сохтмончӣ</label><input type="text" id="editProjectDeveloper"></div>
+                <div class="form-group"><label>Тавсиф</label><textarea id="editProjectDescription" rows="3"></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-danger" id="deleteProjectBtn">Нест кардан</button><button type="button" class="btn-secondary" id="cancelEditProjectBtn">Бекор</button><button type="submit" class="btn-primary" id="submitEditProjectBtn">Сабт</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="editBlockModal">
+    <div class="modal-content">
+        <div class="modal-header"><h2><i class="fas fa-edit"></i> Таҳрири блок</h2><button class="drawer-close" id="closeEditBlockModalBtn">&times;</button></div>
+        <form id="editBlockForm" enctype="multipart/form-data">
+            <input type="hidden" id="editBlockId">
+            <div class="modal-body">
+                <div class="form-group"><label>Номи блок *</label><input type="text" id="editBlockName" required></div>
+                <div class="form-row"><div class="form-group"><label>Аз этаж *</label><input type="number" id="editFloorFrom" required></div><div class="form-group"><label>То этаж *</label><input type="number" id="editFloorTo" required></div></div>
+                <div class="form-row"><div class="form-group"><label>Масоҳат (м²) *</label><input type="number" id="editDefaultArea" step="any" required placeholder="Мисол: 21.5"></div><div class="form-group"><label>Ҳуҷраҳо *</label><input type="number" id="editDefaultRooms" required></div></div>
+                <div class="form-row"><div class="form-group"><label>Тирезаҳо *</label><input type="number" id="editDefaultWindows" required></div><div class="form-group"><label>Нарх як м² ($) *</label><input type="number" id="editDefaultPricePerM2" step="10" required></div></div>
+                <div class="form-row">
+                    <div class="form-group"><label><input type="checkbox" id="editDefaultBalcony"> Балкон</label></div>
+                    <div class="form-group">
+                        <label>Намуди санузел</label>
+                        <select id="editDefaultBathroomType">
+                            <option value="combined">Якҷоя</option>
+                            <option value="separate">Ҷудогона</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>Шумораи санузел</label><input type="number" id="editDefaultBathroomCount" min="1" max="10" value="1"></div>
+                <div class="form-group"><label>Акси планировка (нав)</label><input type="file" id="editBlockPlanImage" accept="image/*"></div>
+                <div class="form-group"><label>Шарҳ</label><textarea id="editBlockDescription" rows="2"></textarea></div>
+                <div class="form-group" style="background: var(--bg-tertiary); padding: 12px; border-radius: var(--radius-md);"><small><i class="fas fa-info-circle"></i> Тағйирот ба ҳамаи квартираҳои мавҷуда татбиқ мешавад.</small></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-danger" id="deleteBlockFromModalBtn">Нест кардан</button><button type="button" class="btn-secondary" id="cancelEditBlockBtn">Бекор</button><button type="submit" class="btn-primary" id="submitEditBlockBtn">Сабт</button></div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let currentProjectId = null;
+let allProjects = [];
+let allBlocks = [];
+let allApartments = [];
+let currentApartment = null;
+let isEditing = false;
+let isSubmitting = false;
+let currentEditBlockId = null;
+
+const FILTERS_KEY = 'chessboard_filters';
+const CURRENT_PROJECT_KEY = 'chessboard_current_project';
+
+// ==================== UTILITIES ====================
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function formatPrice(price) { return price ? price.toLocaleString() : '0'; }
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); }
+function getBathroomText(type, count) { return `${type === 'separate' ? 'Ҷудогона' : 'Якҷоя'}${count && count > 1 ? ` (${count}то)` : ''}`; }
+
+// ==================== LOCALSTORAGE ====================
+function saveCurrentProject() {
+    if (currentProjectId) localStorage.setItem(CURRENT_PROJECT_KEY, currentProjectId);
+}
+
+function loadCurrentProject() {
+    const saved = localStorage.getItem(CURRENT_PROJECT_KEY);
+    if (saved && allProjects.length && allProjects.some(p => p.id == saved)) {
+        currentProjectId = parseInt(saved);
+        return true;
+    }
+    return false;
+}
+
+function saveFilters() {
+    localStorage.setItem(FILTERS_KEY, JSON.stringify({
+        projectId: currentProjectId,
+        search: document.getElementById('searchInput').value,
+        status: document.getElementById('statusFilter').value,
+        floorFrom: document.getElementById('floorFromFilter').value,
+        floorTo: document.getElementById('floorToFilter').value,
+        areaMin: document.getElementById('areaMin').value,
+        areaMax: document.getElementById('areaMax').value,
+        priceMin: document.getElementById('priceMin').value,
+        priceMax: document.getElementById('priceMax').value,
+        rooms: document.getElementById('roomsFilter').value,
+        bathroomType: document.getElementById('bathroomTypeFilter').value,
+        bathroomCountMin: document.getElementById('bathroomCountMin').value,
+        bathroomCountMax: document.getElementById('bathroomCountMax').value,
+        block: document.getElementById('blockFilter').value
+    }));
+}
+
+function loadFilters() {
+    const saved = localStorage.getItem(FILTERS_KEY);
+    if (saved) {
+        try {
+            const f = JSON.parse(saved);
+            if (f.projectId && f.projectId === currentProjectId) {
+                document.getElementById('searchInput').value = f.search || '';
+                document.getElementById('statusFilter').value = f.status || 'all';
+                document.getElementById('floorFromFilter').value = f.floorFrom || '';
+                document.getElementById('floorToFilter').value = f.floorTo || '';
+                document.getElementById('areaMin').value = f.areaMin || '';
+                document.getElementById('areaMax').value = f.areaMax || '';
+                document.getElementById('priceMin').value = f.priceMin || '';
+                document.getElementById('priceMax').value = f.priceMax || '';
+                document.getElementById('roomsFilter').value = f.rooms || '';
+                document.getElementById('bathroomTypeFilter').value = f.bathroomType || 'all';
+                document.getElementById('bathroomCountMin').value = f.bathroomCountMin || '';
+                document.getElementById('bathroomCountMax').value = f.bathroomCountMax || '';
+                if (document.getElementById('blockFilter')) document.getElementById('blockFilter').value = f.block || 'all';
+                return true;
+            }
+        } catch(e) {}
+    }
+    return false;
+}
+
+function clearFilters() {
+    localStorage.removeItem(FILTERS_KEY);
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = 'all';
+    document.getElementById('floorFromFilter').value = '';
+    document.getElementById('floorToFilter').value = '';
+    document.getElementById('areaMin').value = '';
+    document.getElementById('areaMax').value = '';
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    document.getElementById('roomsFilter').value = '';
+    document.getElementById('bathroomTypeFilter').value = 'all';
+    document.getElementById('bathroomCountMin').value = '';
+    document.getElementById('bathroomCountMax').value = '';
+    if (document.getElementById('blockFilter')) document.getElementById('blockFilter').value = 'all';
+}
+
+// ==================== API ====================
+const API = {
+    projects: () => fetch('/api/objekt/projects').then(r => r.json()),
+    createProject: (d) => fetch('/api/objekt/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(r => r.json()),
+    updateProject: (id, d) => fetch(`/api/objekt/projects/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(r => r.json()),
+    deleteProject: (id) => fetch(`/api/objekt/projects/${id}`, { method: 'DELETE' }).then(r => r.json()),
+    blocks: (pid) => fetch(`/api/objekt/projects/${pid}/blocks`).then(r => r.json()),
+    apartments: (pid) => fetch(`/api/objekt/projects/${pid}/apartments`).then(r => r.json()),
+    createBlock: (fd) => fetch('/api/objekt/blocks', { method: 'POST', body: fd }).then(r => r.json()),
+    updateBlock: (id, fd) => fetch(`/api/objekt/blocks/${id}`, { method: 'PUT', body: fd }).then(r => r.json()),
+    updateBlockOrder: (d) => fetch('/api/objekt/blocks/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(r => r.json()),
+    deleteBlock: (id) => fetch(`/api/objekt/blocks/${id}`, { method: 'DELETE' }).then(r => r.json()),
+    updateApartment: (id, d) => fetch(`/api/objekt/apartments/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(r => r.json()),
+    updateApartmentStatus: (id, s) => fetch(`/api/objekt/apartments/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: s }) }).then(r => r.json()),
+    uploadImage: (f) => { const fd = new FormData(); fd.append('image', f); return fetch('/api/objekt/upload-image', { method: 'POST', body: fd }).then(r => r.json()); },
+    exportExcel: (pid, f) => { const p = new URLSearchParams({ project_id: pid, ...f }); window.open(`/api/objekt/export/excel?${p}`, '_blank'); },
+    exportPDF: (pid) => window.open(`/api/objekt/export/pdf/${pid}`, '_blank')
+};
+
+// ==================== LOAD DATA ====================
+async function loadProjects() {
+    try {
+        allProjects = await API.projects();
+        if (!loadCurrentProject() && allProjects.length) currentProjectId = allProjects[0].id;
+        renderTabs();
+        if (currentProjectId && allProjects.some(p => p.id === currentProjectId)) {
+            await loadProjectData();
+        } else if (allProjects.length) {
+            currentProjectId = allProjects[0].id;
+            saveCurrentProject();
+            await loadProjectData();
+        } else {
+            document.getElementById('chessboard').innerHTML = '<div class="loading">📋 Проект нест. Проекти аввалро эҷод кунед!</div>';
+        }
+    } catch(e) { showToast('Хатогӣ дар боргирии проектҳо', 'error'); }
+}
+
+function renderTabs() {
+    const container = document.getElementById('projectsTabs');
+    container.innerHTML = allProjects.map(p => `
+        <div class="project-tab ${currentProjectId === p.id ? 'active' : ''}" data-id="${p.id}">
+            <i class="fas fa-building"></i> ${escapeHtml(p.name)}
+            <div class="project-tab-actions">
+                <i class="fas fa-edit" data-edit="${p.id}"></i>
+                <i class="fas fa-trash-alt" data-delete="${p.id}" style="color: var(--accent-red);"></i>
+            </div>
+        </div>
+    `).join('') + `<div class="project-tab add-project-tab" id="addProjectTabBtn"><i class="fas fa-plus"></i> Проект</div>`;
+    
+    document.querySelectorAll('.project-tab[data-id]').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            if (!e.target.closest('.project-tab-actions')) switchProject(parseInt(tab.dataset.id));
+        });
+    });
+    document.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openEditProjectModal(parseInt(btn.dataset.edit)); }));
+    document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); deleteProject(parseInt(btn.dataset.delete)); }));
+    document.getElementById('addProjectTabBtn')?.addEventListener('click', openAddProjectModal);
+}
+
+async function switchProject(id) {
+    if (currentProjectId === id) return;
+    currentProjectId = id;
+    saveCurrentProject();
+    clearFilters();
+    await loadProjectData();
+    renderTabs();
+    showToast('Проект иваз карда шуд', 'success');
+}
+
+async function loadProjectData() {
+    if (!currentProjectId) return;
+    try {
+        const [blocks, apartments] = await Promise.all([API.blocks(currentProjectId), API.apartments(currentProjectId)]);
+        allBlocks = blocks;
+        allApartments = apartments;
+        updateBlockFilter();
+        renderChessboard();
+        updateStats();
+        loadFilters();
+        applyFilters();
+    } catch(e) { console.error(e); }
+}
+
+function updateBlockFilter() {
+    const select = document.getElementById('blockFilter');
+    if (allBlocks.length > 0) {
+        select.innerHTML = '<option value="all">Ҳама блокҳо</option>' + 
+            allBlocks.map(b => `<option value="${b.id}">Блоки ${escapeHtml(b.name)}</option>`).join('');
+    } else {
+        select.innerHTML = '<option value="all">Ҳама блокҳо</option>';
+    }
+}
+
+// ==================== CHESSBOARD ====================
+function renderChessboard() {
+    if (!allBlocks.length) { 
+        document.getElementById('chessboard').innerHTML = '<div class="loading">🏗️ Блок нест. Блоки аввалро эҷод кунед!</div>'; 
+        return; 
+    }
+    const floors = [...new Set(allApartments.map(a => a.floor))].sort((a,b) => a-b);
+    if (!floors.length) { 
+        document.getElementById('chessboard').innerHTML = '<div class="loading">🏗️ Квартира нест. Блок эҷод кунед!</div>'; 
+        return; 
+    }
+    
+    let html = `<div class="chessboard-header"><div class="block-header-cell"><i class="fas fa-grip-vertical" style="opacity:0.5"></i> Блок / Этаж</div>${floors.map(f => `<div class="floor-header-cell">${f}</div>`).join('')}</div>`;
+    
+    for (const block of allBlocks) {
+        html += `<div class="chessboard-row" data-block-id="${block.id}" draggable="true">
+            <div class="block-cell">
+                <div class="block-name">
+                    <div class="block-name-left">
+                        <i class="fas fa-grip-vertical block-drag-handle"></i>
+                        ${escapeHtml(block.name)}
+                    </div>
+                    <div class="block-actions">
+                        <i class="fas fa-edit edit-block-btn" data-edit-block="${block.id}" title="Таҳрири блок"></i>
+                        <i class="fas fa-trash-alt delete-block-btn" data-delete-block="${block.id}" title="Нест кардани блок" style="color:var(--accent-red);"></i>
+                    </div>
+                </div>
+                <div class="block-area">${block.default_area} м²</div>
+            </div>`;
+        for (const floor of floors) {
+            const apt = allApartments.find(a => a.block_id === block.id && a.floor === floor);
+            if (apt) {
+                html += `<div class="cell status-${apt.status}" data-apt-id="${apt.id}"><div class="cell-status">${apt.status === 'free' ? '🟢' : apt.status === 'reserved' ? '🟡' : '🔴'}</div><div class="cell-price">${formatPrice(apt.total_price)}</div></div>`;
+            } else {
+                html += `<div class="cell status-empty"><div class="cell-status">—</div></div>`;
+            }
+        }
+        html += `</div>`;
+    }
+    document.getElementById('chessboard').innerHTML = html;
+    
+    // Event listeners for apartment cells
+    document.querySelectorAll('.cell[data-apt-id]').forEach(cell => cell.addEventListener('click', () => openApartmentDrawer(parseInt(cell.dataset.aptId))));
+    
+    // Event listeners for edit and delete block buttons
+    document.querySelectorAll('.edit-block-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openEditBlockModal(parseInt(btn.dataset.editBlock)); }));
+    document.querySelectorAll('.delete-block-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); deleteBlock(parseInt(btn.dataset.deleteBlock)); }));
+    
+    // Setup drag and drop for rows
+    setupDragAndDrop();
+}
+
+function setupDragAndDrop() {
+    const rows = document.querySelectorAll('.chessboard-row[draggable="true"]');
+    rows.forEach(row => {
+        row.setAttribute('draggable', 'true');
+        row.addEventListener('dragstart', handleDragStart);
+        row.addEventListener('dragend', handleDragEnd);
+        row.addEventListener('dragover', handleDragOver);
+        row.addEventListener('dragleave', handleDragLeave);
+        row.addEventListener('drop', handleDrop);
+        
+        // Disable drag on child elements that shouldn't trigger drag
+        const dragHandle = row.querySelector('.block-drag-handle');
+        if (dragHandle) {
+            dragHandle.addEventListener('dragstart', (e) => {
+                e.stopPropagation();
+                e.dataTransfer.setData('text/plain', row.dataset.blockId);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+        }
+    });
+}
+
+let draggedBlockId = null;
+
+function handleDragStart(e) {
+    draggedBlockId = parseInt(e.currentTarget.dataset.blockId);
+    e.dataTransfer.setData('text/plain', draggedBlockId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragEnd(e) {
+    e.currentTarget.classList.remove('drag-over');
+    document.querySelectorAll('.chessboard-row').forEach(row => row.classList.remove('drag-over'));
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    const targetRow = e.currentTarget;
+    targetRow.classList.remove('drag-over');
+    const targetBlockId = parseInt(targetRow.dataset.blockId);
+    if (!draggedBlockId || draggedBlockId === targetBlockId) return;
+    
+    try {
+        const result = await API.updateBlockOrder({ block_id: draggedBlockId, target_id: targetBlockId });
+        if (result.success) {
+            allBlocks = result.blocks;
+            renderChessboard();
+            updateBlockFilter();
+            showToast('Тартиби блокҳо иваз шуд', 'success');
+        } else {
+            showToast('Хатогӣ дар иваз кардани тартиб', 'error');
+        }
+    } catch (error) {
+        console.error('Drop error:', error);
+        showToast('Хатогӣ дар иваз кардани тартиб', 'error');
+    }
+    draggedBlockId = null;
+}
+
+// ==================== DRAWER ====================
+async function openApartmentDrawer(id) {
+    currentApartment = allApartments.find(a => a.id === id);
+    if (!currentApartment) return;
+    isEditing = false;
+    renderDrawer();
+    document.getElementById('drawerOverlay').style.display = 'block';
+    document.getElementById('drawer').classList.add('open');
+}
+
+function openImageFullscreen(imgSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imgSrc;
+    modal.classList.add('active');
+}
+
+function renderDrawer() {
+    const block = allBlocks.find(b => b.id === currentApartment.block_id);
+    const body = document.getElementById('drawerBody');
+    if (!isEditing) {
+        body.innerHTML = `
+            <div class="plan-image" id="planImageContainer">
+                ${currentApartment.plan_image ? `<img src="${currentApartment.plan_image}" id="planImage">` : '<i class="fas fa-image fa-3x" style="color:var(--text-tertiary)"></i><p>Нет изображения</p>'}
+            </div>
+            <div class="info-grid">
+                <div class="info-item"><div class="info-label">Блок</div><div class="info-value">${escapeHtml(block?.name || '—')}</div></div>
+                <div class="info-item"><div class="info-label">Этаж</div><div class="info-value">${currentApartment.floor}</div></div>
+                <div class="info-item"><div class="info-label">Масоҳат</div><div class="info-value">${currentApartment.area} м²</div></div>
+                <div class="info-item"><div class="info-label">Ҳуҷраҳо</div><div class="info-value">${currentApartment.rooms}</div></div>
+                <div class="info-item"><div class="info-label">Тирезаҳо</div><div class="info-value">${currentApartment.windows}</div></div>
+                <div class="info-item"><div class="info-label">Балкон</div><div class="info-value">${currentApartment.balcony ? '✅ Да' : '❌ Не'}</div></div>
+                <div class="info-item"><div class="info-label">Санузел</div><div class="info-value">${getBathroomText(currentApartment.bathroom_type, currentApartment.bathroom_count)}</div></div>
+                <div class="info-item"><div class="info-label">Нарх як м²</div><div class="info-value">$${currentApartment.price_per_m2?.toLocaleString()}</div></div>
+                <div class="info-item"><div class="info-label">Нархи умумӣ</div><div class="info-value">$${currentApartment.total_price?.toLocaleString()}</div></div>
+                <div class="info-item"><div class="info-label">Тавсиф</div><div class="info-value">${escapeHtml(currentApartment.description || '—')}</div></div>
+            </div>
+            <select class="status-select" id="drawerStatus"><option value="free" ${currentApartment.status === 'free' ? 'selected' : ''}>🟢 Свободна</option><option value="reserved" ${currentApartment.status === 'reserved' ? 'selected' : ''}>🟡 Бронь</option><option value="sold" ${currentApartment.status === 'sold' ? 'selected' : ''}>🔴 Фурӯхта</option></select>
+            <div class="drawer-buttons"><button class="btn-primary" id="editApartmentBtn"><i class="fas fa-edit"></i> Таҳрир</button></div>
+        `;
+        const planContainer = document.getElementById('planImageContainer');
+        if (planContainer && currentApartment.plan_image) {
+            planContainer.addEventListener('click', () => openImageFullscreen(currentApartment.plan_image));
+        }
+        document.getElementById('drawerStatus')?.addEventListener('change', async () => { 
+            await API.updateApartmentStatus(currentApartment.id, document.getElementById('drawerStatus').value); 
+            currentApartment.status = document.getElementById('drawerStatus').value; 
+            await loadProjectData(); 
+            renderDrawer(); 
+            showToast('Статус иваз шуд'); 
+        });
+        document.getElementById('editApartmentBtn')?.addEventListener('click', () => { isEditing = true; renderDrawer(); });
+    } else {
+        body.innerHTML = `
+            <div class="plan-image"><img id="editPlanPreview" src="${currentApartment.plan_image || ''}" onerror="this.style.display='none'"><div class="plan-image-upload"><label><i class="fas fa-upload"></i> Боргузорӣ<input type="file" id="editPlanImageFile" accept="image/*" style="display:none"></label></div></div>
+            <div class="info-grid">
+                <div class="info-item"><div class="info-label">Масоҳат (м²)</div><input type="number" step="any" class="edit-input" id="editArea" value="${currentApartment.area}"></div>
+                <div class="info-item"><div class="info-label">Ҳуҷраҳо</div><input type="number" class="edit-input" id="editRooms" value="${currentApartment.rooms}"></div>
+                <div class="info-item"><div class="info-label">Тирезаҳо</div><input type="number" class="edit-input" id="editWindows" value="${currentApartment.windows}"></div>
+                <div class="info-item"><div class="info-label">Нарх як м² ($)</div><input type="number" step="10" class="edit-input" id="editPriceM2" value="${currentApartment.price_per_m2}"></div>
+                <div class="info-item"><label><input type="checkbox" id="editBalcony" ${currentApartment.balcony ? 'checked' : ''}> Балкон</label></div>
+                <div class="info-item"><select class="edit-input" id="editBathroomType"><option value="combined" ${currentApartment.bathroom_type === 'combined' ? 'selected' : ''}>Якҷоя</option><option value="separate" ${currentApartment.bathroom_type === 'separate' ? 'selected' : ''}>Ҷудогона</option></select></div>
+                <div class="info-item"><input type="number" min="1" max="10" class="edit-input" id="editBathroomCount" value="${currentApartment.bathroom_count || 1}"></div>
+                <div class="info-item"><textarea class="edit-textarea" id="editDescription" rows="2">${escapeHtml(currentApartment.description || '')}</textarea></div>
+            </div>
+            <select class="status-select" id="editStatus"><option value="free" ${currentApartment.status === 'free' ? 'selected' : ''}>🟢 Свободна</option><option value="reserved" ${currentApartment.status === 'reserved' ? 'selected' : ''}>🟡 Бронь</option><option value="sold" ${currentApartment.status === 'sold' ? 'selected' : ''}>🔴 Фурӯхта</option></select>
+            <div class="drawer-buttons"><button class="btn-primary" id="saveApartmentBtn"><i class="fas fa-save"></i> Сабт</button><button class="btn-secondary" id="cancelEditApartmentBtn"><i class="fas fa-times"></i> Бекор</button></div>
+        `;
+        document.getElementById('editPlanImageFile')?.addEventListener('change', async (input) => {
+            const file = input.target.files[0];
+            if (!file) return;
+            const res = await API.uploadImage(file);
+            if (res.success) { 
+                currentApartment.plan_image = res.url; 
+                const preview = document.getElementById('editPlanPreview');
+                if (preview) { preview.src = res.url; preview.style.display = 'block'; }
+                showToast('Акс боргузорӣ шуд'); 
+            }
+        });
+        document.getElementById('saveApartmentBtn')?.addEventListener('click', async () => {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            const data = {
+                area: parseFloat(document.getElementById('editArea').value),
+                rooms: parseInt(document.getElementById('editRooms').value),
+                windows: parseInt(document.getElementById('editWindows').value),
+                price_per_m2: parseFloat(document.getElementById('editPriceM2').value),
+                balcony: document.getElementById('editBalcony').checked,
+                bathroom_type: document.getElementById('editBathroomType').value,
+                bathroom_count: parseInt(document.getElementById('editBathroomCount').value) || 1,
+                status: document.getElementById('editStatus').value,
+                description: document.getElementById('editDescription').value,
+                plan_image: currentApartment.plan_image
+            };
+            data.total_price = data.area * data.price_per_m2;
+            const res = await API.updateApartment(currentApartment.id, data);
+            if (res.success) {
+                currentApartment = { ...currentApartment, ...data };
+                await loadProjectData();
+                isEditing = false;
+                renderDrawer();
+                showToast('Квартира нав карда шуд');
+            } else showToast('Хатогӣ', 'error');
+            isSubmitting = false;
+        });
+        document.getElementById('cancelEditApartmentBtn')?.addEventListener('click', () => { isEditing = false; renderDrawer(); });
+    }
+}
+
+function closeDrawer() { document.getElementById('drawerOverlay').style.display = 'none'; document.getElementById('drawer').classList.remove('open'); }
+
+// ==================== PROJECTS CRUD ====================
+function openAddProjectModal() { document.getElementById('projectForm').reset(); document.getElementById('projectModal').classList.add('active'); }
+function closeProjectModal() { document.getElementById('projectModal').classList.remove('active'); }
+async function deleteProject(id) {
+    if (!confirm('Проектро нест кардан? Ҳама блокҳо ва квартираҳо нест мешаванд!')) return;
+    const res = await API.deleteProject(id);
+    if (res.success) {
+        if (currentProjectId === id) currentProjectId = null;
+        await loadProjects();
+        if (allProjects.length) currentProjectId = allProjects[0].id;
+        await loadProjectData();
+        renderTabs();
+        showToast('Проект нест карда шуд');
+    } else showToast('Хатогӣ', 'error');
+}
+function openEditProjectModal(id) {
+    const p = allProjects.find(p => p.id === id);
+    if (p) {
+        document.getElementById('editProjectId').value = p.id;
+        document.getElementById('editProjectName').value = p.name;
+        document.getElementById('editProjectAddress').value = p.address || '';
+        document.getElementById('editProjectDeveloper').value = p.developer || '';
+        document.getElementById('editProjectDescription').value = p.description || '';
+        document.getElementById('editProjectModal').classList.add('active');
+    }
+}
+function closeEditProjectModal() { document.getElementById('editProjectModal').classList.remove('active'); }
+
+// ==================== BLOCKS CRUD ====================
+function openAddBlockModal() {
+    if (!currentProjectId) { showToast('Аввал проект интихоб кунед', 'error'); return; }
+    document.getElementById('blockForm').reset();
+    document.getElementById('defaultBalcony').checked = false;
+    document.getElementById('defaultBathroomType').value = 'combined';
+    document.getElementById('defaultBathroomCount').value = 1;
+    document.getElementById('blockModal').classList.add('active');
+}
+function closeBlockModal() { document.getElementById('blockModal').classList.remove('active'); }
+
+function openEditBlockModal(blockId) {
+    const block = allBlocks.find(b => b.id === blockId);
+    if (!block) return;
+    currentEditBlockId = blockId;
+    document.getElementById('editBlockId').value = block.id;
+    document.getElementById('editBlockName').value = block.name;
+    document.getElementById('editFloorFrom').value = block.floor_from;
+    document.getElementById('editFloorTo').value = block.floor_to;
+    document.getElementById('editDefaultArea').value = block.default_area;
+    document.getElementById('editDefaultRooms').value = block.default_rooms;
+    document.getElementById('editDefaultWindows').value = block.default_windows;
+    document.getElementById('editDefaultPricePerM2').value = block.default_price_per_m2;
+    document.getElementById('editDefaultBalcony').checked = block.default_balcony === 1;
+    document.getElementById('editDefaultBathroomType').value = block.default_bathroom_type || 'combined';
+    document.getElementById('editDefaultBathroomCount').value = block.default_bathroom_count || 1;
+    document.getElementById('editBlockDescription').value = block.description || '';
+    document.getElementById('editBlockModal').classList.add('active');
+}
+
+function closeEditBlockModal() { 
+    document.getElementById('editBlockModal').classList.remove('active'); 
+    currentEditBlockId = null;
+}
+
+async function deleteBlock(id) {
+    if (!confirm('Блокро нест кардан? Ҳама квартираҳои он нест мешаванд!')) return;
+    const res = await API.deleteBlock(id);
+    if (res.success) { await loadProjectData(); showToast('Блок нест карда шуд'); }
+    else showToast('Хатогӣ', 'error');
+}
+
+// ==================== FORMS SUBMIT ====================
+document.getElementById('projectForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+    const res = await API.createProject({
+        name: document.getElementById('projectName').value,
+        address: document.getElementById('projectAddress').value,
+        developer: document.getElementById('projectDeveloper').value,
+        description: document.getElementById('projectDescription').value
+    });
+    if (res.success) {
+        closeProjectModal();
+        await loadProjects();
+        if (res.id) currentProjectId = res.id;
+        await loadProjectData();
+        showToast('Проект эҷод шуд');
+    } else showToast('Хатогӣ', 'error');
+    isSubmitting = false;
+});
+
+document.getElementById('editProjectForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+    const id = parseInt(document.getElementById('editProjectId').value);
+    const res = await API.updateProject(id, {
+        name: document.getElementById('editProjectName').value,
+        address: document.getElementById('editProjectAddress').value,
+        developer: document.getElementById('editProjectDeveloper').value,
+        description: document.getElementById('editProjectDescription').value
+    });
+    if (res.success) {
+        closeEditProjectModal();
+        await loadProjects();
+        if (currentProjectId === id) await loadProjectData();
+        showToast('Проект нав карда шуд');
+    } else showToast('Хатогӣ', 'error');
+    isSubmitting = false;
+});
+
+document.getElementById('blockForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+    const fd = new FormData();
+    fd.append('project_id', currentProjectId);
+    fd.append('name', document.getElementById('blockName').value);
+    fd.append('floor_from', document.getElementById('floorFrom').value);
+    fd.append('floor_to', document.getElementById('floorTo').value);
+    fd.append('default_area', document.getElementById('defaultArea').value);
+    fd.append('default_rooms', document.getElementById('defaultRooms').value);
+    fd.append('default_windows', document.getElementById('defaultWindows').value);
+    fd.append('default_price_per_m2', document.getElementById('defaultPricePerM2').value);
+    fd.append('default_balcony', document.getElementById('defaultBalcony').checked ? 'true' : 'false');
+    fd.append('default_bathroom_type', document.getElementById('defaultBathroomType').value);
+    fd.append('default_bathroom_count', document.getElementById('defaultBathroomCount').value);
+    fd.append('description', document.getElementById('blockDescription').value);
+    const file = document.getElementById('blockPlanImage').files[0];
+    if (file) fd.append('plan_image', file);
+    
+    const res = await API.createBlock(fd);
+    if (res.success) {
+        closeBlockModal();
+        await loadProjectData();
+        showToast(`Блок эҷод шуд (${res.count || 0} квартира)`);
+    } else showToast('Хатогӣ: ' + (res.error || 'Номаълум'), 'error');
+    isSubmitting = false;
+});
+
+document.getElementById('editBlockForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmitting || !currentEditBlockId) return;
+    isSubmitting = true;
+    const fd = new FormData();
+    fd.append('name', document.getElementById('editBlockName').value);
+    fd.append('floor_from', document.getElementById('editFloorFrom').value);
+    fd.append('floor_to', document.getElementById('editFloorTo').value);
+    fd.append('default_area', document.getElementById('editDefaultArea').value);
+    fd.append('default_rooms', document.getElementById('editDefaultRooms').value);
+    fd.append('default_windows', document.getElementById('editDefaultWindows').value);
+    fd.append('default_price_per_m2', document.getElementById('editDefaultPricePerM2').value);
+    fd.append('default_balcony', document.getElementById('editDefaultBalcony').checked ? 'true' : 'false');
+    fd.append('default_bathroom_type', document.getElementById('editDefaultBathroomType').value);
+    fd.append('default_bathroom_count', document.getElementById('editDefaultBathroomCount').value);
+    fd.append('description', document.getElementById('editBlockDescription').value);
+    const file = document.getElementById('editBlockPlanImage').files[0];
+    if (file) fd.append('plan_image', file);
+    
+    const res = await API.updateBlock(currentEditBlockId, fd);
+    if (res.success) {
+        closeEditBlockModal();
+        await loadProjectData();
+        showToast('Блок нав карда шуд ва ҳама квартираҳо тағйир ёфтанд');
+    } else showToast('Хатогӣ: ' + (res.error || 'Номаълум'), 'error');
+    isSubmitting = false;
+});
+
+document.getElementById('deleteBlockFromModalBtn')?.addEventListener('click', async () => {
+    if (currentEditBlockId && confirm('Блокро нест кардан?')) {
+        await deleteBlock(currentEditBlockId);
+        closeEditBlockModal();
+    }
+});
+
+// ==================== FILTERS & STATS ====================
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const floorFrom = parseInt(document.getElementById('floorFromFilter').value);
+    const floorTo = parseInt(document.getElementById('floorToFilter').value);
+    const areaMin = parseFloat(document.getElementById('areaMin').value) || 0;
+    const areaMax = parseFloat(document.getElementById('areaMax').value) || Infinity;
+    const priceMin = parseFloat(document.getElementById('priceMin').value) || 0;
+    const priceMax = parseFloat(document.getElementById('priceMax').value) || Infinity;
+    const rooms = parseInt(document.getElementById('roomsFilter').value) || 0;
+    const bathType = document.getElementById('bathroomTypeFilter').value;
+    const bathCountMin = parseInt(document.getElementById('bathroomCountMin').value) || 0;
+    const bathCountMax = parseInt(document.getElementById('bathroomCountMax').value) || Infinity;
+    const blockFilter = document.getElementById('blockFilter').value;
+    
+    let filtered = [...allApartments];
+    if (blockFilter !== 'all') filtered = filtered.filter(a => a.block_id === parseInt(blockFilter));
+    if (status !== 'all') filtered = filtered.filter(a => a.status === status);
+    if (!isNaN(floorFrom)) filtered = filtered.filter(a => a.floor >= floorFrom);
+    if (!isNaN(floorTo)) filtered = filtered.filter(a => a.floor <= floorTo);
+    if (areaMin) filtered = filtered.filter(a => a.area >= areaMin);
+    if (areaMax !== Infinity) filtered = filtered.filter(a => a.area <= areaMax);
+    if (priceMin) filtered = filtered.filter(a => a.total_price >= priceMin);
+    if (priceMax !== Infinity) filtered = filtered.filter(a => a.total_price <= priceMax);
+    if (rooms) filtered = filtered.filter(a => a.rooms === rooms);
+    if (bathType !== 'all') filtered = filtered.filter(a => a.bathroom_type === bathType);
+    if (bathCountMin) filtered = filtered.filter(a => (a.bathroom_count || 1) >= bathCountMin);
+    if (bathCountMax !== Infinity) filtered = filtered.filter(a => (a.bathroom_count || 1) <= bathCountMax);
+    if (search) {
+        filtered = filtered.filter(a => {
+            const block = allBlocks.find(b => b.id === a.block_id);
+            return a.id.toString().includes(search) || 
+                   (block && block.name.toLowerCase().includes(search)) ||
+                   a.floor.toString().includes(search);
+        });
+    }
+    
+    const floors = [...new Set(allApartments.map(a => a.floor))].sort((a,b) => a-b);
+    if (!allBlocks.length) return;
+    
+    let html = `<div class="chessboard-header"><div class="block-header-cell">Блок / Этаж</div>${floors.map(f => `<div class="floor-header-cell">${f}</div>`).join('')}</div>`;
+    for (const block of allBlocks) {
+        if (blockFilter !== 'all' && block.id !== parseInt(blockFilter)) continue;
+        html += `<div class="chessboard-row"><div class="block-cell">
+            <div class="block-name">
+                <div class="block-name-left">
+                    <i class="fas fa-grip-vertical block-drag-handle"></i>
+                    ${escapeHtml(block.name)}
+                </div>
+                <div class="block-actions">
+                    <i class="fas fa-edit edit-block-btn" data-edit-block="${block.id}" title="Таҳрири блок"></i>
+                    <i class="fas fa-trash-alt delete-block-btn" data-delete-block="${block.id}" title="Нест кардани блок" style="color:var(--accent-red);"></i>
+                </div>
+            </div>
+            <div class="block-area">${block.default_area} м²</div>
+        </div>`;
+        for (const floor of floors) {
+            const apt = filtered.find(a => a.block_id === block.id && a.floor === floor);
+            if (apt) {
+                html += `<div class="cell status-${apt.status}" data-apt-id="${apt.id}"><div class="cell-status">${apt.status === 'free' ? '🟢' : apt.status === 'reserved' ? '🟡' : '🔴'}</div><div class="cell-price">${formatPrice(apt.total_price)}</div></div>`;
+            } else {
+                html += `<div class="cell status-empty"><div class="cell-status">—</div></div>`;
+            }
+        }
+        html += `</div>`;
+    }
+    document.getElementById('chessboard').innerHTML = html;
+    document.querySelectorAll('.cell[data-apt-id]').forEach(cell => cell.addEventListener('click', () => openApartmentDrawer(parseInt(cell.dataset.aptId))));
+    document.querySelectorAll('.edit-block-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openEditBlockModal(parseInt(btn.dataset.editBlock)); }));
+    document.querySelectorAll('.delete-block-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); deleteBlock(parseInt(btn.dataset.deleteBlock)); }));
+    setupDragAndDrop();
+    updateStats();
+}
+
+function updateStats() {
+    document.getElementById('statTotal').textContent = allApartments.length;
+    document.getElementById('statFree').textContent = allApartments.filter(a => a.status === 'free').length;
+    document.getElementById('statReserved').textContent = allApartments.filter(a => a.status === 'reserved').length;
+    document.getElementById('statSold').textContent = allApartments.filter(a => a.status === 'sold').length;
+}
+
+function resetFilters() { 
+    clearFilters(); 
+    applyFilters(); 
+    saveFilters();
+    showToast('Филтрҳо тоза шуданд'); 
+}
+
+function exportToExcel() { 
+    if (currentProjectId) API.exportExcel(currentProjectId, { 
+        status: document.getElementById('statusFilter').value,
+        floor_from: document.getElementById('floorFromFilter').value,
+        floor_to: document.getElementById('floorToFilter').value
+    }); 
+    else showToast('Проектро интихоб кунед', 'error'); 
+}
+
+function exportToPDF() { 
+    if (currentProjectId) API.exportPDF(currentProjectId); 
+    else showToast('Проектро интихоб кунед', 'error'); 
+}
+
+// ==================== EVENT LISTENERS ====================
+document.getElementById('addProjectBtn')?.addEventListener('click', openAddProjectModal);
+document.getElementById('addBlockBtn')?.addEventListener('click', openAddBlockModal);
+document.getElementById('exportExcelBtn')?.addEventListener('click', exportToExcel);
+document.getElementById('exportPdfBtn')?.addEventListener('click', exportToPDF);
+document.getElementById('resetFiltersBtn')?.addEventListener('click', resetFilters);
+document.getElementById('closeDrawerBtn')?.addEventListener('click', closeDrawer);
+document.getElementById('drawerOverlay')?.addEventListener('click', closeDrawer);   
+document.getElementById('closeProjectModalBtn')?.addEventListener('click', closeProjectModal);
+document.getElementById('cancelProjectBtn')?.addEventListener('click', closeProjectModal);
+document.getElementById('closeBlockModalBtn')?.addEventListener('click', closeBlockModal);
+document.getElementById('cancelBlockBtn')?.addEventListener('click', closeBlockModal);
+document.getElementById('closeEditProjectModalBtn')?.addEventListener('click', closeEditProjectModal);
+document.getElementById('cancelEditProjectBtn')?.addEventListener('click', closeEditProjectModal);
+document.getElementById('deleteProjectBtn')?.addEventListener('click', () => { if (currentProjectId) deleteProject(currentProjectId); closeEditProjectModal(); });
+document.getElementById('closeEditBlockModalBtn')?.addEventListener('click', closeEditBlockModal);
+document.getElementById('cancelEditBlockBtn')?.addEventListener('click', closeEditBlockModal);
+document.getElementById('imageModalClose')?.addEventListener('click', () => document.getElementById('imageModal').classList.remove('active'));
+document.getElementById('imageModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('imageModal')) document.getElementById('imageModal').classList.remove('active'); });
+
+const filterInputs = ['searchInput', 'statusFilter', 'floorFromFilter', 'floorToFilter', 'areaMin', 'areaMax', 'priceMin', 'priceMax', 'roomsFilter', 'bathroomTypeFilter', 'bathroomCountMin', 'bathroomCountMax', 'blockFilter'];
+filterInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { saveFilters(); applyFilters(); });
+    if (el) el.addEventListener('change', () => { saveFilters(); applyFilters(); });
+});
+
+loadProjects();
+</script>
+{% endblock %}

@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+{% block title %}Zayavka{% endblock %}
+
+{% block content %}
+<style>
+    .filters-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        background: white;
+        padding: 16px 20px;
+        border-radius: 20px;
+        border: 1px solid #eef2f6;
+    }
+    
+    .filters-bar select, .filters-bar button {
+        padding: 10px 16px;
+        background: #f8fafc;
+        border: 1px solid #e1e4e8;
+        border-radius: 12px;
+        color: #5b6e8c;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .analytics-cards {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .analytics-card {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        flex: 1;
+        border: 1px solid #eef2f6;
+        transition: all 0.2s;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -8px rgba(0,0,0,0.1);
+    }
+    
+    .analytics-card h4 {
+        font-size: 14px;
+        color: #8b9dc3;
+        margin-bottom: 8px;
+    }
+    
+    .analytics-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    
+    .requests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 24px;
+    }
+    
+    .request-card {
+        background: white;
+        border-radius: 24px;
+        padding: 20px;
+        border: 1px solid #eef2f6;
+        transition: all 0.2s;
+    }
+    
+    .request-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px -12px rgba(0,0,0,0.1);
+    }
+    
+    .request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    
+    .request-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+    
+    .request-info {
+        margin-bottom: 16px;
+    }
+    
+    .request-info p {
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #5b6e8c;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .request-info i {
+        width: 20px;
+        color: #8b9dc3;
+    }
+    
+    .request-footer {
+        margin-top: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .status-select {
+        flex: 1;
+        padding: 10px;
+        background: #f8fafc;
+        border: 1px solid #e1e4e8;
+        border-radius: 12px;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 24px;
+    }
+    
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 60px;
+        color: #8b9dc3;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .edit-btn, .delete-btn {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .edit-btn { color: #2563eb; }
+    .delete-btn { color: #ef4444; }
+    .edit-btn:hover, .delete-btn:hover { background: #f0f2f5; }
+</style>
+
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1><i class="fas fa-file-alt"></i> Заявки</h1>
+        <p>Управление заявками на недвижимость</p>
+    </div>
+    <button class="btn-primary" onclick="showAddRequestModal()"><i class="fas fa-plus"></i> Создать заявку</button>
+</div>
+
+<div class="filters-bar">
+    <select id="statusFilter" onchange="loadRequests()">
+        <option value="all">Все статусы</option>
+        <option value="new">🟢 Новые</option>
+        <option value="progress">🟡 В работе</option>
+        <option value="done">🔵 Завершены</option>
+        <option value="cancel">🔴 Отменены</option>
+    </select>
+    
+    <select id="dateFilter" onchange="loadRequests()">
+        <option value="all">За все время</option>
+        <option value="day">📅 За день</option>
+        <option value="week">📆 За неделю</option>
+        <option value="month">📆 За месяц</option>
+        <option value="year">📆 За год</option>
+    </select>
+    
+    <select id="userFilter" onchange="loadRequests()">
+        <option value="all">Все сотрудники</option>
+    </select>
+    
+    <button class="btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Экспорт в Excel</button>
+</div>
+
+<div class="analytics-cards">
+    <div class="analytics-card">
+        <h4><i class="fas fa-chart-line"></i> Всего заявок</h4>
+        <div class="analytics-value" id="totalRequests">0</div>
+    </div>
+    <div class="analytics-card">
+        <h4><i class="fas fa-check-circle"></i> Завершено</h4>
+        <div class="analytics-value" id="completedRequests">0</div>
+    </div>
+</div>
+
+<div class="requests-grid" id="requestsGrid">
+    <div class="loading"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>
+</div>
+
+<div id="requestModal" class="modal modal-large">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2 id="requestModalTitle"><i class="fas fa-plus-circle"></i> Создать заявку</h2>
+            <span class="close" onclick="closeRequestModal()">&times;</span>
+        </div>
+        <form id="requestForm">
+            <input type="hidden" id="requestId">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> Тип недвижимости *</label>
+                    <select id="propertyType" required>
+                        <option value="новостройка">🏗️ новостройка</option>
+                        <option value="коробка">📦 коробка</option>
+                        <option value="котлован">🕳️ котлован</option>
+                        <option value="Коммерческая">Коммерческая</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Адрес *</label>
+                    <input type="text" id="address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-arrows-alt"></i> Площадь (м²) *</label>
+                    <input type="number" id="area" step="0.1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-door-open"></i> Комнаты *</label>
+                    <input type="number" id="rooms" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-window-maximize"></i> Окна *</label>
+                    <input type="number" id="windows" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-layer-group"></i> Этаж *</label>
+                    <input type="number" id="floor" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> Этажность *</label>
+                    <input type="number" id="totalFloors" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-file-pdf"></i> Документы</label>
+                    <input type="text" id="documents">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-credit-card"></i> Общая цена (₽) *</label>
+                    <input type="number" id="totalPrice" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-chart-line"></i> Цена за м² (₽) *</label>
+                    <input type="number" id="pricePerM2" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Телефон клиента *</label>
+                    <input type="tel" id="phone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Имя клиента *</label>
+                    <input type="text" id="clientName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-user-tie"></i> Менеджер</label>
+                    <input type="text" id="manager">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-chart-simple"></i> SMM специалист</label>
+                    <input type="text" id="smm">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-user-check"></i> Исполнитель *</label>
+                    <select id="executorId" required></select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label><i class="fas fa-comment"></i> Комментарий</label>
+                    <textarea id="comment" rows="3"></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Сохранить</button>
+                <button type="button" class="btn-secondary" onclick="closeRequestModal()"><i class="fas fa-times"></i> Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function loadUsersForSelect() {
+    const response = await fetch('/api/users/list');
+    const users = await response.json();
+    const select = document.getElementById('executorId');
+    select.innerHTML = '<option value="">Выберите...</option>' + 
+        users.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)} (${u.category})</option>`).join('');
+    
+    const userFilter = document.getElementById('userFilter');
+    userFilter.innerHTML = '<option value="all">Все сотрудники</option>' + 
+        users.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
+}
+
+async function loadRequests() {
+    const status = document.getElementById('statusFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    const userFilter = document.getElementById('userFilter').value;
+    
+    const response = await fetch(`/api/requests?status=${status}&date_filter=${dateFilter}&user_filter=${userFilter}`);
+    const data = await response.json();
+    
+    document.getElementById('totalRequests').textContent = data.stats.total || 0;
+    document.getElementById('completedRequests').textContent = data.stats.completed || 0;
+    
+    const grid = document.getElementById('requestsGrid');
+    if (!data.requests || data.requests.length === 0) {
+        grid.innerHTML = '<div class="loading"><i class="fas fa-inbox"></i> Нет заявок</div>';
+        return;
+    }
+    
+    grid.innerHTML = data.requests.map(req => `
+        <div class="request-card">
+            <div class="request-header">
+                <h3><i class="fas fa-user-circle"></i> ${escapeHtml(req.client_name)}</h3>
+                <span class="status-badge status-${req.status}">${getStatusText(req.status)}</span>
+            </div>
+            <div class="request-info">
+                <p><i class="fas fa-map-marker-alt"></i> ${escapeHtml(req.address)}</p>
+                <p><i class="fas fa-arrows-alt"></i> ${req.area} м² | <i class="fas fa-door-open"></i> ${req.rooms} комн.</p>
+                <p><i class="fas fa-credit-card"></i> ${formatPrice(req.total_price)} ₽ | <i class="fas fa-chart-line"></i> ${formatPrice(req.price_per_m2)} ₽/м²</p>
+                <p><i class="fas fa-phone"></i> ${req.phone}</p>
+                <p><i class="fas fa-user"></i> Автор: ${escapeHtml(req.author_name)}</p>
+                <p><i class="fas fa-user-check"></i> Исполнитель: ${escapeHtml(req.executor_name)}</p>
+                <p><i class="fas fa-calendar"></i> ${new Date(req.created_date).toLocaleString()}</p>
+                ${req.comment ? `<p><i class="fas fa-comment"></i> ${escapeHtml(req.comment)}</p>` : ''}
+            </div>
+            <div class="request-footer">
+                <select class="status-select" onchange="updateRequestStatus(${req.id}, this.value)">
+                    <option value="new" ${req.status === 'new' ? 'selected' : ''}>🟢 Новая</option>
+                    <option value="progress" ${req.status === 'progress' ? 'selected' : ''}>🟡 В работе</option>
+                    <option value="done" ${req.status === 'done' ? 'selected' : ''}>🔵 Завершена</option>
+                    <option value="cancel" ${req.status === 'cancel' ? 'selected' : ''}>🔴 Отмена</option>
+                </select>
+                <div class="action-buttons">
+                    <button class="edit-btn" onclick="editRequest(${req.id})"><i class="fas fa-edit"></i></button>
+                    <button class="delete-btn" onclick="deleteRequest(${req.id})"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function updateRequestStatus(id, status) {
+    await fetch(`/api/requests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+    loadRequests();
+}
+
+async function deleteRequest(id) {
+    if (confirm('Удалить заявку?')) {
+        await fetch(`/api/requests/${id}`, { method: 'DELETE' });
+        loadRequests();
+    }
+}
+
+async function editRequest(id) {
+    const response = await fetch('/api/requests');
+    const data = await response.json();
+    const req = data.requests.find(r => r.id == id);
+    
+    if (req) {
+        document.getElementById('requestModalTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать заявку';
+        document.getElementById('requestId').value = req.id;
+        document.getElementById('propertyType').value = req.property_type;
+        document.getElementById('address').value = req.address;
+        document.getElementById('area').value = req.area;
+        document.getElementById('rooms').value = req.rooms;
+        document.getElementById('windows').value = req.windows;
+        document.getElementById('floor').value = req.floor;
+        document.getElementById('totalFloors').value = req.total_floors;
+        document.getElementById('documents').value = req.documents || '';
+        document.getElementById('totalPrice').value = req.total_price;
+        document.getElementById('pricePerM2').value = req.price_per_m2;
+        document.getElementById('phone').value = req.phone;
+        document.getElementById('clientName').value = req.client_name;
+        document.getElementById('manager').value = req.manager || '';
+        document.getElementById('smm').value = req.smm || '';
+        document.getElementById('executorId').value = req.executor_id;
+        document.getElementById('comment').value = req.comment || '';
+        document.getElementById('requestModal').style.display = 'block';
+    }
+}
+
+document.getElementById('requestForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        property_type: document.getElementById('propertyType').value,
+        address: document.getElementById('address').value,
+        area: parseFloat(document.getElementById('area').value),
+        rooms: parseInt(document.getElementById('rooms').value),
+        windows: parseInt(document.getElementById('windows').value),
+        floor: parseInt(document.getElementById('floor').value),
+        total_floors: parseInt(document.getElementById('totalFloors').value),
+        documents: document.getElementById('documents').value,
+        total_price: parseFloat(document.getElementById('totalPrice').value),
+        price_per_m2: parseFloat(document.getElementById('pricePerM2').value),
+        phone: document.getElementById('phone').value,
+        client_name: document.getElementById('clientName').value,
+        manager: document.getElementById('manager').value,
+        smm: document.getElementById('smm').value,
+        executor_id: parseInt(document.getElementById('executorId').value),
+        comment: document.getElementById('comment').value,
+        files: []
+    };
+    
+    if (!data.property_type || !data.address || !data.client_name || !data.executor_id) {
+        alert('Заполните все обязательные поля');
+        return;
+    }
+    
+    const requestId = document.getElementById('requestId').value;
+    const url = requestId ? `/api/requests/${requestId}` : '/api/requests';
+    const method = requestId ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+        closeRequestModal();
+        loadRequests();
+        alert(requestId ? 'Заявка обновлена!' : 'Заявка создана!');
+    } else {
+        alert('Ошибка сохранения');
+    }
+});
+
+function showAddRequestModal() {
+    document.getElementById('requestModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Создать заявку';
+    document.getElementById('requestForm').reset();
+    document.getElementById('requestId').value = '';
+    document.getElementById('requestModal').style.display = 'block';
+}
+
+function closeRequestModal() {
+    document.getElementById('requestModal').style.display = 'none';
+}
+
+async function exportToExcel() {
+    const status = document.getElementById('statusFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    window.location.href = `/api/requests/export?status=${status}&date_filter=${dateFilter}`;
+}
+
+loadUsersForSelect();
+loadRequests();
+</script>
+{% endblock %}

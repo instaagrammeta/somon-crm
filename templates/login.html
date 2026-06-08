@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate CRM — Воридшавӣ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --green-primary: #1f7a4d;
+            --green-dark: #0f5f3a;
+            --green-light: #d4edda;
+            --green-soft: #f0f9f4;
+            --bg-page: #f1f4f8;
+            --text-dark: #1a1a2e;
+            --text-medium: #4a5568;
+            --text-soft: #8b9dc3;
+            --border-soft: #eef2f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, var(--green-light), transparent);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -200px;
+            left: -200px;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--green-soft), transparent);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 980px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Чап — иллюстратсия */
+        .login-illustration {
+            background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+            color: white;
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-illustration::before {
+            content: '';
+            position: absolute;
+            right: -80px;
+            top: -80px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .login-illustration::after {
+            content: '';
+            position: absolute;
+            left: -100px;
+            bottom: -100px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .illustration-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon-big {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .logo-icon-big::before {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--green-primary);
+            border-radius: 50%;
+        }
+
+        .logo-icon-big::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--green-primary);
+            border-radius: 50%;
+        }
+
+        .illustration-logo span {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .illustration-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .illustration-content h2 {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+
+        .illustration-content p {
+            font-size: 14px;
+            opacity: 0.85;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .illustration-features {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .illustration-footer {
+            font-size: 11px;
+            opacity: 0.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Рост — форма */
+        .login-form-wrapper {
+            padding: 50px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+        .form-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .form-header p {
+            color: var(--text-soft);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-medium);
+            font-size: 13px;
+        }
+
+        .form-group label i {
+            color: var(--green-primary);
+            font-size: 12px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px 14px 46px;
+            background: var(--bg-page);
+            border: 1.5px solid transparent;
+            border-radius: 14px;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+            color: var(--text-dark);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--green-primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.08);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-soft);
+            font-size: 14px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-soft);
+            cursor: pointer;
+            font-size: 14px;
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+
+        .toggle-password:hover {
+            color: var(--green-primary);
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-medium);
+        }
+
+        .checkbox-wrapper input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--green-primary);
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            color: var(--green-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--green-primary);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+
+        .btn-login:hover {
+            background: var(--green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(31, 122, 77, 0.25);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #b91c1c;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        /* Адаптивӣ */
+        @media (max-width: 900px) {
+            .login-wrapper {
+                grid-template-columns: 1fr;
+                max-width: 480px;
+            }
+
+            .login-illustration {
+                padding: 32px;
+                min-height: 200px;
+            }
+
+            .illustration-content h2 {
+                font-size: 22px;
+            }
+
+            .illustration-features {
+                display: none;
+            }
+
+            .login-form-wrapper {
+                padding: 36px 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .login-wrapper {
+                border-radius: 0;
+                min-height: 100vh;
+                box-shadow: none;
+            }
+
+            .login-illustration {
+                padding: 28px 24px;
+                min-height: auto;
+            }
+
+            .illustration-content h2 {
+                font-size: 20px;
+            }
+
+            .illustration-content p {
+                font-size: 13px;
+                margin-bottom: 0;
+            }
+
+            .login-form-wrapper {
+                padding: 28px 24px;
+            }
+
+            .form-header h1 {
+                font-size: 22px;
+            }
+        }
+
+        @media (min-width: 1920px) {
+            .login-wrapper {
+                max-width: 1200px;
+            }
+
+            .illustration-content h2 {
+                font-size: 36px;
+            }
+
+            .form-header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <!-- Чап: иллюстратсия -->
+        <div class="login-illustration">
+            <div class="illustration-logo">
+                <div class="logo-icon-big"></div>
+                <span>RealEstate</span>
+            </div>
+
+            <div class="illustration-content">
+                <h2>Хуш омадед!<br>Хуб хидмат расонед.</h2>
+                <p>Системаи муосир барои идоракунии амвол, лидҳо, заявкаҳо ва кормандон.</p>
+
+                <div class="illustration-features">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-check"></i></div>
+                        <span>Идоракунии лидҳо ва заявкаҳо</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-check"></i></div>
+                        <span>Аналитика ва ҳисоботҳо</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-check"></i></div>
+                        <span>Ҳамкории даста</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="illustration-footer">
+                © 2026 RealEstate CRM. Ҳамаи ҳуқуқҳо маҳфузанд.
+            </div>
+        </div>
+
+        <!-- Рост: форма -->
+        <div class="login-form-wrapper">
+            <div class="form-header">
+                <h1>Воридшавӣ ба система</h1>
+                <p>Логин ва паролатонро ворид кунед барои идома</p>
+            </div>
+
+            <form id="loginForm">
+                <div id="errorMsg" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="errorText"></span>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Логин</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="login" name="login" required placeholder="Логинатонро ворид кунед" autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Парол</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" name="password" required placeholder="Паролатонро ворид кунед" autocomplete="current-password">
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Маро дар хотир дор</span>
+                    </label>
+                    <a href="#" class="forgot-link">Паролро фаромуш кардед?</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    <span>Воридшавӣ</span>
+                </button>
+            </form>
+
+            <div class="form-footer">
+                Версияи система: 2.0 · Real Estate CRM
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const login = document.getElementById('login').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const errorText = document.getElementById('errorText');
+            const loginBtn = document.getElementById('loginBtn');
+
+            errorMsg.style.display = 'none';
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Бор шуда истодааст...</span>';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, password })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    errorText.textContent = data.error || 'Хатогии воридшавӣ. Логин ё парол нодуруст аст.';
+                    errorMsg.style.display = 'flex';
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> <span>Воридшавӣ</span>';
+                }
+            } catch (err) {
+                errorText.textContent = 'Хатогии сервер. Лутфан баъдтар такрор кунед.';
+                errorMsg.style.display = 'flex';
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> <span>Воридшавӣ</span>';
+            }
+        });
+    </script>
+</body>
+</html>
