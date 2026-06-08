@@ -26,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Admin-only paths.
-  const adminPaths = ["/users"];
+  const adminPaths = ["/admin"];
   if (
     auth.token &&
     auth.user &&

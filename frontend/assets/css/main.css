@@ -76,6 +76,23 @@
   .badge-green {
     @apply badge bg-brand-soft text-brand;
   }
+
+  /* Status badges (port of base.html status pills) */
+  .status-badge {
+    @apply inline-block px-3 py-[5px] rounded-full text-[11px] font-semibold;
+  }
+  .status-new {
+    @apply bg-sky-100 text-sky-700;
+  }
+  .status-progress {
+    @apply bg-amber-100 text-amber-700;
+  }
+  .status-done {
+    @apply bg-brand-light text-brand-dark;
+  }
+  .status-cancel {
+    @apply bg-red-100 text-red-700;
+  }
   .badge-red {
     @apply badge bg-red-50 text-red-600;
   }
