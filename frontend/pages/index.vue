@@ -10,7 +10,7 @@ const { t } = useI18n();
 const { data: stats, pending } = useAsyncData<DashboardStats>(
   "dashboard-stats",
   () => api.get<DashboardStats>("/api/dashboard/stats"),
-  { default: () => ({} as DashboardStats) }
+  { lazy: true, default: () => ({} as DashboardStats) }
 );
 
 const cards = computed(() => {

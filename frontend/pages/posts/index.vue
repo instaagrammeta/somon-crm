@@ -28,7 +28,7 @@ const projects = [
 ];
 const catMeta = (c?: string) => categories.find((x) => x.value === c) || categories[5];
 
-const { data: posts, pending, refresh } = useAsyncData<Post[]>("posts", () => api.get<Post[]>("/api/posts"), { default: () => [] });
+const { data: posts, pending, refresh } = useAsyncData<Post[]>("posts", () => api.get<Post[]>("/api/posts"), { lazy: true, default: () => [] });
 
 const filter = ref("all");
 const filtered = computed(() => {

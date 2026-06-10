@@ -11,7 +11,8 @@ const toast = useToast();
 
 const { data: projects, refresh: refreshProjects } = useAsyncData<ObjektProject[]>(
   "objekt-projects",
-  () => api.get<ObjektProject[]>("/api/objekt/projects")
+  () => api.get<ObjektProject[]>("/api/objekt/projects"),
+  { lazy: true, default: () => [] }
 );
 const activeId = ref<number | null>(null);
 watch(projects, (p) => { if (p?.length && !activeId.value) activeId.value = p[0].id; }, { immediate: true });
@@ -19,12 +20,12 @@ watch(projects, (p) => { if (p?.length && !activeId.value) activeId.value = p[0]
 const { data: blocks, refresh: refreshBlocks } = useAsyncData<ObjektBlock[]>(
   () => `objekt-blocks-${activeId.value}`,
   () => activeId.value ? api.get<ObjektBlock[]>(`/api/objekt/projects/${activeId.value}/blocks`) : Promise.resolve([]),
-  { watch: [activeId] }
+  { watch: [activeId], lazy: true, default: () => [] }
 );
 const { data: apartments, refresh: refreshApts } = useAsyncData<ObjektApartment[]>(
   () => `objekt-apts-${activeId.value}`,
   () => activeId.value ? api.get<ObjektApartment[]>(`/api/objekt/projects/${activeId.value}/apartments`) : Promise.resolve([]),
-  { watch: [activeId] }
+  { watch: [activeId], lazy: true, default: () => [] }
 );
 
 // === project CRUD ===

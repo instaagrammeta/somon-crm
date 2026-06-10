@@ -21,7 +21,7 @@ const sources = [
 const { data: boards, refresh: refreshBoards } = useAsyncData<KanbanBoard[]>(
   "kanban-boards",
   () => api.get<KanbanBoard[]>("/api/kanban/boards"),
-  { default: () => [] }
+  { lazy: true, default: () => [] }
 );
 const activeId = ref<number | null>(null);
 watch(boards, (b) => { if (b?.length && !activeId.value) activeId.value = b[0].id; }, { immediate: true });
@@ -29,12 +29,12 @@ watch(boards, (b) => { if (b?.length && !activeId.value) activeId.value = b[0].i
 const { data: cols, refresh: refreshCols } = useAsyncData<KanbanColumn[]>(
   () => `kb-cols-${activeId.value}`,
   () => activeId.value ? api.get<KanbanColumn[]>(`/api/kanban/boards/${activeId.value}/columns`) : Promise.resolve([]),
-  { watch: [activeId], default: () => [] }
+  { watch: [activeId], lazy: true, default: () => [] }
 );
 const { data: leads, refresh: refreshLeads } = useAsyncData<KanbanLead[]>(
   () => `kb-leads-${activeId.value}`,
   () => activeId.value ? api.get<KanbanLead[]>(`/api/kanban/leads?board_id=${activeId.value}`) : Promise.resolve([]),
-  { watch: [activeId], default: () => [] }
+  { watch: [activeId], lazy: true, default: () => [] }
 );
 
 // filters

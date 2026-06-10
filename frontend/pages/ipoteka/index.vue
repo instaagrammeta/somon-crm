@@ -8,7 +8,7 @@ const api = useApi();
 const auth = useAuthStore();
 const toast = useToast();
 
-const { data: banks, pending, refresh } = useAsyncData<Bank[]>("banks", () => api.get<Bank[]>("/api/banks"), { default: () => [] });
+const { data: banks, pending, refresh } = useAsyncData<Bank[]>("banks", () => api.get<Bank[]>("/api/banks"), { lazy: true, default: () => [] });
 
 // conditions cache per bank
 const conditions = ref<Record<number, MortgageCondition[]>>({});

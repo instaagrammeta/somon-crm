@@ -25,7 +25,7 @@ const toast = useToast();
 const { data: objects, pending, refresh } = useAsyncData<InstallmentObject[]>(
   "installments",
   () => api.get<InstallmentObject[]>("/api/installment-objects"),
-  { default: () => [] }
+  { lazy: true, default: () => [] }
 );
 
 const conditions = ref<Record<number, InstallmentCondition[]>>({});

@@ -10,7 +10,8 @@ const { t } = useI18n();
 
 const { data: users, pending, refresh } = useAsyncData<User[]>(
   "users",
-  () => api.get<User[]>("/api/users")
+  () => api.get<User[]>("/api/users"),
+  { lazy: true, default: () => [] }
 );
 
 const open = ref(false);

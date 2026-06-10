@@ -22,7 +22,7 @@ const districts = [
 ];
 const typeIcon = (t: string) => (t === "новостройка" ? "🏗️" : t === "коробка" ? "📦" : t === "котлован" ? "🕳️" : "🏢");
 
-const { data: houses, pending, refresh } = useAsyncData<House[]>("houses", () => api.get<House[]>("/api/houses"), { default: () => [] });
+const { data: houses, pending, refresh } = useAsyncData<House[]>("houses", () => api.get<House[]>("/api/houses"), { lazy: true, default: () => [] });
 
 const fl = reactive({ search: "", type: "all", district: "all" });
 const filtered = computed(() => {

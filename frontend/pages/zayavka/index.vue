@@ -19,21 +19,21 @@ const propertyTypes = [
 const { data: boards, refresh: refreshBoards } = useAsyncData<RequestsBoard[]>(
   "req-boards",
   () => api.get<RequestsBoard[]>("/api/requests-boards"),
-  { default: () => [] }
+  { lazy: true, default: () => [] }
 );
-const { data: users } = useAsyncData<User[]>("users-list", () => api.get<User[]>("/api/users/list"), { default: () => [] });
+const { data: users } = useAsyncData<User[]>("users-list", () => api.get<User[]>("/api/users/list"), { lazy: true, default: () => [] });
 const activeId = ref<number | null>(null);
 watch(boards, (b) => { if (b?.length && !activeId.value) activeId.value = b[0].id; }, { immediate: true });
 
 const { data: cols, refresh: refreshCols } = useAsyncData<RequestsColumn[]>(
   () => `req-cols-${activeId.value}`,
   () => activeId.value ? api.get<RequestsColumn[]>(`/api/requests-boards/${activeId.value}/columns`) : Promise.resolve([]),
-  { watch: [activeId], default: () => [] }
+  { watch: [activeId], lazy: true, default: () => [] }
 );
 const { data: items, refresh: refreshItems } = useAsyncData<RequestItem[]>(
   () => `req-items-${activeId.value}`,
   () => activeId.value ? api.get<RequestItem[]>(`/api/requests-board/${activeId.value}/requests`) : Promise.resolve([]),
-  { watch: [activeId], default: () => [] }
+  { watch: [activeId], lazy: true, default: () => [] }
 );
 
 const activeBoard = computed(() => boards.value?.find((b) => b.id === activeId.value));

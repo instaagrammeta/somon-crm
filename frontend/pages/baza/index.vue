@@ -12,7 +12,7 @@ const parentId = ref(0);
 const { data: folders, refresh: refreshFolders } = useAsyncData<Folder[]>(
   () => `folders-${parentId.value}`,
   () => api.get<Folder[]>(`/api/folders?parent_id=${parentId.value}`),
-  { watch: [parentId] }
+  { watch: [parentId], lazy: true, default: () => [] }
 );
 const breadcrumbs = ref<Folder[]>([]);
 
@@ -33,7 +33,7 @@ const { data: files, refresh: refreshFiles } = useAsyncData<FolderFile[]>(
   () => selectedFolder.value
     ? api.get<FolderFile[]>(`/api/folders/${selectedFolder.value.id}/files`)
     : Promise.resolve([]),
-  { watch: [selectedFolder] }
+  { watch: [selectedFolder], lazy: true, default: () => [] }
 );
 
 const newFolderName = ref("");

@@ -12,9 +12,9 @@ const status = ref<"all" | "new" | "in_progress" | "done" | "cancelled">("all");
 const { data: tasks, pending, refresh } = useAsyncData<Task[]>(
   "tasks",
   () => api.get<Task[]>(`/api/tasks${status.value !== "all" ? `?status=${status.value}` : ""}`),
-  { watch: [status], default: () => [] }
+  { watch: [status], lazy: true, default: () => [] }
 );
-const { data: users } = useAsyncData<User[]>("users-list", () => api.get<User[]>("/api/users/list"), { default: () => [] });
+const { data: users } = useAsyncData<User[]>("users-list", () => api.get<User[]>("/api/users/list"), { lazy: true, default: () => [] });
 
 const filters = computed(() => [
   { key: "all", label: t("app.all") },

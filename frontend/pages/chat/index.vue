@@ -9,7 +9,7 @@ const { t } = useI18n();
 const toast = useToast();
 
 const { data: messages, refresh } = useAsyncData<Message[]>("messages",
-  () => api.get<Message[]>("/api/messages?limit=200"));
+  () => api.get<Message[]>("/api/messages?limit=200"), { lazy: true, default: () => [] });
 
 const text = ref("");
 const fileInput = ref<HTMLInputElement | null>(null);

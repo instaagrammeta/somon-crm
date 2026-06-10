@@ -6,8 +6,12 @@ export function useCrud<T extends { id: number }>(baseUrl: string, key: string) 
   const toast = useToast();
   const { t } = useI18n();
 
-  const { data, pending, refresh } = useAsyncData<T[]>(key, () =>
-    api.get<T[]>(baseUrl)
+  // lazy:true keeps the initial render non-blocking so a failed/slow fetch on
+  // a cold page reload can never crash the SPA with a fatal 500 error page.
+  const { data, pending, refresh } = useAsyncData<T[]>(
+    key,
+    () => api.get<T[]>(baseUrl),
+    { lazy: true, default: () => [] as T[] }
   );
 
   const open = ref(false);

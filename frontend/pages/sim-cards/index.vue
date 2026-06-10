@@ -10,7 +10,7 @@ const api = useApi();
 
 const c = useCrud<SimCard>("/api/sim-cards", "sim-cards");
 const ph = useCrud<CompanyPhone>("/api/company-phones", "phones");
-const { data: users } = useAsyncData<User[]>("users-list", () => api.get<User[]>("/api/users/list"));
+const { data: users } = useAsyncData<User[]>("users-list", () => api.get<User[]>("/api/users/list"), { lazy: true, default: () => [] });
 
 const tab = ref<"sims" | "phones">("sims");
 

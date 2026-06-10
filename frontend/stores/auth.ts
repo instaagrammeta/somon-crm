@@ -25,6 +25,7 @@ export const useAuthStore = defineStore("auth", {
       const c = useCookie<string | null>("access_token", {
         maxAge: 60 * 60 * 24 * 7,
         sameSite: "lax",
+        path: "/",
       });
       this.token = c.value;
     },
@@ -34,8 +35,16 @@ export const useAuthStore = defineStore("auth", {
       const cookie = useCookie<string | null>("access_token", {
         maxAge: 60 * 60 * 24 * 7,
         sameSite: "lax",
+        path: "/",
       });
       cookie.value = token;
+      // When logging out, remove the cookie synchronously from document.cookie
+      // as well. useCookie writes can be deferred to the next flush, and if the
+      // very next navigation re-reads a stale cookie in hydrate() the user gets
+      // bounced straight back into the CRM (i.e. "logout doesn't work").
+      if (import.meta.client && !token) {
+        document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+      }
     },
     async login(login: string, password: string) {
       // IMPORTANT: do NOT use useApi() here — login is the very first
@@ -77,13 +86,15 @@ export const useAuthStore = defineStore("auth", {
       return this.user;
     },
     async logout() {
-      const api = useApi();
+      // Best-effort server-side blacklist; never block local logout on it.
       try {
+        const api = useApi();
         await api.post("/api/logout");
       } catch {
-        /* ignore */
+        /* ignore network/parse errors — we log out locally regardless */
       }
       this.softLogout();
+      this.booted = true;
     },
     softLogout() {
       this.setToken(null);
