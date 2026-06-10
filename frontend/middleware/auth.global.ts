@@ -11,9 +11,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore();
   auth.hydrate();
 
-  // Lazy-load the current user once.
+  // Lazy-load the current user once. Must never throw — otherwise Nuxt
+  // renders the 500 error page on every reload.
   if (auth.token && !auth.booted) {
-    await auth.fetchMe();
+    try {
+      await auth.fetchMe();
+    } catch {
+      /* ignore: fetchMe already handles its own failures */
+    }
   }
 
   const isPublic = to.path === "/login";
