@@ -51,12 +51,15 @@ export const useAuthStore = defineStore("auth", {
       });
       this.setToken(res.token);
       this.user = res.user;
+      // Mark as booted so the global middleware does NOT immediately re-run
+      // fetchMe() on the post-login navigation. We already have the user.
+      this.booted = true;
       return res.user;
     },
     async fetchMe() {
       if (!this.token) return null;
-      const api = useApi();
       try {
+        const api = useApi();
         const res = await api.get<{ authenticated: boolean; user?: User }>(
           "/api/check-auth"
         );

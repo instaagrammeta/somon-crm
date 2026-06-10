@@ -15,12 +15,22 @@ const submit = async () => {
   if (!form.login || !form.password) return;
   loading.value = true;
   error.value = "";
+  let user;
   try {
-    const user = await auth.login(form.login.trim(), form.password);
-    toast.success(t("auth.welcome", { name: user.full_name }));
-    await navigateTo("/");
+    user = await auth.login(form.login.trim(), form.password);
   } catch (e: any) {
+    // Only an actual failed login request lands here.
     error.value = e?.data?.error || t("auth.invalid");
+    loading.value = false;
+    return;
+  }
+  // Login succeeded: greet the user and go to the dashboard. A navigation /
+  // redirect hiccup must NOT be reported back as "invalid credentials".
+  toast.success(t("auth.welcome", { name: user.full_name }));
+  try {
+    await navigateTo("/");
+  } catch {
+    /* ignore navigation redirect errors */
   } finally {
     loading.value = false;
   }

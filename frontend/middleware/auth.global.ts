@@ -11,9 +11,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore();
   auth.hydrate();
 
-  // Lazy-load the current user once.
+  // Lazy-load the current user once. This must never throw — otherwise the
+  // whole navigation aborts and Nuxt renders the fatal 500 error page (which
+  // is exactly what happened on every cold reload). fetchMe already guards
+  // itself, but we wrap here as well for defense in depth.
   if (auth.token && !auth.booted) {
-    await auth.fetchMe();
+    try {
+      await auth.fetchMe();
+    } catch {
+      auth.booted = true;
+    }
   }
 
   const isPublic = to.path === "/login";

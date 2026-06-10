@@ -7,21 +7,51 @@
  *
  * SPA-only mode: every call runs in the browser, so we always hit the
  * relative `/api/*` URL which nginx proxies to the Go backend.
+ *
+ * IMPORTANT: `useApi()` must be safe to call from ANY context, not just a
+ * component `setup()`. It is invoked from `auth.fetchMe()` which runs inside
+ * the global route middleware (and on cold reload). Composables that are only
+ * valid inside `setup()` — notably `useI18n()` — would throw there and crash
+ * navigation (manifesting as a 500 page on every reload and a bogus
+ * "invalid credentials" error right after a successful login). We therefore
+ * avoid `useI18n()`/`useRouter()` at the top level and read the locale /
+ * perform redirects defensively.
  */
 import type { FetchOptions } from "ofetch";
 
 export function useApi() {
   const cfg = useRuntimeConfig();
   const auth = useAuthStore();
-  const router = useRouter();
-  const { locale } = useI18n();
 
   const baseURL = (cfg.public.apiBase as string) || "";
+
+  /**
+   * Resolve the active locale without `useI18n()` (which is setup-only).
+   * Falls back to the i18n cookie and then the configured default so the
+   * Accept-Language header is best-effort and never throws.
+   */
+  const currentLocale = (): string => {
+    try {
+      const i18n: any = useNuxtApp().$i18n;
+      const loc = i18n?.locale;
+      const val = typeof loc === "string" ? loc : loc?.value;
+      if (val) return val;
+    } catch {
+      /* not inside an i18n-aware context */
+    }
+    try {
+      const cookie = useCookie<string | null>("i18n_redirected");
+      if (cookie.value) return cookie.value;
+    } catch {
+      /* ignore */
+    }
+    return (cfg.public.defaultLocale as string) || "tg";
+  };
 
   const buildOpts = (opts: FetchOptions = {}): FetchOptions => {
     const headers: Record<string, string> = {
       Accept: "application/json",
-      "Accept-Language": locale.value || "tg",
+      "Accept-Language": currentLocale(),
       ...((opts.headers as Record<string, string>) || {}),
     };
     if (auth.token) {
@@ -34,8 +64,10 @@ export function useApi() {
       headers,
       onResponseError: async (ctx) => {
         if (ctx.response?.status === 401 && auth.token) {
-          await auth.softLogout();
-          router.push("/login");
+          auth.softLogout();
+          // navigateTo is safe to call from any context (unlike router.push
+          // obtained via useRouter() at the top level).
+          await navigateTo("/login");
         }
         if (opts.onResponseError) await opts.onResponseError(ctx);
       },
