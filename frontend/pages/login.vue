@@ -15,15 +15,19 @@ const submit = async () => {
   if (!form.login || !form.password) return;
   loading.value = true;
   error.value = "";
+  let user;
   try {
-    const user = await auth.login(form.login.trim(), form.password);
-    toast.success(t("auth.welcome", { name: user.full_name }));
-    await navigateTo("/");
+    user = await auth.login(form.login.trim(), form.password);
   } catch (e: any) {
     error.value = e?.data?.error || t("auth.invalid");
-  } finally {
     loading.value = false;
+    return;
   }
+  // Login succeeded — show welcome and go to the dashboard. A navigation
+  // error here must NOT be reported as "invalid credentials".
+  toast.success(t("auth.welcome", { name: user.full_name }));
+  loading.value = false;
+  await navigateTo("/");
 };
 </script>
 

@@ -55,30 +55,60 @@ export const useAuthStore = defineStore("auth", {
     },
     async fetchMe() {
       if (!this.token) return null;
-      const api = useApi();
+      // IMPORTANT: do NOT use useApi() here. fetchMe() is called from the
+      // global route middleware (a Pinia-action context, not a component
+      // setup), where useRouter()/useI18n() inside useApi() throw
+      // "Nuxt instance unavailable". A throw here escapes the middleware and
+      // makes Nuxt render the 500 error page on every page reload.
+      // We use $fetch directly, exactly like login(), and never throw out.
+      const cfg = useRuntimeConfig();
+      const baseURL = (cfg.public.apiBase as string) || "";
       try {
-        const res = await api.get<{ authenticated: boolean; user?: User }>(
-          "/api/check-auth"
+        const res = await $fetch<{ authenticated: boolean; user?: User }>(
+          "/api/check-auth",
+          {
+            baseURL,
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+              Accept: "application/json",
+            },
+          }
         );
         if (res.authenticated && res.user) {
           this.user = res.user;
         } else {
+          // Server says the token is no longer valid.
           this.setToken(null);
           this.user = null;
         }
-      } catch {
-        this.setToken(null);
-        this.user = null;
+      } catch (e: any) {
+        // Only drop the session on a real auth rejection (401/403).
+        // Network errors or a transient 500 must NOT log the user out or
+        // crash navigation.
+        const status = e?.response?.status ?? e?.statusCode;
+        if (status === 401 || status === 403) {
+          this.setToken(null);
+          this.user = null;
+        }
+      } finally {
+        this.booted = true;
       }
-      this.booted = true;
       return this.user;
     },
     async logout() {
-      const api = useApi();
-      try {
-        await api.post("/api/logout");
-      } catch {
-        /* ignore */
+      // Same reasoning as fetchMe: avoid useApi() outside of setup context.
+      const cfg = useRuntimeConfig();
+      const baseURL = (cfg.public.apiBase as string) || "";
+      if (this.token) {
+        try {
+          await $fetch("/api/logout", {
+            method: "POST",
+            baseURL,
+            headers: { Authorization: `Bearer ${this.token}` },
+          });
+        } catch {
+          /* ignore — we log out locally regardless */
+        }
       }
       this.softLogout();
     },
