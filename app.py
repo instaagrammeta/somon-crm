@@ -14,6 +14,11 @@ app.secret_key = 'your-super-secret-key-change-in-production-2024'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 
+# Сессияро устувор мекунем, то баъди перезагрузка корбар аз система берун нашавад
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 # Создание папок
 for folder in ['photos', 'files', 'chat', 'posts']:
     os.makedirs(os.path.join('uploads', folder), exist_ok=True)
@@ -510,10 +515,21 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Базаро ҳангоми импорти модул омода мекунем (на танҳо ҳангоми `python app.py`),
+# то деплой тавассути gunicorn/uwsgi низ ҷадвалҳоро дошта бошад ва хатои 500 надиҳад.
+try:
+    init_db()
+except Exception as _e:
+    print(f"init_db error: {_e}")
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
+            # Барои дархостҳои API JSON бармегардонем, на саҳифаи HTML.
+            # Ин боиси хатогии 500 ҳангоми перезагрузка дар CRM мешуд.
+            if request.path.startswith('/api/'):
+                return jsonify({'success': False, 'error': 'Не авторизован'}), 401
             return redirect(url_for('login_page'))
         return f(*args, **kwargs)
     return decorated_function
@@ -525,6 +541,25 @@ def admin_required(f):
             return jsonify({'error': 'Доступ запрещен'}), 403
         return f(*args, **kwargs)
     return decorated_function
+
+# ================ ERROR HANDLERS ================
+# Ба ҷои саҳифаи хатои 500 бо тугмаи "Бозгашт", ҷавоби тоза бармегардонем.
+@app.errorhandler(500)
+def handle_500(e):
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'error': 'Хатогии дохилии сервер'}), 500
+    # Барои саҳифаҳо корбарро ба система равона мекунем (агар ворид шуда бошад)
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return redirect(url_for('login_page'))
+
+@app.errorhandler(404)
+def handle_404(e):
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'error': 'Ёфт нашуд'}), 404
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return redirect(url_for('login_page'))
 
 # ================ PAGE ROUTES ================
 @app.route('/')
@@ -3550,15 +3585,21 @@ def check_auth():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    data = request.json
-    login = data.get('login')
-    password = hashlib.sha256(data.get('password', '').encode()).hexdigest()
-    
+    data = request.get_json(silent=True) or request.form
+    login = (data.get('login') or '').strip()
+    raw_password = data.get('password') or ''
+
+    if not login or not raw_password:
+        return jsonify({'success': False, 'error': 'Логин ва паролро ворид кунед'}), 400
+
+    password = hashlib.sha256(raw_password.encode()).hexdigest()
+
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE login = ? AND password = ?', (login, password)).fetchone()
     conn.close()
-    
+
     if user:
+        session.permanent = True
         session['user_id'] = user['id']
         session['user_name'] = user['full_name']
         session['role'] = user['role']
