@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/instaagrammeta/somon-crm/backend/internal/i18n"
 	"github.com/instaagrammeta/somon-crm/backend/internal/middleware"
 	"github.com/instaagrammeta/somon-crm/backend/internal/models"
 	"github.com/instaagrammeta/somon-crm/backend/internal/utils"
@@ -73,8 +74,11 @@ func (h *TaskHandler) Create(c *gin.Context) {
 		utils.ErrorRaw(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if t.ExecutorID != nil && *t.ExecutorID != 0 {
-		go h.Telegram.NotifyKey(*t.ExecutorID, "tg.task_assigned", t.Title, t.Description)
+	// Notify the assignee (in-app + Telegram), unless self-assigned.
+	if t.ExecutorID != nil && *t.ExecutorID != 0 && *t.ExecutorID != uid {
+		go h.Notif.Push(*t.ExecutorID, models.NotifyTaskAssigned,
+			i18n.Translate(i18n.LocaleTG, "notify.task_assigned"), t.Title, "/zadacha",
+			"tg.task_assigned", t.Title, t.Description)
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "task": t})
 }
@@ -88,7 +92,12 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		return
 	}
 	uid := middleware.CurrentUserID(c)
-	if !middleware.IsAdmin(c) && t.AuthorID != nil && *t.AuthorID != uid {
+	isAdmin := middleware.IsAdmin(c)
+	isAuthor := t.AuthorID != nil && *t.AuthorID == uid
+	isExecutor := t.ExecutorID != nil && *t.ExecutorID == uid
+	// Author, executor and admin may all touch the task. The executor is limited
+	// to changing the status (see below); author/admin may edit everything.
+	if !isAdmin && !isAuthor && !isExecutor {
 		utils.ErrorResp(c, http.StatusForbidden, "error.forbidden")
 		return
 	}
@@ -99,43 +108,78 @@ func (h *TaskHandler) Update(c *gin.Context) {
 	}
 	prevExecutor := t.ExecutorID
 	prevStatus := t.Status
+	canEditAll := isAdmin || isAuthor
 
 	updates := map[string]any{}
-	if in.Title != "" {
-		updates["title"] = in.Title
-	}
-	if in.Description != "" {
-		updates["description"] = in.Description
-	}
-	if in.ExecutorID != nil {
-		updates["executor_id"] = in.ExecutorID
-	}
+	// Status can be changed by author, executor and admin.
 	if in.Status != "" {
 		updates["status"] = in.Status
 	}
-	if file, err := c.FormFile("photo"); err == nil {
-		rel, _, err := utils.SaveUpload(file, h.Cfg.Upload.Dir, "tasks")
-		if err == nil {
-			updates["photo"] = rel
+	// Everything else is author/admin only.
+	if canEditAll {
+		if in.Title != "" {
+			updates["title"] = in.Title
+		}
+		if in.Description != "" {
+			updates["description"] = in.Description
+		}
+		if in.ExecutorID != nil {
+			updates["executor_id"] = in.ExecutorID
+		}
+		if file, err := c.FormFile("photo"); err == nil {
+			rel, _, err := utils.SaveUpload(file, h.Cfg.Upload.Dir, "tasks")
+			if err == nil {
+				updates["photo"] = rel
+			}
 		}
 	}
-	if err := h.DB.Model(&t).Updates(updates).Error; err != nil {
-		utils.ErrorRaw(c, http.StatusInternalServerError, err.Error())
-		return
+	if len(updates) > 0 {
+		if err := h.DB.Model(&t).Updates(updates).Error; err != nil {
+			utils.ErrorRaw(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 	_ = h.DB.First(&t, id)
 
-	// Notify on executor change or status change
+	h.notifyTaskChange(uid, &t, prevExecutor, prevStatus)
+	utils.OK(c, gin.H{"success": true, "task": t})
+}
+
+// notifyTaskChange fires in-app + Telegram notifications when a task is updated.
+//   - a (re)assigned executor is told the task is theirs;
+//   - on a status change, the *other* party (author/executor) is informed.
+func (h *TaskHandler) notifyTaskChange(actorID uint, t *models.Task, prevExecutor *uint, prevStatus string) {
+	assignedTo := uint(0)
 	if t.ExecutorID != nil && *t.ExecutorID != 0 {
 		newAssigned := prevExecutor == nil || *prevExecutor != *t.ExecutorID
-		statusChanged := prevStatus != t.Status
-		if newAssigned {
-			go h.Telegram.NotifyKey(*t.ExecutorID, "tg.task_assigned", t.Title, t.Description)
-		} else if statusChanged {
-			go h.Telegram.NotifyKey(*t.ExecutorID, "tg.task_updated", t.Title, t.Status)
+		if newAssigned && *t.ExecutorID != actorID {
+			assignedTo = *t.ExecutorID
+			go h.Notif.Push(*t.ExecutorID, models.NotifyTaskAssigned,
+				i18n.Translate(i18n.LocaleTG, "notify.task_assigned"), t.Title, "/zadacha",
+				"tg.task_assigned", t.Title, t.Description)
 		}
 	}
-	utils.OK(c, gin.H{"success": true, "task": t})
+
+	if prevStatus == t.Status {
+		return
+	}
+	statusLabel := i18n.Translate(i18n.LocaleTG, "task.status_"+t.Status)
+	body := t.Title + " → " + statusLabel
+	recipients := []uint{}
+	if t.AuthorID != nil {
+		recipients = append(recipients, *t.AuthorID)
+	}
+	if t.ExecutorID != nil {
+		recipients = append(recipients, *t.ExecutorID)
+	}
+	for _, r := range recipients {
+		if r == 0 || r == actorID || r == assignedTo {
+			continue // skip the actor and anyone already told via "assigned"
+		}
+		go h.Notif.Push(r, models.NotifyTaskStatus,
+			i18n.Translate(i18n.LocaleTG, "notify.task_status_changed"), body, "/zadacha",
+			"tg.task_updated", t.Title, statusLabel)
+	}
 }
 
 // DELETE /api/tasks/:id

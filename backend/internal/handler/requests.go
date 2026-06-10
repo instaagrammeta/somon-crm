@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/instaagrammeta/somon-crm/backend/internal/i18n"
 	"github.com/instaagrammeta/somon-crm/backend/internal/middleware"
 	"github.com/instaagrammeta/somon-crm/backend/internal/models"
 	"github.com/instaagrammeta/somon-crm/backend/internal/utils"
@@ -367,8 +368,11 @@ func (h *RequestsHandler) CreateItem(c *gin.Context) {
 		utils.ErrorRaw(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if in.ExecutorID != nil && *in.ExecutorID != 0 {
-		go h.Telegram.NotifyKey(*in.ExecutorID, "tg.request_assigned", in.ClientName, in.Phone, in.Address)
+	if in.ExecutorID != nil && *in.ExecutorID != 0 && *in.ExecutorID != uid {
+		go h.Notif.Push(*in.ExecutorID, models.NotifyRequestAssign,
+			i18n.Translate(i18n.LocaleTG, "notify.request_assigned"),
+			in.ClientName+" · "+in.Phone, "/zayavka",
+			"tg.request_assigned", in.ClientName, in.Phone, in.Address)
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "id": item.ID})
 }

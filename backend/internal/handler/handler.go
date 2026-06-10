@@ -16,8 +16,9 @@ type App struct {
 	Cfg      *config.Config
 	Auth     *service.AuthService
 	Telegram *service.TelegramService
+	Notif    *service.NotificationService
 }
 
 func NewApp(db *gorm.DB, rdb *redis.Client, cfg *config.Config, auth *service.AuthService, tg *service.TelegramService) *App {
-	return &App{DB: db, Redis: rdb, Cfg: cfg, Auth: auth, Telegram: tg}
+	return &App{DB: db, Redis: rdb, Cfg: cfg, Auth: auth, Telegram: tg, Notif: service.NewNotification(db, tg)}
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/instaagrammeta/somon-crm/backend/internal/i18n"
 	"github.com/instaagrammeta/somon-crm/backend/internal/middleware"
 	"github.com/instaagrammeta/somon-crm/backend/internal/models"
 	"github.com/instaagrammeta/somon-crm/backend/internal/utils"
@@ -327,7 +328,10 @@ func (h *LidHandler) KanbanMoveLead(c *gin.Context) {
 		return
 	}
 	if lead.AuthorID != nil && *lead.AuthorID != 0 && oldColTitle != newColTitle {
-		go h.Telegram.NotifyKey(*lead.AuthorID, "tg.lead_moved", oldColTitle, newColTitle)
+		go h.Notif.Push(*lead.AuthorID, models.NotifyLeadMoved,
+			i18n.Translate(i18n.LocaleTG, "notify.lead_moved"),
+			oldColTitle+" → "+newColTitle, "/lids",
+			"tg.lead_moved", oldColTitle, newColTitle)
 	}
 	utils.OK(c, gin.H{"success": true})
 }

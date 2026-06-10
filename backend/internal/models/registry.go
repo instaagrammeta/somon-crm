@@ -8,6 +8,7 @@ func AllModels() []any {
 	return []any{
 		&User{},
 		&Task{},
+		&Notification{},
 		&LegacyRequest{},
 		&RequestsBoard{},
 		&RequestsColumn{},

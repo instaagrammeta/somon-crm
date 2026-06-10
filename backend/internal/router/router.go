@@ -47,6 +47,7 @@ func Build(app *handler.App, cfg *config.Config) *gin.Engine {
 	folders := handler.NewFolderHandler(app)
 	ipoteka := handler.NewIpotekaHandler(app)
 	dash := handler.NewDashboardHandler(app)
+	notifs := handler.NewNotificationHandler(app)
 
 	api := r.Group("/api")
 
@@ -234,6 +235,13 @@ func Build(app *handler.App, cfg *config.Config) *gin.Engine {
 
 	// dashboard
 	priv.GET("/dashboard/stats", dash.Stats)
+
+	// notifications (in-app feed)
+	priv.GET("/notifications", notifs.List)
+	priv.GET("/notifications/unread-count", notifs.UnreadCount)
+	priv.POST("/notifications/read-all", notifs.MarkAllRead)
+	priv.POST("/notifications/mark-read/:id", notifs.MarkRead)
+	priv.DELETE("/notifications/:id", notifs.Delete)
 
 	return r
 }

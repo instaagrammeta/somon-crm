@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/instaagrammeta/somon-crm/backend/internal/i18n"
 	"github.com/instaagrammeta/somon-crm/backend/internal/models"
 	"github.com/instaagrammeta/somon-crm/backend/internal/utils"
 )
@@ -237,22 +238,22 @@ func (h *SimHandler) Stats(c *gin.Context) {
 	h.DB.Model(&models.CompanyPhone{}).Where("status = 'free'").Count(&freePhones)
 	h.DB.Model(&models.TariffPayment{}).Select("COALESCE(SUM(amount), 0)").Row().Scan(&totalPaid)
 	c.JSON(http.StatusOK, gin.H{
-		"total_sims":   totalSims,
-		"active_sims":  activeSims,
-		"free_phones":  freePhones,
-		"total_paid":   totalPaid,
+		"total_sims":  totalSims,
+		"active_sims": activeSims,
+		"free_phones": freePhones,
+		"total_paid":  totalPaid,
 	})
 }
 
 // GET /api/sim-phones/export/excel
 func (h *SimHandler) ExportExcel(c *gin.Context) {
 	type row struct {
-		Phone        string  `json:"phone_number"`
-		Operator     string  `json:"operator"`
-		Status       string  `json:"status"`
-		AssignedName string  `json:"assigned_name"`
-		PhoneModel   string  `json:"phone_model"`
-		LastCost     float64 `json:"last_cost"`
+		Phone        string     `json:"phone_number"`
+		Operator     string     `json:"operator"`
+		Status       string     `json:"status"`
+		AssignedName string     `json:"assigned_name"`
+		PhoneModel   string     `json:"phone_model"`
+		LastCost     float64    `json:"last_cost"`
 		EndDate      *time.Time `json:"end_date"`
 	}
 	var rows []row
@@ -293,10 +294,10 @@ func (h *SimHandler) SendExpiryNotifications(c *gin.Context) {
 	}
 	cutoff := time.Now().UTC().AddDate(0, 0, days)
 	type row struct {
-		SimID       uint    `gorm:"column:sim_id"`
-		Phone       string  `gorm:"column:phone_number"`
-		AssignedTo  *uint   `gorm:"column:assigned_to"`
-		EndDate     time.Time
+		SimID      uint   `gorm:"column:sim_id"`
+		Phone      string `gorm:"column:phone_number"`
+		AssignedTo *uint  `gorm:"column:assigned_to"`
+		EndDate    time.Time
 	}
 	var rows []row
 	h.DB.Table("sim_tariffs t").
@@ -314,7 +315,10 @@ func (h *SimHandler) SendExpiryNotifications(c *gin.Context) {
 		if daysLeft < 0 {
 			daysLeft = 0
 		}
-		go h.Telegram.NotifyKey(*r.AssignedTo, "tg.tariff_expiring", r.Phone, daysLeft)
+		go h.Notif.Push(*r.AssignedTo, models.NotifyTariffExpiring,
+			i18n.Translate(i18n.LocaleTG, "notify.tariff_expiring"),
+			r.Phone, "/sim-cards",
+			"tg.tariff_expiring", r.Phone, daysLeft)
 		sent++
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "sent": sent, "scanned": len(rows)})

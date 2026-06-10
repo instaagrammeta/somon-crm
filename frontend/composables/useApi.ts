@@ -104,9 +104,15 @@ export function useApi() {
     URL.revokeObjectURL(u);
   };
 
-  /** Upload a multipart form. */
-  const upload = <T = any>(url: string, form: FormData) =>
-    post<T>(url, form);
+  /**
+   * Upload a multipart form. Defaults to POST (create); pass "PUT" to update an
+   * existing resource — the Go backend's update routes are registered as PUT.
+   */
+  const upload = <T = any>(
+    url: string,
+    form: FormData,
+    method: "POST" | "PUT" = "POST"
+  ) => $fetch<T>(url, { method, body: form, ...buildOpts() });
 
   return { get, post, put, patch, del, download, upload, baseURL };
 }

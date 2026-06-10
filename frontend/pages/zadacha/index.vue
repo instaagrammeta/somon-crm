@@ -70,7 +70,7 @@ const save = async () => {
   if (photoFile.value) fd.append("photo", photoFile.value);
   try {
     if (editing.value.id) {
-      await api.upload(`/api/tasks/${editing.value.id}`, fd);
+      await api.upload(`/api/tasks/${editing.value.id}`, fd, "PUT");
       toast.success(t("notify.updated"));
     } else {
       await api.upload("/api/tasks", fd);
@@ -86,8 +86,12 @@ const save = async () => {
 const changeStatus = async (tk: Task, newStatus: string) => {
   const fd = new FormData();
   fd.append("status", newStatus);
-  await api.upload(`/api/tasks/${tk.id}`, fd);
-  await refresh();
+  try {
+    await api.upload(`/api/tasks/${tk.id}`, fd, "PUT");
+    await refresh();
+  } catch (e: any) {
+    toast.error(e?.data?.error || t("notify.error"));
+  }
 };
 
 const confirmDel = ref<{ open: boolean; id?: number }>({ open: false });

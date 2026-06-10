@@ -6,11 +6,20 @@
  */
 const ui = useUiStore();
 const auth = useAuthStore();
+const notif = useNotificationsStore();
 const { locale, locales, setLocale, t } = useI18n();
 
 const search = ref("");
 const localeOpen = ref(false);
 const localesList = computed(() => locales.value as { code: string; name: string }[]);
+
+// Poll the unread notification count for the bell badge.
+let pollTimer: any = null;
+onMounted(() => {
+  notif.fetchUnread();
+  pollTimer = setInterval(() => notif.fetchUnread(), 30000);
+});
+onUnmounted(() => clearInterval(pollTimer));
 
 const onSearch = (e: KeyboardEvent) => {
   if (e.key === "Enter" && search.value.trim()) {
@@ -90,7 +99,12 @@ const switchLocale = (code: string) => {
         :title="t('nav.notifications')"
       >
         <i class="fas fa-bell" />
-        <span class="absolute top-2.5 right-[11px] w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+        <span
+          v-if="notif.unread > 0"
+          class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white"
+        >
+          {{ notif.unread > 99 ? "99+" : notif.unread }}
+        </span>
       </NuxtLink>
 
       <!-- User -->
