@@ -123,6 +123,42 @@ const movePhoto = (idx: number, dir: -1 | 1) => {
   [arr[idx], arr[to]] = [arr[to], arr[idx]];
 };
 
+// HTML5 drag-and-drop reorder for desktop. Mobile users get the on-screen
+// arrow buttons below.
+const dragFromIdx = ref<number | null>(null);
+const dragOverIdx = ref<number | null>(null);
+
+const onDragStart = (e: DragEvent, idx: number) => {
+  dragFromIdx.value = idx;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    // Some browsers require setData to actually start the drag.
+    e.dataTransfer.setData("text/plain", String(idx));
+  }
+};
+const onDragOver = (e: DragEvent, idx: number) => {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  dragOverIdx.value = idx;
+};
+const onDragLeave = (idx: number) => {
+  if (dragOverIdx.value === idx) dragOverIdx.value = null;
+};
+const onDrop = (e: DragEvent, toIdx: number) => {
+  e.preventDefault();
+  const from = dragFromIdx.value;
+  dragFromIdx.value = null;
+  dragOverIdx.value = null;
+  if (from === null || from === toIdx) return;
+  const arr = photoItems.value;
+  const [moved] = arr.splice(from, 1);
+  arr.splice(toIdx, 0, moved);
+};
+const onDragEnd = () => {
+  dragFromIdx.value = null;
+  dragOverIdx.value = null;
+};
+
 const toggleExecutor = (id: number) => {
   const i = executorIds.value.indexOf(id);
   if (i === -1) executorIds.value.push(id);
@@ -345,45 +381,70 @@ const statusBadge = (s: string) =>
             <div
               v-for="(p, idx) in photoItems"
               :key="p.uid"
-              class="relative group rounded-[12px] overflow-hidden border border-border-soft aspect-square"
+              class="relative rounded-[12px] overflow-hidden border-2 aspect-square bg-page transition-all"
+              :class="[
+                dragOverIdx === idx && dragFromIdx !== idx ? 'border-brand scale-105' : 'border-border-soft',
+                dragFromIdx === idx ? 'opacity-50' : ''
+              ]"
+              draggable="true"
+              @dragstart="onDragStart($event, idx)"
+              @dragover="onDragOver($event, idx)"
+              @dragleave="onDragLeave(idx)"
+              @drop="onDrop($event, idx)"
+              @dragend="onDragEnd"
             >
-              <img :src="p.preview" class="w-full h-full object-cover" />
+              <img :src="p.preview" class="w-full h-full object-cover pointer-events-none" draggable="false" />
+
+              <!-- "new" badge -->
               <span
                 v-if="p.kind === 'new'"
-                class="absolute top-1 left-1 bg-brand text-white text-[10px] px-1.5 py-0.5 rounded-full"
-                >{{ t("task.new_badge") }}</span
+                class="absolute top-1 left-1 bg-brand text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow"
+              >{{ t("task.new_badge") }}</span>
+
+              <!-- order indicator -->
+              <span
+                class="absolute top-1 right-9 bg-black/60 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+              >{{ idx + 1 }}/{{ photoItems.length }}</span>
+
+              <!-- always-visible delete (top-right) -->
+              <button
+                type="button"
+                class="absolute top-1 right-1 w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 active:scale-90 text-white shadow-lg flex items-center justify-center transition-all z-10"
+                :title="t('task.remove_photo')"
+                :aria-label="t('task.remove_photo')"
+                @click.stop="removePhoto(p.uid)"
               >
-              <!-- controls -->
-              <div class="absolute inset-x-0 bottom-0 flex justify-between items-center px-1.5 py-1 bg-ink/45 opacity-0 group-hover:opacity-100 transition-opacity">
+                <i class="fas fa-times text-sm" />
+              </button>
+
+              <!-- always-visible reorder bar (bottom) -->
+              <div class="absolute inset-x-0 bottom-0 flex justify-between items-center px-1 py-1 bg-gradient-to-t from-black/70 to-transparent">
                 <button
                   type="button"
-                  class="w-6 h-6 rounded-md bg-white/85 text-ink disabled:opacity-30"
+                  class="w-7 h-7 rounded-md bg-white/90 hover:bg-white active:scale-90 text-ink disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all"
                   :disabled="idx === 0"
                   :title="t('task.move_left')"
-                  @click="movePhoto(idx, -1)"
+                  :aria-label="t('task.move_left')"
+                  @click.stop="movePhoto(idx, -1)"
                 >
-                  <i class="fas fa-chevron-left text-[11px]" />
+                  <i class="fas fa-chevron-left text-xs" />
                 </button>
                 <button
                   type="button"
-                  class="w-6 h-6 rounded-md bg-white/85 text-red-600"
-                  :title="t('task.remove_photo')"
-                  @click="removePhoto(p.uid)"
-                >
-                  <i class="fas fa-trash text-[11px]" />
-                </button>
-                <button
-                  type="button"
-                  class="w-6 h-6 rounded-md bg-white/85 text-ink disabled:opacity-30"
+                  class="w-7 h-7 rounded-md bg-white/90 hover:bg-white active:scale-90 text-ink disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all"
                   :disabled="idx === photoItems.length - 1"
                   :title="t('task.move_right')"
-                  @click="movePhoto(idx, 1)"
+                  :aria-label="t('task.move_right')"
+                  @click.stop="movePhoto(idx, 1)"
                 >
-                  <i class="fas fa-chevron-right text-[11px]" />
+                  <i class="fas fa-chevron-right text-xs" />
                 </button>
               </div>
             </div>
           </div>
+          <p v-if="photoItems.length" class="text-[11px] text-ink-soft mt-2">
+            <i class="fas fa-info-circle mr-1" />{{ t("task.reorder_hint") }}
+          </p>
           <p v-else class="text-xs text-ink-soft">{{ t("task.no_photos") }}</p>
         </div>
 
