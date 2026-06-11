@@ -53,6 +53,42 @@ func (j *JSONB) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UintSlice helper: stored as jsonb in postgres. Used for multi-value foreign
+// keys such as a task's list of executor user IDs.
+type UintSlice []uint
+
+func (s UintSlice) Value() (driver.Value, error) {
+	if s == nil {
+		return "[]", nil
+	}
+	b, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return string(b), nil
+}
+
+func (s *UintSlice) Scan(src any) error {
+	if src == nil {
+		*s = nil
+		return nil
+	}
+	var b []byte
+	switch v := src.(type) {
+	case []byte:
+		b = v
+	case string:
+		b = []byte(v)
+	default:
+		return errors.New("UintSlice.Scan: unsupported type")
+	}
+	if len(b) == 0 {
+		*s = nil
+		return nil
+	}
+	return json.Unmarshal(b, s)
+}
+
 // StringSlice helper: stored as jsonb in postgres.
 type StringSlice []string
 

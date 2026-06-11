@@ -40,9 +40,12 @@ export interface Task {
   description?: string;
   author_id?: number;
   executor_id?: number;
+  executor_ids?: number[];
   author_name?: string;
   executor_name?: string;
+  executor_names?: string[];
   photo?: string;
+  photos?: string[];
   status: "new" | "in_progress" | "done" | "cancelled";
   created_at: string;
 }

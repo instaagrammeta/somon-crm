@@ -1,0 +1,2 @@
+ALTER TABLE tasks DROP COLUMN IF EXISTS photos;
+ALTER TABLE tasks DROP COLUMN IF EXISTS executor_ids;

@@ -114,5 +114,60 @@ export function useApi() {
     method: "POST" | "PUT" = "POST"
   ) => $fetch<T>(url, { method, body: form, ...buildOpts() });
 
-  return { get, post, put, patch, del, download, upload, baseURL };
+  /**
+   * Upload a multipart form with real upload progress (0–100). `$fetch`/`fetch`
+   * cannot report request-body progress, so this uses XMLHttpRequest directly
+   * while still attaching the bearer token + locale header and handling 401 the
+   * same way as the rest of the API. The returned promise resolves with the
+   * parsed JSON body (or rejects with `{ status, data }` mirroring ofetch).
+   */
+  const uploadProgress = <T = any>(
+    url: string,
+    form: FormData,
+    method: "POST" | "PUT" = "POST",
+    onProgress?: (percent: number) => void
+  ) =>
+    new Promise<T>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, baseURL + url);
+      xhr.responseType = "json";
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("Accept", "application/json");
+      xhr.setRequestHeader("Accept-Language", currentLocale());
+      if (auth.token) xhr.setRequestHeader("Authorization", `Bearer ${auth.token}`);
+
+      if (xhr.upload) {
+        xhr.upload.onprogress = (e: ProgressEvent) => {
+          if (onProgress && e.lengthComputable) {
+            onProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+      }
+      xhr.onload = () => {
+        const body =
+          xhr.response ??
+          (() => {
+            try {
+              return JSON.parse(xhr.responseText);
+            } catch {
+              return null;
+            }
+          })();
+        if (xhr.status >= 200 && xhr.status < 300) {
+          if (onProgress) onProgress(100);
+          resolve(body as T);
+          return;
+        }
+        if (xhr.status === 401 && auth.token) {
+          auth.softLogout();
+          navigateTo("/login");
+        }
+        reject({ status: xhr.status, data: body });
+      };
+      xhr.onerror = () => reject({ status: 0, data: null });
+      xhr.ontimeout = () => reject({ status: 0, data: null });
+      xhr.send(form);
+    });
+
+  return { get, post, put, patch, del, download, upload, uploadProgress, baseURL };
 }
