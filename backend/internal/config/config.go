@@ -11,15 +11,21 @@ import (
 
 // Config holds all application configuration loaded from environment.
 type Config struct {
-	App       AppConfig
-	DB        DBConfig
-	Redis     RedisConfig
-	JWT       JWTConfig
-	Admin     AdminSeedConfig
-	Telegram  TelegramConfig
-	Upload    UploadConfig
-	CORS      CORSConfig
-	Locale    LocaleConfig
+	App      AppConfig
+	DB       DBConfig
+	Redis    RedisConfig
+	JWT      JWTConfig
+	Admin    AdminSeedConfig
+	Telegram TelegramConfig
+	Upload   UploadConfig
+	CORS     CORSConfig
+	Locale   LocaleConfig
+
+	// v-2 additions
+	AI       AIConfig
+	WhatsApp WhatsAppConfig
+	Email    EmailConfig
+	Site     SiteConfig
 }
 
 type AppConfig struct {
@@ -67,9 +73,9 @@ type AdminSeedConfig struct {
 }
 
 type TelegramConfig struct {
-	Token                  string
-	BotUsername            string
-	NotificationsEnabled   bool
+	Token                string
+	BotUsername          string
+	NotificationsEnabled bool
 }
 
 type UploadConfig struct {
@@ -83,6 +89,56 @@ type CORSConfig struct {
 
 type LocaleConfig struct {
 	Default string
+}
+
+// AIConfig — DeepSeek (OpenAI-compatible). The same client is reused for chat
+// completions, lead scoring, summarization, OCR (vision) and Whisper-style
+// audio transcription. To use a different provider just point BaseURL at it
+// — the wire protocol is OpenAI v1 in all known cases.
+type AIConfig struct {
+	Provider           string // "deepseek" (default) | "openai" | "custom"
+	APIKey             string
+	BaseURL            string // https://api.deepseek.com/v1
+	ChatModel          string // deepseek-chat
+	ReasoningModel     string // deepseek-reasoner
+	VisionModel        string // model used for OCR (deepseek-vl or gpt-4o)
+	WhisperModel       string // whisper-1 / whisper-large-v3
+	WhisperBaseURL     string // optional: separate endpoint for Whisper (Groq, OpenAI). Falls back to BaseURL.
+	WhisperAPIKey      string // optional: separate key for Whisper. Falls back to APIKey.
+	HTTPTimeoutSeconds int
+	MaxLeadsPerMinute  int // soft per-user rate limit on AI features
+}
+
+func (a AIConfig) Enabled() bool { return a.APIKey != "" }
+
+type WhatsAppConfig struct {
+	PhoneNumberID string
+	AccessToken   string
+	VerifyToken   string // for the webhook handshake
+	BaseURL       string // https://graph.facebook.com/v20.0
+	Enabled       bool
+}
+
+type EmailConfig struct {
+	IMAPHost string
+	IMAPPort int
+	SMTPHost string
+	SMTPPort int
+	Username string
+	Password string
+	From     string
+	UseTLS   bool
+	Enabled  bool
+}
+
+// SiteConfig — values exposed by the public website (about, contact, etc.).
+type SiteConfig struct {
+	BrandName      string
+	Phone          string
+	Email          string
+	Address        string
+	APKDownloadURL string // direct link served from /static/apk/<filename> or external URL
+	APKVersion     string
 }
 
 // Load reads .env (if present) and environment variables.
@@ -121,6 +177,45 @@ func Load() (*Config, error) {
 	v.SetDefault("UPLOAD_MAX_MB", 50)
 	v.SetDefault("CORS_ALLOWED_ORIGINS", "*")
 	v.SetDefault("DEFAULT_LOCALE", "tg")
+
+	// AI (DeepSeek by default — fully OpenAI-compatible).
+	v.SetDefault("AI_PROVIDER", "deepseek")
+	v.SetDefault("AI_API_KEY", "")
+	v.SetDefault("AI_BASE_URL", "https://api.deepseek.com/v1")
+	v.SetDefault("AI_CHAT_MODEL", "deepseek-chat")
+	v.SetDefault("AI_REASONING_MODEL", "deepseek-reasoner")
+	v.SetDefault("AI_VISION_MODEL", "deepseek-vl2") // any OpenAI-compatible vision model
+	v.SetDefault("AI_WHISPER_MODEL", "whisper-1")
+	v.SetDefault("AI_WHISPER_BASE_URL", "")
+	v.SetDefault("AI_WHISPER_API_KEY", "")
+	v.SetDefault("AI_HTTP_TIMEOUT_SECONDS", 60)
+	v.SetDefault("AI_MAX_PER_MINUTE", 30)
+
+	// WhatsApp Business Cloud API (Meta).
+	v.SetDefault("WHATSAPP_PHONE_NUMBER_ID", "")
+	v.SetDefault("WHATSAPP_ACCESS_TOKEN", "")
+	v.SetDefault("WHATSAPP_VERIFY_TOKEN", "somon-verify")
+	v.SetDefault("WHATSAPP_BASE_URL", "https://graph.facebook.com/v20.0")
+	v.SetDefault("WHATSAPP_ENABLED", false)
+
+	// Email IMAP/SMTP.
+	v.SetDefault("EMAIL_IMAP_HOST", "")
+	v.SetDefault("EMAIL_IMAP_PORT", 993)
+	v.SetDefault("EMAIL_SMTP_HOST", "")
+	v.SetDefault("EMAIL_SMTP_PORT", 587)
+	v.SetDefault("EMAIL_USERNAME", "")
+	v.SetDefault("EMAIL_PASSWORD", "")
+	v.SetDefault("EMAIL_FROM", "")
+	v.SetDefault("EMAIL_TLS", true)
+	v.SetDefault("EMAIL_ENABLED", false)
+
+	// Public website branding.
+	v.SetDefault("SITE_BRAND_NAME", "Somon Real Estate")
+	v.SetDefault("SITE_PHONE", "")
+	v.SetDefault("SITE_EMAIL", "")
+	v.SetDefault("SITE_ADDRESS", "")
+	v.SetDefault("SITE_APK_URL", "/static/apk/somon-crm.apk")
+	v.SetDefault("SITE_APK_VERSION", "1.0.0")
 
 	cfg := &Config{
 		App: AppConfig{
@@ -168,6 +263,45 @@ func Load() (*Config, error) {
 		Locale: LocaleConfig{
 			Default: v.GetString("DEFAULT_LOCALE"),
 		},
+		AI: AIConfig{
+			Provider:           v.GetString("AI_PROVIDER"),
+			APIKey:             v.GetString("AI_API_KEY"),
+			BaseURL:            strings.TrimRight(v.GetString("AI_BASE_URL"), "/"),
+			ChatModel:          v.GetString("AI_CHAT_MODEL"),
+			ReasoningModel:     v.GetString("AI_REASONING_MODEL"),
+			VisionModel:        v.GetString("AI_VISION_MODEL"),
+			WhisperModel:       v.GetString("AI_WHISPER_MODEL"),
+			WhisperBaseURL:     strings.TrimRight(v.GetString("AI_WHISPER_BASE_URL"), "/"),
+			WhisperAPIKey:      v.GetString("AI_WHISPER_API_KEY"),
+			HTTPTimeoutSeconds: v.GetInt("AI_HTTP_TIMEOUT_SECONDS"),
+			MaxLeadsPerMinute:  v.GetInt("AI_MAX_PER_MINUTE"),
+		},
+		WhatsApp: WhatsAppConfig{
+			PhoneNumberID: v.GetString("WHATSAPP_PHONE_NUMBER_ID"),
+			AccessToken:   v.GetString("WHATSAPP_ACCESS_TOKEN"),
+			VerifyToken:   v.GetString("WHATSAPP_VERIFY_TOKEN"),
+			BaseURL:       strings.TrimRight(v.GetString("WHATSAPP_BASE_URL"), "/"),
+			Enabled:       v.GetBool("WHATSAPP_ENABLED"),
+		},
+		Email: EmailConfig{
+			IMAPHost: v.GetString("EMAIL_IMAP_HOST"),
+			IMAPPort: v.GetInt("EMAIL_IMAP_PORT"),
+			SMTPHost: v.GetString("EMAIL_SMTP_HOST"),
+			SMTPPort: v.GetInt("EMAIL_SMTP_PORT"),
+			Username: v.GetString("EMAIL_USERNAME"),
+			Password: v.GetString("EMAIL_PASSWORD"),
+			From:     v.GetString("EMAIL_FROM"),
+			UseTLS:   v.GetBool("EMAIL_TLS"),
+			Enabled:  v.GetBool("EMAIL_ENABLED"),
+		},
+		Site: SiteConfig{
+			BrandName:      v.GetString("SITE_BRAND_NAME"),
+			Phone:          v.GetString("SITE_PHONE"),
+			Email:          v.GetString("SITE_EMAIL"),
+			Address:        v.GetString("SITE_ADDRESS"),
+			APKDownloadURL: v.GetString("SITE_APK_URL"),
+			APKVersion:     v.GetString("SITE_APK_VERSION"),
+		},
 	}
 
 	return cfg, nil
@@ -184,5 +318,3 @@ func parseCSV(s string) []string {
 	}
 	return out
 }
-
-

@@ -39,6 +39,20 @@ func AllModels() []any {
 		&MortgageCondition{},
 		&InstallmentObject{},
 		&InstallmentCondition{},
+
+		// v-2: realtime + AI + 2FA + public website + virtual tours
+		&AuditLog{},
+		&UserTwoFactor{},
+		&WebsiteLead{},
+		&Tour{},
+		&Panorama{},
+		&PanoramaHotspot{},
+		&VoiceNote{},
+		&AILog{},
+		&Workflow{},
+		&WorkflowRun{},
+		&IntegrationChannel{},
+		&UserPresence{},
 	}
 }
 

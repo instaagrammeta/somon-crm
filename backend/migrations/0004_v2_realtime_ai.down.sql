@@ -1,0 +1,21 @@
+DROP TABLE IF EXISTS user_presence;
+DROP TABLE IF EXISTS integration_channels;
+DROP TABLE IF EXISTS workflow_runs;
+DROP TABLE IF EXISTS workflows;
+DROP TABLE IF EXISTS ai_logs;
+DROP TABLE IF EXISTS voice_notes;
+DROP TABLE IF EXISTS panorama_hotspots;
+DROP TABLE IF EXISTS panoramas;
+DROP TABLE IF EXISTS tours;
+DROP TABLE IF EXISTS website_leads;
+DROP TABLE IF EXISTS user_two_factors;
+DROP TABLE IF EXISTS audit_logs;
+
+ALTER TABLE houses DROP COLUMN IF EXISTS lng;
+ALTER TABLE houses DROP COLUMN IF EXISTS lat;
+ALTER TABLE houses DROP COLUMN IF EXISTS public_features;
+ALTER TABLE houses DROP COLUMN IF EXISTS public_gallery;
+ALTER TABLE houses DROP COLUMN IF EXISTS public_price_from;
+ALTER TABLE houses DROP COLUMN IF EXISTS public_full_desc;
+ALTER TABLE houses DROP COLUMN IF EXISTS public_short_desc;
+ALTER TABLE houses DROP COLUMN IF EXISTS public_visible;

@@ -20,6 +20,8 @@ func Build(app *handler.App, cfg *config.Config) *gin.Engine {
 	r.Use(gin.Logger(), gin.Recovery())
 	r.Use(middleware.CORS(cfg.CORS.AllowedOrigins))
 	r.Use(middleware.Locale(cfg.Locale.Default))
+	// v-2: every mutating /api/* request is recorded into audit_logs.
+	r.Use(middleware.Audit(app.DB))
 
 	// File upload size limit
 	r.MaxMultipartMemory = cfg.Upload.MaxMB << 20
@@ -49,7 +51,31 @@ func Build(app *handler.App, cfg *config.Config) *gin.Engine {
 	dash := handler.NewDashboardHandler(app)
 	notifs := handler.NewNotificationHandler(app)
 
+	// v-2 handlers
+	pub := handler.NewPublicHandler(app)
+	twofa := handler.NewTwoFAHandler(app)
+	wsH := handler.NewWSHandler(app)
+	aiH := handler.NewAIHandler(app)
+	voiceH := handler.NewVoiceHandler(app)
+	tourH := handler.NewTourHandler(app)
+	wlH := handler.NewWebsiteLeadHandler(app)
+	wfH := handler.NewWorkflowHandler(app)
+	waWh := handler.NewWhatsAppWebhookHandler(app)
+
 	api := r.Group("/api")
+
+	// === public website (no auth) ===
+	pubGroup := api.Group("/public")
+	pubGroup.GET("/site/config", pub.Config)
+	pubGroup.GET("/houses", pub.Houses)
+	pubGroup.GET("/houses/:id", pub.HouseDetail)
+	pubGroup.GET("/tours/:slug", pub.Tour)
+	pubGroup.POST("/leads", pub.CaptureLead)
+	pubGroup.GET("/apk", pub.APK)
+
+	// === WhatsApp webhook (no auth — Meta calls it directly) ===
+	api.GET("/webhooks/whatsapp", waWh.Verify)
+	api.POST("/webhooks/whatsapp", waWh.Receive)
 
 	// === public ===
 	api.POST("/login", auth.Login)
@@ -242,6 +268,55 @@ func Build(app *handler.App, cfg *config.Config) *gin.Engine {
 	priv.POST("/notifications/read-all", notifs.MarkAllRead)
 	priv.POST("/notifications/mark-read/:id", notifs.MarkRead)
 	priv.DELETE("/notifications/:id", notifs.Delete)
+
+	// ===== v-2: WebSocket realtime =====
+	priv.GET("/ws", wsH.Connect)
+	priv.GET("/ws/online", wsH.Online)
+
+	// ===== v-2: 2FA =====
+	priv.GET("/2fa/status", twofa.Status)
+	priv.POST("/2fa/setup", twofa.Setup)
+	priv.POST("/2fa/verify", twofa.Verify)
+	priv.POST("/2fa/disable", twofa.Disable)
+
+	// ===== v-2: AI features =====
+	priv.POST("/ai/assistant", aiH.Assistant)
+	priv.POST("/ai/score-lead/:id", aiH.ScoreLead)
+	priv.POST("/ai/summarize", aiH.Summarize)
+	priv.POST("/ai/categorize", aiH.Categorize)
+	priv.POST("/ai/ocr", aiH.OCR)
+	adm.GET("/ai/logs", aiH.Logs)
+
+	// ===== v-2: voice notes =====
+	priv.POST("/voice/upload", voiceH.Upload)
+	priv.GET("/voice", voiceH.List)
+	priv.DELETE("/voice/:id", voiceH.Delete)
+
+	// ===== v-2: virtual tours (admin CRUD) =====
+	priv.GET("/tours", tourH.List)
+	priv.GET("/tours/:id", tourH.Get)
+	adm.POST("/tours", tourH.Create)
+	adm.PUT("/tours/:id", tourH.Update)
+	adm.DELETE("/tours/:id", tourH.Delete)
+	adm.POST("/tours/:id/panoramas", tourH.UploadPanorama)
+	adm.PUT("/panoramas/:id", tourH.UpdatePanorama)
+	adm.DELETE("/panoramas/:id", tourH.DeletePanorama)
+	adm.POST("/panoramas/:id/hotspots", tourH.CreateHotspot)
+	adm.DELETE("/hotspots/:id", tourH.DeleteHotspot)
+
+	// ===== v-2: website leads (admin dashboard) =====
+	priv.GET("/website-leads", wlH.List)
+	priv.PUT("/website-leads/:id", wlH.Update)
+	priv.POST("/website-leads/:id/promote", wlH.Promote)
+	adm.DELETE("/website-leads/:id", wlH.Delete)
+
+	// ===== v-2: workflow builder + audit =====
+	priv.GET("/workflows", wfH.List)
+	adm.POST("/workflows", wfH.Create)
+	adm.PUT("/workflows/:id", wfH.Update)
+	adm.DELETE("/workflows/:id", wfH.Delete)
+	priv.GET("/workflows/:id/runs", wfH.Runs)
+	adm.GET("/audit-logs", wfH.AuditList)
 
 	return r
 }

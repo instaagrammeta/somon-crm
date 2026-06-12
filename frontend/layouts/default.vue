@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const auth = useAuthStore();
+// v-2: open the global WebSocket so notif bell + chat update without F5.
+useRealtime();
 onMounted(async () => {
   if (auth.token && !auth.user) await auth.fetchMe();
 });
@@ -20,5 +22,8 @@ onMounted(async () => {
         </div>
       </main>
     </div>
+
+    <!-- v-2: floating AI assistant button + WS-driven notifications -->
+    <AIAssistant />
   </div>
 </template>

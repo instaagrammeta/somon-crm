@@ -10,12 +10,21 @@ import (
 // NotificationService creates in-app notifications AND mirrors them to Telegram,
 // so every alert is visible both inside the CRM and via the bot.
 type NotificationService struct {
-	db *gorm.DB
-	tg *TelegramService
+	db  *gorm.DB
+	tg  *TelegramService
+	hub *Hub // optional, for live WebSocket fan-out
 }
 
 func NewNotification(db *gorm.DB, tg *TelegramService) *NotificationService {
 	return &NotificationService{db: db, tg: tg}
+}
+
+// AttachHub wires the realtime hub into notifications so every Push also
+// streams to the user's open WS connections.
+func (s *NotificationService) AttachHub(h *Hub) {
+	if s != nil {
+		s.hub = h
+	}
 }
 
 // Push stores an in-app notification for the recipient and sends a Telegram
@@ -39,6 +48,14 @@ func (s *NotificationService) Push(userID uint, ntype, title, body, link, tgKey 
 		}
 		if err := s.db.Create(&n).Error; err != nil {
 			log.Printf("[notify] db create failed: %v", err)
+		} else if s.hub != nil {
+			// Stream the saved notification to every open browser tab so the bell
+			// updates without a page refresh.
+			s.hub.SendToUser(userID, Event{
+				Topic:   TopicNotif,
+				Action:  "create",
+				Payload: n,
+			})
 		}
 	}
 	if s.tg == nil {

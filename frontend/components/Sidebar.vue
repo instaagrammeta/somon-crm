@@ -20,7 +20,7 @@ const isSales = computed(
 );
 
 const menu = computed<NavItem[]>(() => [
-  { to: "/", label: t("nav.dashboard"), icon: "fa-th-large" },
+  { to: "/dashboard", label: t("nav.dashboard"), icon: "fa-th-large" },
   { to: "/zadacha", label: t("nav.tasks"), icon: "fa-tasks" },
   { to: "/zayavka", label: t("nav.requests"), icon: "fa-file-invoice" },
   { to: "/lids", label: t("nav.sales"), icon: "fa-fire", show: () => isSales.value },
@@ -35,6 +35,9 @@ const general = computed<NavItem[]>(() => [
   { to: "/chat", label: t("nav.chat"), icon: "fa-comment-dots" },
   { to: "/sim-cards", label: t("nav.sim_cards"), icon: "fa-sim-card" },
   { to: "/baza", label: t("nav.base"), icon: "fa-folder-open" },
+  // v-2 admin tools
+  { to: "/admin/website-leads", label: "Лидҳои вебсайт", icon: "fa-globe", show: () => auth.isAdmin },
+  { to: "/me/2fa", label: "2FA" , icon: "fa-shield-halved" },
   { to: "/admin", label: t("nav.employees"), icon: "fa-user-shield", show: () => auth.isAdmin },
 ]);
 
@@ -42,7 +45,7 @@ const visibleMenu = computed(() => menu.value.filter((i) => !i.show || i.show())
 const visibleGeneral = computed(() => general.value.filter((i) => !i.show || i.show()));
 
 function isActive(path: string) {
-  if (path === "/") return route.path === "/";
+  if (path === "/dashboard") return route.path === "/dashboard";
   return route.path.startsWith(path);
 }
 
@@ -70,7 +73,7 @@ const onLogout = async () => {
   >
     <!-- Header / Logo -->
     <div class="px-[22px] pt-6 pb-[18px]">
-      <NuxtLink to="/" class="flex items-center gap-2.5">
+      <NuxtLink to="/dashboard" class="flex items-center gap-2.5">
         <span class="logo-icon" />
         <span class="text-[19px] font-extrabold tracking-[-0.3px] text-ink">RealEstate</span>
       </NuxtLink>

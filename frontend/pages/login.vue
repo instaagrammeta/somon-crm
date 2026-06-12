@@ -28,7 +28,7 @@ const submit = async () => {
   // redirect hiccup must NOT be reported back as "invalid credentials".
   toast.success(t("auth.welcome", { name: user.full_name }));
   try {
-    await navigateTo("/");
+    await navigateTo("/dashboard");
   } catch {
     /* ignore navigation redirect errors */
   } finally {
