@@ -12,6 +12,7 @@ import (
 
 	"github.com/instaagrammeta/somon-crm/backend/internal/middleware"
 	"github.com/instaagrammeta/somon-crm/backend/internal/models"
+	"github.com/instaagrammeta/somon-crm/backend/internal/service"
 	"github.com/instaagrammeta/somon-crm/backend/internal/utils"
 )
 
@@ -111,11 +112,11 @@ func (h *VoiceHandler) transcribeAsync(id uint, audio []byte, filename, locale s
 			userID = *row.UserID
 		}
 		if userID != 0 {
-			h.Hub.SendToUser(userID, struct {
-				Topic   string           `json:"topic"`
-				Action  string           `json:"action"`
-				Payload models.VoiceNote `json:"payload"`
-			}{Topic: "voice", Action: "update", Payload: row})
+			h.Hub.SendToUser(userID, service.Event{
+				Topic:   "voice",
+				Action:  "update",
+				Payload: row,
+			})
 		}
 	}
 }

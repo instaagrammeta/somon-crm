@@ -72,7 +72,7 @@ func (h *TwoFAHandler) Disable(c *gin.Context) {
 		utils.ErrorResp(c, http.StatusUnauthorized, "auth.unauthorized")
 		return
 	}
-	if !h.Auth.CheckPassword(u.PasswordHash, body.Password) {
+	if !h.Auth.CheckPassword(u.Password, body.Password) {
 		utils.ErrorResp(c, http.StatusUnauthorized, "auth.wrong_password")
 		return
 	}
