@@ -1,0 +1,78 @@
+# Deploy the latest images to a single VPS over SSH.
+#
+# How it works:
+#   1. CI builds both images and pushes them to ghcr.io.
+#   2. This workflow SSHes into the server, pulls the new images, and runs
+#      `docker compose up -d` against the same compose file checked into git.
+#
+# REQUIRED secrets (Settings → Secrets and variables → Actions):
+#   SSH_HOST           ip or hostname of the production server
+#   SSH_USER           login user (e.g. deploy)
+#   SSH_KEY            private key for that user (paste the key contents)
+#   SSH_PORT           optional, defaults to 22
+#   DEPLOY_PATH        absolute path on the server, e.g. /opt/somon-crm
+#
+# Trigger this manually (Actions → Deploy → Run workflow) the first few times,
+# then enable the "after Docker images" trigger below.
+name: Deploy
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Docker images"]
+    types: [completed]
+    branches: [main, "v-*"]
+
+jobs:
+  ssh:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SSH-deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_KEY }}
+          port:     ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Pull the latest source so docker-compose.yml + nginx.conf are
+            # in sync with the freshly-built images.
+            git fetch --all --prune
+            git checkout ${{ github.ref_name }}
+            git pull --ff-only
+
+            # Use registry images (built by docker-images.yml). The compose
+            # file still has 'build:' for local dev; on the server we override
+            # with the published image via an inline override file.
+            cat > docker-compose.override.yml <<EOF
+            services:
+              backend:
+                image: ghcr.io/${{ github.repository }}/backend:latest
+                pull_policy: always
+              frontend:
+                image: ghcr.io/${{ github.repository }}/frontend:latest
+                pull_policy: always
+            EOF
+
+            # Login to ghcr if the images are private (no-op for public).
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Wait until /health returns ok.
+            for i in $(seq 1 60); do
+              if curl -fsS http://127.0.0.1/health | grep -q '"ok":true'; then
+                echo "Deploy healthy."
+                break
+              fi
+              sleep 2
+            done
+
+            docker image prune -f

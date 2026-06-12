@@ -2,6 +2,7 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -30,9 +31,44 @@ func Build(app *handler.App, cfg *config.Config) *gin.Engine {
 	uploadH := handler.NewUploadHandler(app)
 	r.GET("/uploads/*path", uploadH.ServeFile)
 
-	// Health
+	// Health: deep check for DB + Redis. Returns 503 when any dependency is
+	// unhealthy so docker-compose / kube readiness probes flip the pod.
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"ok": true, "time": time.Now().UTC()})
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+		out := gin.H{"ok": true, "time": time.Now().UTC()}
+		status := http.StatusOK
+
+		// DB
+		if sqlDB, err := app.DB.DB(); err != nil {
+			out["db"] = "unavailable"
+			out["ok"] = false
+			status = http.StatusServiceUnavailable
+		} else if err := sqlDB.PingContext(ctx); err != nil {
+			out["db"] = "ping failed: " + err.Error()
+			out["ok"] = false
+			status = http.StatusServiceUnavailable
+		} else {
+			out["db"] = "ok"
+		}
+
+		// Redis (optional — only treated as failure if explicitly configured)
+		if app.Redis != nil {
+			if err := app.Redis.Ping(ctx).Err(); err != nil {
+				out["redis"] = "ping failed: " + err.Error()
+				out["ok"] = false
+				status = http.StatusServiceUnavailable
+			} else {
+				out["redis"] = "ok"
+			}
+		}
+
+		// Light info for ops dashboards
+		out["env"] = cfg.App.Env
+		out["realtime"] = app.Hub != nil
+		out["ai"] = app.AI != nil && app.AI.Enabled()
+
+		c.JSON(status, out)
 	})
 
 	auth := handler.NewAuthHandler(app)

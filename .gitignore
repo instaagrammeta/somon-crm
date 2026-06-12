@@ -5,3 +5,10 @@
 node_modules/
 .nuxt/
 .output/
+
+
+
+# v-2: bootstrap leaves these here, not tracked
+docker-compose.override.yml
+static/apk/*.apk
+static/apk/*.aab

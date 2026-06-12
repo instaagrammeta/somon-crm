@@ -1,0 +1,110 @@
+# Continuous integration — runs on every push and pull request.
+#
+# Three jobs in parallel:
+#   • backend  — go vet + go build + (optional) go test
+#   • frontend — npm ci + nuxt build (catches type errors and missing deps)
+#   • compose  — `docker compose config` validates the YAML + dockerfiles
+#
+# Designed to be fast (<5min) so PR feedback is immediate.
+name: CI
+
+on:
+  push:
+    branches: [main, "v-*"]
+  pull_request:
+    branches: [main, "v-*"]
+
+# Cancel previous runs on the same branch when a new commit lands.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          # Caching is conditional on a go.sum file existing; this repo
+          # currently builds it on the fly via `go mod tidy`, so we skip
+          # the cache to avoid actions/setup-go-v5 failing on the missing path.
+          cache: false
+
+      - name: Resolve dependencies
+        # `go mod tidy` is also what the production Dockerfile runs, so this
+        # mirrors what the deployment will see.
+        run: go mod tidy
+
+      - name: gofmt (must be empty)
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "::error::Files not gofmt'd:"
+            echo "$out"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: |
+          go build -o /tmp/server  ./cmd/server
+          go build -o /tmp/migrate ./cmd/migrate
+
+      - name: go test
+        # Tests are optional for now (the v-2 PR adds none). Don't fail CI
+        # when the test set is empty — fail when present tests fail.
+        run: |
+          if find . -name '*_test.go' | grep -q .; then
+            go test ./... -count=1 -timeout 5m
+          else
+            echo "No *_test.go files yet — skipping."
+          fi
+
+  frontend:
+    name: Frontend (Nuxt)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          # No package-lock.json yet — caching disabled; re-enable once the
+          # lockfile is committed.
+
+      - name: Install
+        # The Dockerfile uses --legacy-peer-deps; mirror that here so any
+        # peerDependency conflict surfaces in CI, not at deploy time.
+        run: npm install --no-audit --no-fund --legacy-peer-deps --ignore-scripts
+
+      - name: Nuxt prepare (generates .nuxt types)
+        run: npx nuxt prepare
+
+      - name: Build
+        run: npx nuxt build
+
+  compose:
+    name: docker-compose validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose.yml
+        run: |
+          # Use a placeholder .env so variable expansion succeeds.
+          cp .env.example .env
+          docker compose config >/dev/null
+          echo "compose file OK"

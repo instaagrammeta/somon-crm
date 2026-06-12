@@ -1,14 +1,24 @@
-# Production-ready stack:
-#   Postgres + Redis + Go backend + Nuxt SSR frontend + Nginx reverse proxy.
+# ============================================================================
+# Somon CRM v-2 — full production stack.
 #
-# Usage:
-#   1. Copy .env.example to .env and customize values
+# Quick start:
+#   1. cp .env.example .env  (then edit at least JWT_SECRET, DB_PASSWORD,
+#                             ADMIN_PASSWORD, AI_API_KEY)
 #   2. docker compose up -d --build
-#   3. Browse to http://<server-ip>/   (port 80)
+#   3. Open http://<server-ip>/         (public website + CRM login)
 #
-# Internal network — only nginx is exposed to host.
-
-version: "3.9"
+# Or one-liner:
+#   ./bootstrap.sh
+#
+# Services:
+#   postgres   — Postgres 16
+#   redis      — Redis 7 (sessions, JWT blacklist, presence cache)
+#   backend    — Go (Gin + GORM + WebSocket hub + AI)
+#   frontend   — Nuxt 4 SPA (CRM + public marketing site)
+#   nginx      — TLS-ready reverse proxy, the only port exposed to the host
+#
+# Each service has a healthcheck so 'docker compose up' only returns healthy.
+# ============================================================================
 
 services:
   postgres:
@@ -58,16 +68,23 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       UPLOAD_DIR: /app/uploads
-      # Set to "true" once if you changed ADMIN_PASSWORD after first startup.
-      # Then unset and restart again so a normal startup runs.
       RESET_ADMIN_PASSWORD: ${RESET_ADMIN_PASSWORD:-false}
     volumes:
       - uploads:/app/uploads
+      - ./static:/app/static:ro       # APK + any static binaries
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      # The image is FROM alpine:3.20 → wget is available; curl is not.
+      # Health endpoint pings DB + Redis, so a 200 means the whole stack is up.
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8080/health | grep -q '\"ok\":true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks: [somon]
 
   frontend:
@@ -82,11 +99,18 @@ services:
       NITRO_HOST: 0.0.0.0
       # Browser-side base URL: empty → same-origin via nginx
       NUXT_PUBLIC_API_BASE: ""
-      # Server-side (SSR) base URL: Docker DNS to reach backend
+      # Server-side (SSR fallback) base URL: Docker DNS to reach backend
       NUXT_API_BASE_INTERNAL: "http://backend:8080"
       NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-tg}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/ | head -c 1 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks: [somon]
 
   nginx:
@@ -94,13 +118,21 @@ services:
     container_name: somon_nginx
     restart: unless-stopped
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     ports:
       - "${PUBLIC_PORT:-80}:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - uploads:/var/www/uploads:ro
+      - ./static:/var/www/static:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1/health | grep -q '\"ok\":true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     networks: [somon]
 
 volumes:
